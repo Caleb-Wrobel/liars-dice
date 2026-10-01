@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  BOT_LEVELS,
+  BOT_LEVEL_NAMES,
   Bot,
+  type BotLevel,
   Game,
   advancedRules,
   basicRules,
@@ -22,6 +25,68 @@ describe("Bot", () => {
       }
       expect(g.winner, `seed ${seed} did not finish`).not.toBeNull();
     }
+  });
+
+  it.each(BOT_LEVEL_NAMES)("plays full games at the %s level using only legal moves", (level) => {
+    for (const rules of [basicRules(), advancedRules()]) {
+      for (let seed = 0; seed < 20; seed++) {
+        const g = new Game(["A", "B", "C"], rules, seededRng(seed));
+        const bots = [0, 1, 2].map((i) => new Bot({ rng: seededRng(seed * 10 + i), level }));
+        for (let turns = 0; turns < 5000 && g.winner === null; turns++) bots[g.current]!.play(g);
+        expect(g.winner, `${level} seed ${seed} did not finish`).not.toBeNull();
+      }
+    }
+  });
+
+  it("defaults to the normal level", () => {
+    expect(new Bot().level).toBe("normal");
+    expect(new Bot().style).toEqual(BOT_LEVELS.normal);
+    expect(new Bot({ pullBelow: 0.9 }).style.pullBelow).toBe(0.9);
+  });
+
+  /** How often a bot facing `claim` (with nothing visible) pulls the cup. */
+  const pullRate = (level: BotLevel, claim: string) => {
+    let pulls = 0;
+    const trials = 300;
+    for (let seed = 0; seed < trials; seed++) {
+      const g = new Game(["A", "B"], advancedRules(), seededRng(seed));
+      g.makeClaim(parseRank(claim));
+      if (new Bot({ rng: seededRng(seed + 1000), level }).play(g) !== null) pulls++;
+    }
+    return pulls / trials;
+  };
+
+  it("gets more patient as the level rises", () => {
+    // "three 3" is true about 16% of the time; "pair 6" about 52%.
+    expect(pullRate("easy", "three 3")).toBeGreaterThan(0.9);
+    expect(pullRate("stabby", "three 3")).toBeLessThan(0.1);
+    // Easy is jumpy: it pulls an even-odds claim a good fraction of the time. Normal doesn't.
+    expect(pullRate("easy", "pair 6")).toBeGreaterThan(0.2);
+    expect(pullRate("normal", "pair 6")).toBeLessThan(0.1);
+    expect(pullRate("easy", "three 3")).toBeGreaterThan(pullRate("normal", "three 3"));
+    expect(pullRate("normal", "three 3")).toBeGreaterThan(pullRate("stabby", "three 3"));
+  });
+
+  /** Win rate of level `a` against level `b` over two-player games, alternating seats and rules. */
+  const winRate = (a: BotLevel, b: BotLevel, games = 150) => {
+    let wins = 0;
+    for (let seed = 0; seed < games; seed++) {
+      const rules = seed % 4 < 2 ? basicRules() : advancedRules();
+      const g = new Game(["A", "B"], rules, seededRng(seed), seed % 2);
+      const bots = [
+        new Bot({ rng: seededRng(seed * 2 + 1), level: a }),
+        new Bot({ rng: seededRng(seed * 2 + 2), level: b }),
+      ];
+      for (let turns = 0; turns < 5000 && g.winner === null; turns++) bots[g.current]!.play(g);
+      if (g.winner === 0) wins++;
+    }
+    return wins / games;
+  };
+
+  it("makes higher levels genuinely stronger", () => {
+    expect(winRate("normal", "easy")).toBeGreaterThan(0.6);
+    expect(winRate("stabby", "normal")).toBeGreaterThan(0.55);
+    expect(winRate("stabby", "easy")).toBeGreaterThan(0.7);
   });
 
   it("must pull the top claim", () => {

@@ -18,22 +18,56 @@ import {
 } from "./ranks.ts";
 import type { Rng } from "./rng.ts";
 
-const SAMPLES = 200;
 const ALL_DICE: readonly number[] = Array.from({ length: NUM_DICE }, (_, i) => i);
+
+/** The numbers that make one bot play differently from another. */
+export interface BotStyle {
+  /** Pull when the standing claim looks less likely than this. */
+  readonly pullBelow: number;
+  /** Random wobble (plus or minus) on that threshold, so the bot isn't predictable. */
+  readonly noise: number;
+  /** Dice simulations per estimate. Fewer means a rougher read of the claim. */
+  readonly samples: number;
+  /** How many rungs below its real rank it may claim, chosen at random. */
+  readonly sandbag: readonly number[];
+  /** How many rungs above the standing claim it bluffs, chosen at random. */
+  readonly bluff: readonly number[];
+}
+
+/**
+ * Levels are ordered by strength. In this game claims tend to be close to the truth, so the
+ * main lever is patience: pulling on a shaky claim usually loses a life, and the strongest
+ * play is to let a claim climb until it really stops being believable, then pull.
+ */
+export const BOT_LEVELS = {
+  /** Jumpy: pulls on shaky claims, reads the odds roughly, and is often wrong. */
+  easy: { pullBelow: 0.5, noise: 0.15, samples: 40, sandbag: [0, 0, 0, 1], bluff: [1, 1, 2] },
+  /** A balanced opponent. */
+  normal: { pullBelow: 0.25, noise: 0.1, samples: 200, sandbag: [0, 0, 1, 2, 3], bluff: [1, 1, 2, 3, 5] },
+  /** Patient: hides its strength, lets you climb, then stabs when your claim stops being believable. */
+  stabby: { pullBelow: 0.08, noise: 0.05, samples: 400, sandbag: [0, 1, 2, 3, 4], bluff: [1, 2, 3, 5] },
+} as const satisfies Record<string, BotStyle>;
+
+export type BotLevel = keyof typeof BOT_LEVELS;
+export const BOT_LEVEL_NAMES = Object.keys(BOT_LEVELS) as BotLevel[];
 
 export interface BotOptions {
   readonly rng?: Rng;
-  /** Pull when the claim looks less likely than this. */
+  /** Defaults to "normal". */
+  readonly level?: BotLevel;
+  /** Overrides the level's pull threshold. */
   readonly pullBelow?: number;
 }
 
 export class Bot {
   readonly rng: Rng;
-  readonly pullBelow: number;
+  readonly level: BotLevel;
+  readonly style: BotStyle;
 
-  constructor({ rng = Math.random, pullBelow = 0.35 }: BotOptions = {}) {
+  constructor({ rng = Math.random, level = "normal", pullBelow }: BotOptions = {}) {
     this.rng = rng;
-    this.pullBelow = pullBelow;
+    this.level = level;
+    this.style = pullBelow === undefined ? BOT_LEVELS[level] : { ...BOT_LEVELS[level], pullBelow };
   }
 
   /** Estimate how likely the standing claim is, given only the visible dice. */
@@ -41,11 +75,11 @@ export class Bot {
     const visible = [...game.visible].map((i) => game.dice[i]!);
     const unseen = NUM_DICE - visible.length;
     let hits = 0;
-    for (let n = 0; n < SAMPLES; n++) {
+    for (let n = 0; n < this.style.samples; n++) {
       const dice = [...visible, ...Array.from({ length: unseen }, () => this.rollDie())];
       if (compareRanks(evaluate(dice), game.claim) >= 0) hits++;
     }
-    return hits / SAMPLES;
+    return hits / this.style.samples;
   }
 
   /**
@@ -54,8 +88,8 @@ export class Bot {
    */
   play(game: Game, say: (text: string) => void = () => {}): PullResult | null {
     if (game.step === Step.Decide) {
-      const noise = this.rng() * 0.2 - 0.1;
-      const doubt = this.chanceTrue(game) < this.pullBelow + noise;
+      const noise = (this.rng() * 2 - 1) * this.style.noise;
+      const doubt = this.chanceTrue(game) < this.style.pullBelow + noise;
       if (!game.available().includes("peer") || doubt) {
         say("pulls the cup");
         return game.pull();
@@ -93,8 +127,8 @@ export class Bot {
     const actual = LADDER.findIndex((r) => sameRank(r, evaluate(game.dice)));
     const target =
       actual > standing
-        ? Math.max(standing + 1, actual - this.pick([0, 0, 1, 2, 3]))
-        : Math.min(standing + this.pick([1, 1, 2, 3, 5]), LADDER.length - 1);
+        ? Math.max(standing + 1, actual - this.pick(this.style.sandbag))
+        : Math.min(standing + this.pick(this.style.bluff), LADDER.length - 1);
     return LADDER[target]!;
   }
 
