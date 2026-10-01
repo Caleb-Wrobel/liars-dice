@@ -15,7 +15,12 @@ import {
 import { useEffect, useState } from "react";
 
 export const HUMAN = 0;
-export const BOT_DELAY_MS = 900;
+
+/** How fast the bots move. "step" waits for you to press Next move after each action. */
+export type Pace = "fast" | "normal" | "slow" | "step";
+export const PACES: readonly Pace[] = ["fast", "normal", "slow", "step"];
+/** Pause before each bot action, in milliseconds. */
+export const PACE_MS = { fast: 250, normal: 700, slow: 1600 } as const;
 /** Opponents are seated after the human, in this order. */
 export const BOT_NAMES = ["Bob", "Carol", "Dave", "Eve", "Frank"] as const;
 
@@ -27,6 +32,8 @@ export interface Config {
   readonly opponents?: number;
   /** How the bots play. Defaults to "normal". */
   readonly level?: BotLevel;
+  /** How fast the bots move. Defaults to "normal". Can be changed during the game. */
+  readonly pace?: Pace;
   /** Makes dice and the bots deterministic. Used by tests. */
   readonly seed?: number;
 }
@@ -51,6 +58,7 @@ export function useSession(config: Config) {
     };
   });
   const [tick, setTick] = useState(0);
+  const [pace, setPace] = useState<Pace>(config.pace ?? "normal");
   const [log, setLog] = useState<readonly string[]>([]);
   const [pulled, setPulled] = useState<PullResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,16 +86,21 @@ export function useSession(config: Config) {
 
   /** The seat of the bot about to move, or null when it's the human's turn or the game is over. */
   const botSeat = game.winner === null && game.current !== HUMAN && pulled === null ? game.current : null;
-  useEffect(() => {
+
+  /** Makes the bot's next visible move: pull, peer, rearrange, roll, or claim. */
+  const botStep = () => {
     if (botSeat === null) return;
-    const timer = setTimeout(() => {
-      const name = game.names[botSeat]!;
-      const result = bots[botSeat - 1]!.play(game, (text) => say(`${name} ${text}`));
-      if (result) setPulled(result);
-      refresh();
-    }, BOT_DELAY_MS);
+    const name = game.names[botSeat]!;
+    const outcome = bots[botSeat - 1]!.step(game, (text) => say(`${name} ${text}`));
+    if (outcome.kind === "pulled") setPulled(outcome.result);
+    refresh();
+  };
+
+  useEffect(() => {
+    if (botSeat === null || pace === "step") return;
+    const timer = setTimeout(botStep, PACE_MS[pace]);
     return () => clearTimeout(timer);
-  }, [botSeat, tick]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [botSeat, tick, pace]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visibleSet: ReadonlySet<number> = draft ?? game.visible;
 
@@ -105,6 +118,9 @@ export function useSession(config: Config) {
     visibleSet,
     botSeat,
     botTurn: botSeat !== null,
+    pace,
+    setPace,
+    nextBotStep: botStep,
 
     pullCup: () =>
       act(() => {

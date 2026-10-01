@@ -53,14 +53,20 @@ legend { color: var(--muted); padding: 0 6px; }
 .player { padding: 8px 14px; border-radius: 999px; background: var(--panel); border: 1px solid #2c5240; display: flex; gap: 10px; }
 .player.active { border-color: var(--accent); }
 .hearts { color: var(--bad); letter-spacing: 2px; }
-.scoreboard .link { margin-left: auto; }
+.table-controls { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pace { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+.pace select { min-height: 36px; padding: 2px 8px; }
 
 .claim-card { background: var(--panel); border: 1px solid #2c5240; border-radius: var(--radius); padding: 16px; display: grid; gap: 6px; }
 .label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
 .claim-text { font-size: 1.4rem; font-weight: 600; }
 .by, .hint { color: var(--muted); font-size: 0.9rem; }
-.thinking { color: var(--accent); }
+.thinking { color: var(--accent); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .decide-buttons, .roll-buttons, .claim-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+
+.claim-dice { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0; }
+.claim-dice .die { width: 38px; height: 38px; }
+.die-kicker .die-body { stroke: var(--accent); stroke-dasharray: 7 5; stroke-width: 4; }
 
 /* Trays and dice */
 .trays { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }

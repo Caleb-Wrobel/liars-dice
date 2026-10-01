@@ -1,15 +1,26 @@
 import { Step, parseRank } from "@liars-dice/engine";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { BOT_DELAY_MS, HUMAN, useSession, type Config } from "./session.ts";
+import { HUMAN, PACE_MS, useSession, type Config } from "./session.ts";
 
 const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1 };
 const advanced: Config = { ...basic, advanced: true };
 
 afterEach(() => vi.useRealTimers());
 
-/** Alice opens with the smallest claim and Bob answers, leaving Alice to act. */
-function afterBobAnswers(config: Config) {
+type Hook = ReturnType<typeof renderHook<ReturnType<typeof useSession>, unknown>>;
+
+/** Lets the bots take their moves, one pause at a time, until it is Alice's turn or a pull happens. */
+function letBotsPlay({ result }: Hook, ms: number = PACE_MS.normal) {
+  for (let i = 0; i < 40 && result.current.botSeat !== null; i++) {
+    act(() => {
+      vi.advanceTimersByTime(ms + 10);
+    });
+  }
+}
+
+/** Alice opens with the smallest claim and the bots answer, leaving Alice to act. */
+function afterBotsAnswer(config: Config) {
   vi.useFakeTimers();
   const hook = renderHook(() => useSession(config));
   const { result } = hook;
@@ -18,9 +29,7 @@ function afterBobAnswers(config: Config) {
     act(() => result.current.peek());
   }
   act(() => result.current.claim(parseRank("none 1")));
-  act(() => {
-    vi.advanceTimersByTime(BOT_DELAY_MS + 50);
-  });
+  letBotsPlay(hook);
   return hook;
 }
 
@@ -48,36 +57,35 @@ describe("useSession", () => {
     expect(result.current.error).toMatch(/roll and peek/);
   });
 
-  it("hands over to Bob, who answers after a short delay", () => {
+  it("hands over to Bob, who moves one visible step at a time", () => {
     vi.useFakeTimers();
-    const { result } = renderHook(() => useSession(advanced));
+    const hook = renderHook(() => useSession(advanced));
+    const { result } = hook;
     act(() => result.current.claim(parseRank("none 1")));
     expect(result.current.game.current).toBe(1);
     expect(result.current.botTurn).toBe(true);
+
     act(() => {
-      vi.advanceTimersByTime(BOT_DELAY_MS + 50);
+      vi.advanceTimersByTime(PACE_MS.normal + 10);
     });
-    expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(true);
+    expect(result.current.log.filter((line) => line.startsWith("Bob "))).toHaveLength(1);
+    expect(result.current.game.current).toBe(1); // still mid-turn: one move, not the whole turn
+
+    letBotsPlay(hook);
     expect(result.current.game.current).toBe(HUMAN);
     expect(result.current.game.step).toBe(Step.Decide);
+    expect(result.current.log.filter((line) => line.startsWith("Bob ")).length).toBeGreaterThan(1);
   });
 
   it("seats several bots, who answer one after another", () => {
     vi.useFakeTimers();
-    const { result } = renderHook(() => useSession({ ...advanced, opponents: 3 }));
+    const hook = renderHook(() => useSession({ ...advanced, opponents: 3 }));
+    const { result } = hook;
     expect(result.current.game.names).toEqual(["Alice", "Bob", "Carol", "Dave"]);
     act(() => result.current.claim(parseRank("none 1")));
     expect(result.current.botSeat).toBe(1);
-    act(() => {
-      vi.advanceTimersByTime(BOT_DELAY_MS + 50);
-    });
-    // Bob has moved; unless he pulled, it's now Carol's turn and she answers next.
-    if (result.current.pulled === null) {
-      expect(result.current.botSeat).toBe(2);
-      act(() => {
-        vi.advanceTimersByTime(BOT_DELAY_MS + 50);
-      });
-    }
+    letBotsPlay(hook);
+    // Bob has moved; unless somebody pulled, Carol answered him.
     const spoke = (who: string) => result.current.log.some((line) => line.startsWith(`${who} `));
     expect(spoke("Bob")).toBe(true);
     expect(result.current.pulled !== null || spoke("Carol")).toBe(true);
@@ -90,8 +98,50 @@ describe("useSession", () => {
     expect(low.current.game.names).toHaveLength(2);
   });
 
+  describe("pacing", () => {
+    it("waits longer between bot moves when the pace is slow", () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useSession({ ...advanced, pace: "slow" }));
+      act(() => result.current.claim(parseRank("none 1")));
+      act(() => {
+        vi.advanceTimersByTime(PACE_MS.normal + 10);
+      });
+      expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(false);
+      act(() => {
+        vi.advanceTimersByTime(PACE_MS.slow - PACE_MS.normal);
+      });
+      expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(true);
+    });
+
+    it("can be changed during the game", () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useSession({ ...advanced, pace: "slow" }));
+      act(() => result.current.claim(parseRank("none 1")));
+      act(() => result.current.setPace("fast"));
+      act(() => {
+        vi.advanceTimersByTime(PACE_MS.fast + 10);
+      });
+      expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(true);
+    });
+
+    it("waits for Next move in step-by-step mode", () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useSession({ ...advanced, pace: "step" }));
+      act(() => result.current.claim(parseRank("none 1")));
+      act(() => {
+        vi.advanceTimersByTime(60_000);
+      });
+      expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(false);
+
+      act(() => result.current.nextBotStep());
+      expect(result.current.log.filter((line) => line.startsWith("Bob "))).toHaveLength(1);
+      act(() => result.current.nextBotStep());
+      expect(result.current.log.filter((line) => line.startsWith("Bob "))).toHaveLength(2);
+    });
+  });
+
   it("drafts a rearrangement and commits it when the player rolls", () => {
-    const { result } = afterBobAnswers(basic);
+    const { result } = afterBotsAnswer(basic);
     act(() => result.current.peer());
     const before = [...result.current.game.visible]; // whatever Bob left showing
     for (const die of [0, 1, 2, 3]) act(() => result.current.moveDie(die, "visible"));
@@ -104,7 +154,7 @@ describe("useSession", () => {
   });
 
   it("stops basic players leaving nothing to roll", () => {
-    const { result } = afterBobAnswers(basic);
+    const { result } = afterBotsAnswer(basic);
     act(() => result.current.peer());
     for (const die of [0, 1, 2, 3, 4]) act(() => result.current.moveDie(die, "visible"));
     expect(result.current.visibleSet.size).toBe(4);
@@ -112,7 +162,7 @@ describe("useSession", () => {
   });
 
   it("lets advanced players put every die in the visible tray", () => {
-    const { result } = afterBobAnswers(advanced);
+    const { result } = afterBotsAnswer(advanced);
     act(() => result.current.peer());
     for (const die of [0, 1, 2, 3, 4]) act(() => result.current.moveDie(die, "visible"));
     expect(result.current.visibleSet.size).toBe(5);
@@ -126,7 +176,7 @@ describe("useSession", () => {
   });
 
   it("shows the result of a pull, then clears it", () => {
-    const { result } = afterBobAnswers(basic);
+    const { result } = afterBotsAnswer(basic);
     const before = result.current.game.lives.reduce((a, b) => a + b, 0);
     act(() => result.current.pullCup());
     expect(result.current.pulled).not.toBeNull();

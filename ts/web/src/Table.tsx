@@ -11,12 +11,14 @@ import {
 } from "@dnd-kit/core";
 import { NUM_DICE, Step, formatRank } from "@liars-dice/engine";
 import type { ReactNode } from "react";
+import { ClaimDice } from "./ClaimDice.tsx";
 import { ClaimPicker } from "./ClaimPicker.tsx";
 import { Die } from "./Die.tsx";
 import { PullDialog } from "./PullDialog.tsx";
-import { HUMAN, useSession, type Config, type Tray } from "./session.ts";
+import { HUMAN, PACES, useSession, type Config, type Pace, type Tray } from "./session.ts";
 
 const LABELS = "abcde";
+const PACE_LABELS: Record<Pace, string> = { fast: "Fast", normal: "Normal", slow: "Slow", step: "Step by step" };
 
 /** The fixed turn order, with the engine action each step stands for. */
 const STEPS = [
@@ -123,9 +125,21 @@ export function Table({ config, onQuit }: { config: Config; onQuit: () => void }
             </span>
           </div>
         ))}
-        <button type="button" className="link" onClick={onQuit}>
-          New game
-        </button>
+        <div className="table-controls">
+          <label className="pace">
+            Bot pace
+            <select value={s.pace} onChange={(e) => s.setPace(e.target.value as Pace)}>
+              {PACES.map((p) => (
+                <option key={p} value={p}>
+                  {PACE_LABELS[p]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="link" onClick={onQuit}>
+            New game
+          </button>
+        </div>
       </header>
 
       <section className="claim-card" aria-live="polite">
@@ -135,6 +149,7 @@ export function Table({ config, onQuit }: { config: Config; onQuit: () => void }
           <>
             <p className="label">Standing claim</p>
             <p className="claim-text">{formatRank(game.claim)}</p>
+            <ClaimDice rank={game.claim} />
             <p className="by">by {game.names[game.claimer]}</p>
           </>
         )}
@@ -153,9 +168,16 @@ export function Table({ config, onQuit }: { config: Config; onQuit: () => void }
           </div>
         )}
         {s.botSeat !== null && (
-          <p className="thinking" role="status">
-            {game.names[s.botSeat]} is thinking…
-          </p>
+          <div className="thinking" role="status">
+            <p>
+              {game.names[s.botSeat]} {s.pace === "step" ? "is waiting for you." : "is thinking…"}
+            </p>
+            {s.pace === "step" && (
+              <button type="button" className="primary" onClick={s.nextBotStep}>
+                Next move
+              </button>
+            )}
+          </div>
         )}
         {game.lives[HUMAN] === 0 && game.winner === null && (
           <p className="hint">You're out. Watching the rest of the game.</p>

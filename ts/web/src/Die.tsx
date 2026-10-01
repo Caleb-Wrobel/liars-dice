@@ -9,13 +9,13 @@ const PIPS: Record<number, readonly (readonly [number, number])[]> = {
 };
 
 /** A die face, or an unseen die when `face` is null. */
-export function Die({ face, label }: { face: number | null; label: string }) {
+export function Die({ face, label, kicker = false }: { face: number | null; label: string; kicker?: boolean }) {
   return (
     <svg
       viewBox="0 0 100 100"
       role="img"
       aria-label={face === null ? `die ${label}, unseen` : `die ${label}, showing ${face}`}
-      className={face === null ? "die die-unseen" : "die"}
+      className={`die${face === null ? " die-unseen" : ""}${kicker ? " die-kicker" : ""}`}
     >
       <rect x="4" y="4" width="92" height="92" rx="18" className="die-body" />
       {face === null ? (

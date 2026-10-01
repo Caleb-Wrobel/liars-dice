@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BOT_LEVEL_NAMES, type BotLevel } from "@liars-dice/engine";
-import { BOT_NAMES, type Config } from "./session.ts";
+import { BOT_NAMES, type Config, type Pace } from "./session.ts";
 
 const LEVEL_BLURBS: Record<BotLevel, string> = {
   easy: "Jumpy. Pulls on shaky claims and misreads the odds, so a truthful claim often catches it out.",
@@ -14,6 +14,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [advanced, setAdvanced] = useState(false);
   const [opponents, setOpponents] = useState(1);
   const [level, setLevel] = useState<BotLevel>("normal");
+  const [pace, setPace] = useState<Pace>("normal");
 
   return (
     <main className="setup">
@@ -22,7 +23,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onStart({ name: name.trim() || "Alice", lives, advanced, opponents, level });
+          onStart({ name: name.trim() || "Alice", lives, advanced, opponents, level, pace });
         }}
       >
         <label>
@@ -59,6 +60,15 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
             ))}
           </select>
           <span className="hint">{LEVEL_BLURBS[level]}</span>
+        </label>
+        <label>
+          Bot pace
+          <select value={pace} onChange={(e) => setPace(e.target.value as Pace)}>
+            <option value="fast">Fast</option>
+            <option value="normal">Normal</option>
+            <option value="slow">Slow, so you can watch</option>
+            <option value="step">Step by step, you press Next move</option>
+          </select>
         </label>
         <fieldset>
           <legend>Rules</legend>
