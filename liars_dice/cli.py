@@ -1,8 +1,12 @@
 """Text interface. Everyone shares the screen, so there is no hiding yet."""
 from __future__ import annotations
 
+from .bot import Bot
 from .game import Game, Rules, RuleError
 from .ranks import NIL, NUM_DICE, evaluate, parse_rank
+
+# Dice are lettered so a die's name can't be mistaken for its face.
+LABELS = "abcde"[:NUM_DICE]
 
 CLAIM_HELP = ("claims: none K | pair N [K] | two pair H L [K] | three N [K] | "
               "full T P | four N [K] | five N      ([K] = optional kicker)")
@@ -33,9 +37,9 @@ def show_state(game: Game) -> None:
 
 
 def show_dice(game: Game) -> None:
-    """Number, face ('?' if you haven't seen it) and set ('*' = hidden)."""
+    """Letter, face ('?' if you haven't seen it) and set ('*' = hidden)."""
     print("  " + "  ".join(
-        f"{i + 1}:{face if i in game.known else '?'}{'' if i in game.visible else '*'}"
+        f"{LABELS[i]}:{face if i in game.known else '?'}{'' if i in game.visible else '*'}"
         for i, face in enumerate(game.dice)) + "   (* = hidden set)")
     if len(game.known) == NUM_DICE:
         print(f"  that's {evaluate(game.dice)}")
@@ -51,16 +55,12 @@ def show_result(game: Game, result) -> None:
 
 def read_split() -> set[int]:
     while True:
-        raw = input(f"Which dice (1-{NUM_DICE}) go in the VISIBLE set? "
-                    "e.g. '1 3', blank for none: ").split()
-        try:
-            picked = {int(w) - 1 for w in raw}
-        except ValueError:
-            print("  numbers only")
-            continue
-        if picked <= set(range(NUM_DICE)):
-            return picked
-        print(f"  dice are numbered 1-{NUM_DICE}")
+        raw = input(f"Which dice ({LABELS[0]}-{LABELS[-1]}) go in the VISIBLE set? "
+                    "e.g. 'a c', blank for none: ").lower()
+        letters = [c for c in raw if c not in " ,"]
+        if all(c in LABELS for c in letters):
+            return {LABELS.index(c) for c in letters}
+        print(f"  dice are lettered {LABELS[0]}-{LABELS[-1]}")
 
 
 def read_claim(game: Game) -> bool:
@@ -112,13 +112,30 @@ def take_turn(game: Game) -> None:
         show_dice(game)
 
 
+def bot_turn(game: Game, bot: Bot) -> None:
+    name = game.names[game.current]
+    print(f"\n=== {name}'s turn ===")
+    result = bot.play(game, lambda text: print(f"{name} {text}."))
+    if result is not None:
+        show_result(game, result)
+
+
 def main() -> None:
-    count = int(input("Players [2]: ") or 2)
-    names = [input(f"Name for player {i + 1}: ").strip() or f"P{i + 1}" for i in range(count)]
+    vs_bot = ask("Play against a bot? [Y/n]: ", {"y", "n", ""}) != "n"
+    if vs_bot:
+        names = [input("Your name [Alice]: ").strip() or "Alice", "Bob"]
+        bots = {1: Bot()}
+    else:
+        count = int(input("Players [2]: ") or 2)
+        names = [input(f"Name for player {i + 1}: ").strip() or f"P{i + 1}" for i in range(count)]
+        bots = {}
     lives = int(input("Lives [3]: ") or 3)
     advanced = ask("Advanced rules? [y/N]: ", {"y", "n", ""}) == "y"
     game = Game(names, Rules.advanced(lives) if advanced else Rules(lives))
 
     while game.winner is None:
-        take_turn(game)
+        if game.current in bots:
+            bot_turn(game, bots[game.current])
+        else:
+            take_turn(game)
     print(f"\n{game.names[game.winner]} wins!")
