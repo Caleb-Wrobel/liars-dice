@@ -3,6 +3,7 @@ import {
   BOT_LEVELS,
   BOT_LEVEL_NAMES,
   Bot,
+  randomBotLevel,
   type BotLevel,
   Game,
   advancedRules,
@@ -137,5 +138,34 @@ describe("Bot", () => {
     g = new Game(["A", "B"], advancedRules(), seededRng(1));
     g.makeClaim(parseRank("none 1")); // always true
     expect(new Bot({ rng: seededRng(1) }).play(g)).toBeNull(); // peered and raised instead
+  });
+});
+
+describe("randomBotLevel", () => {
+  it("only ever returns a real level", () => {
+    const rng = seededRng(3);
+    for (let i = 0; i < 200; i++) expect(BOT_LEVEL_NAMES).toContain(randomBotLevel(rng));
+  });
+
+  it("reaches every level, each about a third of the time", () => {
+    const rng = seededRng(11);
+    const counts = new Map<string, number>();
+    const draws = 3000;
+    for (let i = 0; i < draws; i++) {
+      const level = randomBotLevel(rng);
+      counts.set(level, (counts.get(level) ?? 0) + 1);
+    }
+    expect([...counts.keys()].sort()).toEqual([...BOT_LEVEL_NAMES].sort());
+    for (const count of counts.values()) expect(count / draws).toBeGreaterThan(0.28);
+  });
+
+  it("repeats for the same seed", () => {
+    const draw = (seed: number) => Array.from({ length: 12 }, ((rng) => () => randomBotLevel(rng))(seededRng(seed)));
+    expect(draw(5)).toEqual(draw(5));
+    expect(draw(5)).not.toEqual(draw(6));
+  });
+
+  it("works with the default random source", () => {
+    expect(BOT_LEVEL_NAMES).toContain(randomBotLevel());
   });
 });

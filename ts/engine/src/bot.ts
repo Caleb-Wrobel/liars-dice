@@ -51,6 +51,11 @@ export const BOT_LEVELS = {
 export type BotLevel = keyof typeof BOT_LEVELS;
 export const BOT_LEVEL_NAMES = Object.keys(BOT_LEVELS) as BotLevel[];
 
+/** A level picked at random, each equally likely. */
+export function randomBotLevel(rng: Rng = Math.random): BotLevel {
+  return BOT_LEVEL_NAMES[Math.floor(rng() * BOT_LEVEL_NAMES.length)]!;
+}
+
 export interface BotOptions {
   readonly rng?: Rng;
   /** Defaults to "normal". */
