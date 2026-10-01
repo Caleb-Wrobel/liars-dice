@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Node (for the upcoming TypeScript port)
+node_modules/
+dist/
+
+# Editor and OS
+.vscode/
+.DS_Store
