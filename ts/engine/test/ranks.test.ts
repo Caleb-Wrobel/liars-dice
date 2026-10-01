@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  CATEGORY_LABELS,
   Category,
   LADDER,
   NIL,
   TOP_RANK,
   compareRanks,
+  definingFaceCount,
   evaluate,
   formatRank,
+  hasKicker,
   isLegal,
+  nextRank,
   parseRank,
   rank,
   sameRank,
@@ -92,6 +96,22 @@ describe("parseRank", () => {
     "high card 1",
   ])("rejects %s", (bad) => {
     expect(() => parseRank(bad)).toThrow();
+  });
+});
+
+describe("helpers for building claims", () => {
+  it("finds the smallest rank above another", () => {
+    expect(nextRank(NIL)).toEqual(rank(NoPair, [], 1));
+    expect(nextRank(rank(Pair, [2]))).toEqual(rank(Pair, [2], 1));
+    expect(nextRank(rank(Pair, [2], 6))).toEqual(rank(Pair, [3]));
+    expect(nextRank(TOP_RANK)).toBeUndefined();
+  });
+
+  it("describes which categories take faces and kickers", () => {
+    expect([NoPair, Pair, TwoPair, FullHouse].map(definingFaceCount)).toEqual([0, 1, 2, 2]);
+    expect([NoPair, Pair, TwoPair, ThreeKind, FourKind].every(hasKicker)).toBe(true);
+    expect(hasKicker(FullHouse) || hasKicker(FiveKind)).toBe(false);
+    expect(CATEGORY_LABELS[TwoPair]).toBe("Two pair");
   });
 });
 

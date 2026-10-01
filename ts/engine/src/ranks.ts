@@ -163,6 +163,27 @@ const LEGAL: ReadonlySet<string> = new Set(LADDER.map(rankKey));
 
 export const isLegal = (r: Rank): boolean => LEGAL.has(rankKey(r));
 
+/** Display names for the categories, lowest to highest. */
+export const CATEGORY_LABELS: Record<Category, string> = {
+  [Category.NoPair]: "No pair",
+  [Category.Pair]: "Pair",
+  [Category.TwoPair]: "Two pair",
+  [Category.ThreeKind]: "Three of a kind",
+  [Category.FullHouse]: "Full house",
+  [Category.FourKind]: "Four of a kind",
+  [Category.FiveKind]: "Five of a kind",
+};
+
+/** How many defining faces a category takes: 0 for no pair, 2 for two pair and full house. */
+export const definingFaceCount = (category: Category): number => DEFINING[category];
+
+/** Whether a category can carry a kicker. */
+export const hasKicker = (category: Category): boolean => HAS_KICKER.has(category);
+
+/** The smallest legal rank above `r`, or undefined at the top of the ladder. */
+export const nextRank = (r: Rank): Rank | undefined =>
+  LADDER.find((candidate) => compareRanks(candidate, r) > 0);
+
 export class RankParseError extends Error {
   constructor(message: string) {
     super(message);
