@@ -14,3 +14,8 @@ dist/
 
 # Throwaway screenshots, preview pages and browser profiles (see the screenshot notes in memory)
 .scratch/
+
+# Temporary preview pages used to screenshot the UI. They must sit in the web package so Vite can
+# import from src, so they are ignored by name instead.
+/ts/web/preview*.html
+/ts/web/src/_preview*.tsx
