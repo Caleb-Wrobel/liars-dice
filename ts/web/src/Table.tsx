@@ -10,11 +10,12 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { NUM_DICE, Step, formatRank } from "@liars-dice/engine";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ClaimDice } from "./ClaimDice.tsx";
 import { ClaimPicker } from "./ClaimPicker.tsx";
 import { Die } from "./Die.tsx";
 import { PullDialog } from "./PullDialog.tsx";
+import { RulesDialog } from "./RulesDialog.tsx";
 import { HUMAN, PACES, useSession, type Config, type Pace, type Tray } from "./session.ts";
 
 const LABELS = "abcde";
@@ -86,6 +87,15 @@ export function Table({
   onRematch: (pace: Pace) => void;
 }) {
   const s = useSession(config);
+  const [showRules, setShowRules] = useState(false);
+  const openRules = () => {
+    s.setPaused(true); // the bots wait while you read
+    setShowRules(true);
+  };
+  const closeRules = () => {
+    setShowRules(false);
+    s.setPaused(false);
+  };
   const { game } = s;
   const available = game.available();
   const myTurn = game.current === HUMAN && game.winner === null && s.pulled === null;
@@ -148,6 +158,9 @@ export function Table({
               ))}
             </select>
           </label>
+          <button type="button" className="link" onClick={openRules}>
+            Rules
+          </button>
           <button type="button" className="link" onClick={onQuit}>
             New game
           </button>
@@ -272,6 +285,8 @@ export function Table({
           <li key={`${s.log.length}-${i}`}>{line}</li>
         ))}
       </ol>
+
+      {showRules && <RulesDialog onClose={closeRules} advanced={config.advanced} />}
 
       {s.pulled && (
         <PullDialog

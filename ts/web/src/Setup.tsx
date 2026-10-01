@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BOT_LEVEL_NAMES, type BotLevel } from "@liars-dice/engine";
+import { RulesDialog } from "./RulesDialog.tsx";
 import { BOT_NAMES, type Config, type Pace } from "./session.ts";
 import { THEMES, applyTheme, loadTheme, saveTheme, type ThemeId } from "./theme.ts";
 
@@ -17,11 +18,16 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [level, setLevel] = useState<BotLevel>("normal");
   const [pace, setPace] = useState<Pace>("normal");
   const [theme, setTheme] = useState<ThemeId>(() => loadTheme());
+  const [showRules, setShowRules] = useState(false);
 
   return (
     <main className="setup">
       <h1>Liar's Dice</h1>
       <p className="tagline">Pass the dice. Peer, roll, peek, claim. Bluff well.</p>
+      <button type="button" className="link how-to-play" onClick={() => setShowRules(true)}>
+        How to play
+      </button>
+      {showRules && <RulesDialog onClose={() => setShowRules(false)} />}
       <form
         onSubmit={(e) => {
           e.preventDefault();

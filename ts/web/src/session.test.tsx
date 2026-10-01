@@ -98,6 +98,23 @@ describe("useSession", () => {
     expect(low.current.game.names).toHaveLength(2);
   });
 
+  it("holds the bots still while paused, then lets them carry on", () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useSession(advanced));
+    act(() => result.current.claim(parseRank("none 1")));
+    act(() => result.current.setPaused(true));
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(false);
+
+    act(() => result.current.setPaused(false));
+    act(() => {
+      vi.advanceTimersByTime(PACE_MS.normal + 10);
+    });
+    expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(true);
+  });
+
   describe("pacing", () => {
     it("waits longer between bot moves when the pace is slow", () => {
       vi.useFakeTimers();

@@ -75,6 +75,20 @@ describe("Table", () => {
     expect(screen.getByRole("group", { name: /Claimed dice/ })).toBeInTheDocument();
   });
 
+  it("opens the rules from the table, marking the rules you are playing", async () => {
+    const { unmount } = render(<Table config={basic} onQuit={() => {}} onRematch={() => {}} />);
+    await userEvent.click(screen.getByRole("button", { name: "Rules" }));
+    expect(screen.getByRole("dialog", { name: "How to play" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Basic (your game)" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    unmount();
+
+    render(<Table config={{ ...basic, advanced: true }} onQuit={() => {}} onRematch={() => {}} />);
+    await userEvent.click(screen.getByRole("button", { name: "Rules" }));
+    expect(screen.getByRole("columnheader", { name: "Advanced (your game)" })).toBeInTheDocument();
+  });
+
   it("lets you change the bot pace from the table", async () => {
     render(<Table config={basic} onQuit={() => {}} onRematch={() => {}} />);
     const pace = screen.getByLabelText("Bot pace");
@@ -112,6 +126,18 @@ describe("Setup table style", () => {
     localStorage.setItem("liars-dice:theme", "casino");
     render(<Setup onStart={() => {}} />);
     expect(screen.getByLabelText(/Table style/)).toHaveValue("casino");
+  });
+});
+
+describe("Setup rules link", () => {
+  it("opens and closes the rules reference", async () => {
+    render(<Setup onStart={() => {}} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "How to play" }));
+    expect(screen.getByRole("dialog", { name: "How to play" })).toBeInTheDocument();
+    expect(screen.queryByText(/your game/)).toBeNull(); // no game yet, so neither mode is marked
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
 

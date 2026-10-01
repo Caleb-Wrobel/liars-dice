@@ -37,6 +37,7 @@ label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
 .setup { padding-top: 48px; }
 .setup h1 { font-size: 2.4rem; color: var(--accent); }
 .tagline { color: var(--muted); }
+.how-to-play { justify-self: start; padding-left: 0; }
 .setup form { display: grid; gap: var(--gap); margin-top: 8px; }
 fieldset { border: 2px solid var(--surface-edge); border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
 legend { color: var(--muted); padding: 0 6px; }
@@ -53,7 +54,8 @@ legend { color: var(--muted); padding: 0 6px; }
 .lives { display: inline-flex; gap: 4px; align-items: center; }
 .life { display: inline-block; } /* each theme draws its own: a coin, a heart, ... */
 
-.table-controls { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.table-controls { margin-left: auto; display: flex; align-items: center; justify-content: flex-end; gap: 4px 8px; flex-wrap: wrap; }
+.table-controls .link { padding-inline: 8px; }
 .pace { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
 .pace select { min-height: 36px; padding: 2px 8px; }
 

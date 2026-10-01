@@ -59,6 +59,8 @@ export function useSession(config: Config) {
   });
   const [tick, setTick] = useState(0);
   const [pace, setPace] = useState<Pace>(config.pace ?? "normal");
+  /** Bots wait while this is true, e.g. while the rules are open. */
+  const [paused, setPaused] = useState(false);
   const [log, setLog] = useState<readonly string[]>([]);
   const [pulled, setPulled] = useState<PullResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -97,10 +99,10 @@ export function useSession(config: Config) {
   };
 
   useEffect(() => {
-    if (botSeat === null || pace === "step") return;
+    if (botSeat === null || pace === "step" || paused) return;
     const timer = setTimeout(botStep, PACE_MS[pace]);
     return () => clearTimeout(timer);
-  }, [botSeat, tick, pace]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [botSeat, tick, pace, paused]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visibleSet: ReadonlySet<number> = draft ?? game.visible;
 
@@ -120,6 +122,7 @@ export function useSession(config: Config) {
     botTurn: botSeat !== null,
     pace,
     setPace,
+    setPaused,
     nextBotStep: botStep,
 
     pullCup: () =>
