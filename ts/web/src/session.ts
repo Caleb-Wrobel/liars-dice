@@ -1,0 +1,148 @@
+import {
+  Bot,
+  Game,
+  NUM_DICE,
+  RuleError,
+  advancedRules,
+  basicRules,
+  formatRank,
+  seededRng,
+  type DiceSet,
+  type PullResult,
+  type Rank,
+} from "@liars-dice/engine";
+import { useEffect, useState } from "react";
+
+export const HUMAN = 0;
+export const BOT_DELAY_MS = 900;
+/** Opponents are seated after the human, in this order. */
+export const BOT_NAMES = ["Bob", "Carol", "Dave", "Eve", "Frank"] as const;
+
+export interface Config {
+  readonly name: string;
+  readonly lives: number;
+  readonly advanced: boolean;
+  /** How many bots sit at the table, 1 to 5. Defaults to 1. */
+  readonly opponents?: number;
+  /** Makes dice and the bots deterministic. Used by tests. */
+  readonly seed?: number;
+}
+
+/** The two trays the dice move between. */
+export type Tray = "visible" | "hidden";
+
+/**
+ * One human against one or more bots. The engine is mutable, so each action ends by bumping a
+ * counter to re-render. The UI only reads the engine and calls these actions.
+ */
+export function useSession(config: Config) {
+  const [{ game, bots }] = useState(() => {
+    const rules = config.advanced ? advancedRules(config.lives) : basicRules(config.lives);
+    const seeded = config.seed !== undefined;
+    const count = Math.min(Math.max(config.opponents ?? 1, 1), BOT_NAMES.length);
+    const seats = BOT_NAMES.slice(0, count);
+    return {
+      game: new Game([config.name, ...seats], rules, seeded ? seededRng(config.seed!) : undefined),
+      // bots[i] sits in seat i + 1
+      bots: seats.map((_, i) => new Bot(seeded ? { rng: seededRng(config.seed! + 1 + i) } : {})),
+    };
+  });
+  const [tick, setTick] = useState(0);
+  const [log, setLog] = useState<readonly string[]>([]);
+  const [pulled, setPulled] = useState<PullResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  /** Dice dragged into the visible tray this turn, committed when the player moves on. */
+  const [draft, setDraft] = useState<ReadonlySet<number> | null>(null);
+
+  const say = (line: string) => setLog((lines) => [...lines.slice(-19), line]);
+  const refresh = () => setTick((n) => n + 1);
+
+  const act = (fn: () => void) => {
+    setError(null);
+    try {
+      fn();
+    } catch (e) {
+      if (!(e instanceof RuleError)) throw e;
+      setError(e.message);
+    }
+    refresh();
+  };
+
+  const commitDraft = () => {
+    if (draft !== null && game.available().includes("rearrange")) game.rearrange(draft);
+    setDraft(null);
+  };
+
+  /** The seat of the bot about to move, or null when it's the human's turn or the game is over. */
+  const botSeat = game.winner === null && game.current !== HUMAN && pulled === null ? game.current : null;
+  useEffect(() => {
+    if (botSeat === null) return;
+    const timer = setTimeout(() => {
+      const name = game.names[botSeat]!;
+      const result = bots[botSeat - 1]!.play(game, (text) => say(`${name} ${text}`));
+      if (result) setPulled(result);
+      refresh();
+    }, BOT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [botSeat, tick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const visibleSet: ReadonlySet<number> = draft ?? game.visible;
+
+  /** Whether this split leaves something the rules let the player roll. */
+  const arrangementAllowed = (visible: ReadonlySet<number>) =>
+    game.rules.rollOptional ||
+    game.rules.rollable.some((which) => (which === "hidden" ? NUM_DICE - visible.size : visible.size) > 0);
+
+  return {
+    game,
+    name: config.name,
+    log,
+    pulled,
+    error,
+    visibleSet,
+    botSeat,
+    botTurn: botSeat !== null,
+
+    pullCup: () =>
+      act(() => {
+        say(`${config.name} pulls the cup`);
+        setPulled(game.pull());
+        setDraft(null);
+      }),
+    peer: () =>
+      act(() => {
+        game.peer();
+        say(`${config.name} peers at the hidden dice`);
+      }),
+    roll: (which: DiceSet) =>
+      act(() => {
+        commitDraft();
+        game.roll(which);
+        say(`${config.name} rolls the ${which} set`);
+      }),
+    peek: () =>
+      act(() => {
+        commitDraft();
+        game.peek();
+      }),
+    claim: (rank: Rank) =>
+      act(() => {
+        commitDraft();
+        game.makeClaim(rank);
+        say(`${config.name} claims ${formatRank(rank)}`);
+      }),
+    moveDie: (index: number, to: Tray) => {
+      if (game.current !== HUMAN || !game.available().includes("rearrange")) return;
+      const next = new Set(draft ?? game.visible);
+      if (to === "visible") next.add(index);
+      else next.delete(index);
+      if (!arrangementAllowed(next)) {
+        setError("Basic rules: leave at least one hidden die to roll.");
+        return;
+      }
+      setError(null);
+      setDraft(next);
+    },
+    dismissPull: () => setPulled(null),
+  };
+}

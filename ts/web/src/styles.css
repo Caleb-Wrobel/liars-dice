@@ -1,0 +1,126 @@
+:root {
+  color-scheme: dark;
+  --bg: #0e1a14;
+  --felt: #17402c;
+  --felt-edge: #0d2a1c;
+  --panel: #12261c;
+  --ink: #f1f4ec;
+  --muted: #a7bbaf;
+  --accent: #e8c15a;
+  --ok: #7fd6a0;
+  --bad: #ef8a78;
+  --die: #f7f4ea;
+  --pip: #1b1b1b;
+  --radius: 14px;
+  --gap: 14px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); min-height: 100dvh; }
+h1, h2, p { margin: 0; }
+button, select, input { font: inherit; color: inherit; }
+
+main { max-width: 720px; margin: 0 auto; padding: 16px; display: grid; gap: var(--gap); }
+
+button {
+  min-height: 44px; padding: 8px 16px; border-radius: 10px; cursor: pointer;
+  border: 1px solid #3c6a53; background: var(--panel);
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.primary { background: var(--accent); color: #1b1606; border-color: var(--accent); font-weight: 600; }
+button.link { background: none; border: none; color: var(--muted); text-decoration: underline; min-height: 44px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+select, input[type="text"], input:not([type]) {
+  min-height: 44px; padding: 6px 10px; border-radius: 10px; border: 1px solid #3c6a53; background: var(--panel);
+}
+label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
+
+/* Setup */
+.setup { padding-top: 48px; }
+.setup h1 { font-size: 2.2rem; }
+.tagline { color: var(--muted); }
+.setup form { display: grid; gap: var(--gap); margin-top: 8px; }
+fieldset { border: 1px solid #2c5240; border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
+legend { color: var(--muted); padding: 0 6px; }
+.choice { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 10px; color: var(--ink); }
+.choice input { margin-top: 4px; width: 20px; height: 20px; accent-color: var(--accent); }
+
+/* Scoreboard and claim */
+.scoreboard { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.player { padding: 8px 14px; border-radius: 999px; background: var(--panel); border: 1px solid #2c5240; display: flex; gap: 10px; }
+.player.active { border-color: var(--accent); }
+.hearts { color: var(--bad); letter-spacing: 2px; }
+.scoreboard .link { margin-left: auto; }
+
+.claim-card { background: var(--panel); border: 1px solid #2c5240; border-radius: var(--radius); padding: 16px; display: grid; gap: 6px; }
+.label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.claim-text { font-size: 1.4rem; font-weight: 600; }
+.by, .hint { color: var(--muted); font-size: 0.9rem; }
+.thinking { color: var(--accent); }
+.decide-buttons, .roll-buttons, .claim-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+
+/* Trays and dice */
+.trays { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+.tray {
+  background: var(--felt); border: 2px solid var(--felt-edge); border-radius: var(--radius);
+  padding: 10px; min-height: 130px; display: grid; align-content: start; gap: 8px;
+}
+.tray h2 { font-size: 0.8rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.tray-hidden { background: repeating-linear-gradient(135deg, var(--felt) 0 12px, #1b4a34 12px 24px); }
+.tray.over { border-color: var(--accent); }
+.tray-dice { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.die-button {
+  padding: 0; min-height: 0; width: 56px; border: none; background: none; display: grid; gap: 2px; justify-items: center;
+  touch-action: none; /* lets a finger drag the die instead of scrolling the page */
+}
+.die-button:disabled { opacity: 1; cursor: default; }
+.die-button.movable { cursor: grab; }
+.die-button.dragging { cursor: grabbing; z-index: 10; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5)); }
+.die { width: 56px; height: 56px; display: block; }
+.die-body { fill: var(--die); stroke: #00000040; stroke-width: 2; }
+.die-pip { fill: var(--pip); }
+.die-unseen .die-body { fill: #2b3b33; stroke: #54786a; }
+.die-mark { fill: var(--muted); font-size: 52px; font-weight: 700; }
+.die-letter { font-size: 0.8rem; color: var(--ink); opacity: 0.7; line-height: 1; }
+
+/* Step rail */
+.step-rail { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; font-size: 0.8rem; }
+.step-rail li { flex: 1; text-align: center; padding: 6px 4px; border-radius: 8px; background: var(--panel); color: #5f7a6b; }
+.step-rail li.done { color: var(--muted); text-decoration: line-through; }
+.step-rail li.open { color: var(--ink); border: 1px dashed #3c6a53; }
+.step-rail li.current { color: #1b1606; background: var(--accent); font-weight: 600; }
+
+/* Actions and claim picker */
+.actions { display: grid; gap: var(--gap); }
+.claim-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; align-items: end; }
+.claim-picker label { min-width: 0; } /* let a select shrink to its column instead of spilling into the next one */
+.claim-picker select { width: 100%; }
+.claim-picker legend { grid-column: 1 / -1; }
+.claim-picker .claim-buttons, .claim-picker .hint { grid-column: 1 / -1; }
+
+.error { color: var(--bad); }
+.log { list-style: none; margin: 0; padding: 0; color: var(--muted); font-size: 0.9rem; display: grid; gap: 2px; }
+
+/* Pull dialog */
+.backdrop { position: fixed; inset: 0; background: #000a; display: grid; place-items: center; padding: 16px; }
+.dialog { background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius); padding: 20px; max-width: 420px; width: 100%; display: grid; gap: 12px; }
+.dice-row { display: flex; gap: 8px; justify-content: center; }
+.dice-row .die { width: 52px; height: 52px; }
+.ok { color: var(--ok); }
+.bad { color: var(--bad); }
+
+@media (max-width: 480px) {
+  /* Stack the trays so all five dice fit on one row. */
+  .trays { grid-template-columns: 1fr; gap: 8px; }
+  .tray { min-height: 96px; } /* keep an empty tray big enough to drop a die on */
+  .die-button { width: 48px; }
+  .die { width: 48px; height: 48px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .die-button { transition: transform 120ms ease; }
+  .die-button.dragging { transition: none; }
+}
