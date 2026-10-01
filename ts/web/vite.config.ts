@@ -3,5 +3,10 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
-  test: { environment: "jsdom", setupFiles: ["./src/test-setup.ts"] },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test-setup.ts"],
+    // Without this Vitest stubs every .css import to an empty string, which would blind the theme tests.
+    css: true,
+  },
 });
