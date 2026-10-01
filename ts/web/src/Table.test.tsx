@@ -16,6 +16,19 @@ describe("Table", () => {
     expect(screen.queryByText("Make your claim")).toBeNull();
   });
 
+  it("doesn't offer Peek before the mandatory roll, so basic play can't get stuck", async () => {
+    render(<Table config={basic} onQuit={() => {}} />);
+    expect(screen.getByRole("button", { name: "Roll hidden dice" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Peek at hidden dice" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Roll hidden dice" }));
+    expect(screen.getByRole("button", { name: "Peek at hidden dice" })).toBeInTheDocument();
+  });
+
+  it("offers Peek straight away in advanced play", () => {
+    render(<Table config={{ ...basic, advanced: true }} onQuit={() => {}} />);
+    expect(screen.getByRole("button", { name: "Peek at hidden dice" })).toBeInTheDocument();
+  });
+
   it("doesn't let you move dice before the rearrange step", () => {
     render(<Table config={basic} onQuit={() => {}} />);
     for (const die of screen.getAllByRole("button", { name: /^die [a-e]/ })) {
