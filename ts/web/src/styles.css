@@ -18,6 +18,15 @@ h1, h2, h3, legend, .claim-text { font-family: var(--font-display); font-weight:
 button, select, input { font: inherit; color: var(--control-ink); }
 
 main { max-width: 720px; margin: 0 auto; padding: 16px; display: grid; gap: var(--gap); }
+/*
+ * On a phone, Safari's toolbar covers the bottom strip of the page, the gap between the small and the
+ * large viewport heights, while it is showing. A page shorter than a full screen cannot scroll to clear
+ * it, so its last control ends up underneath. Padding the page by that gap keeps the last control clear.
+ * The gap is 0 wherever the browser's chrome does not move, so desktops are unaffected.
+ */
+@supports (height: 100svh) {
+  main { padding-bottom: calc(16px + (100lvh - 100svh)); }
+}
 
 button {
   min-height: 44px; padding: 8px 16px; border-radius: var(--radius); cursor: pointer;
@@ -36,7 +45,8 @@ select, input[type="text"], input:not([type]) {
 label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
 
 /* Setup */
-.setup { padding-top: 48px; }
+.setup { padding-top: 16px; }
+@media (min-width: 640px) { .setup { padding-top: 48px; } } /* room to breathe on a big screen, not on a phone */
 .setup h1 { font-size: 2.4rem; color: var(--accent); }
 .tagline { color: var(--muted); }
 .setup-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
