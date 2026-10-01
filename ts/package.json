@@ -1,11 +1,15 @@
 {
   "name": "liars-dice-ts",
   "private": true,
-  "workspaces": ["engine", "web"],
+  "workspaces": [
+    "engine",
+    "web"
+  ],
   "scripts": {
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev": "npm run dev -w @liars-dice/web",
+    "dev:lan": "npm run dev:lan -w @liars-dice/web",
     "build": "npm run build -w @liars-dice/web"
   }
 }
