@@ -60,7 +60,7 @@ function contrast(a: string, b: string, vision: Matrix | null): number {
 const TEXT: readonly (readonly [string, string, number])[] = [
   ["text", "page", 4.5],
   ["text", "surface", 4.5],
-  ["text", "control-bg", 4.5],
+  ["control-ink", "control-bg", 4.5],
   ["muted", "page", 4.5],
   ["muted", "surface", 4.5],
   ["accent", "page", 4.5],

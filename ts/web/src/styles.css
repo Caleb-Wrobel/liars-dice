@@ -13,7 +13,9 @@ body {
 }
 h1, h2, p { margin: 0; }
 h1, h2, h3, legend, .claim-text { font-family: var(--font-display); font-weight: var(--display-weight, 400); }
-button, select, input { font: inherit; color: inherit; }
+/* Controls set their own text colour: inheriting it breaks wherever a container has a different ink,
+   such as the parchment claim card, whose dark ink would land on a dark button. */
+button, select, input { font: inherit; color: var(--control-ink); }
 
 main { max-width: 720px; margin: 0 auto; padding: 16px; display: grid; gap: var(--gap); }
 
