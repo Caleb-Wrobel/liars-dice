@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { Setup } from "./Setup.tsx";
 import { Table } from "./Table.tsx";
 import type { Config } from "./session.ts";
@@ -91,6 +91,27 @@ describe("Table", () => {
     expect(screen.queryAllByLabelText(/unseen/)).toHaveLength(0);
     await userEvent.click(screen.getByRole("button", { name: /^Smallest raise/ }));
     expect(await screen.findByText("Bob is thinking…")).toBeInTheDocument();
+  });
+});
+
+describe("Setup table style", () => {
+  afterEach(() => {
+    localStorage.clear();
+    delete document.documentElement.dataset.theme;
+  });
+
+  it("switches the skin right away and remembers it", async () => {
+    render(<Setup onStart={() => {}} />);
+    expect(screen.getByLabelText(/Table style/)).toHaveValue("saloon");
+    await userEvent.selectOptions(screen.getByLabelText(/Table style/), "casino");
+    expect(document.documentElement.dataset.theme).toBe("casino");
+    expect(localStorage.getItem("liars-dice:theme")).toBe("casino");
+  });
+
+  it("starts on the skin you picked last time", () => {
+    localStorage.setItem("liars-dice:theme", "casino");
+    render(<Setup onStart={() => {}} />);
+    expect(screen.getByLabelText(/Table style/)).toHaveValue("casino");
   });
 });
 

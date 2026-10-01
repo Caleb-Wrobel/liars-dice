@@ -1,0 +1,64 @@
+/*
+ * Casino: green felt and gold. The original look of the game, kept as a second skin.
+ * Keep every colour a solid hex: src/themes/contrast.test.ts reads these values.
+ */
+:root[data-theme="casino"] {
+  color-scheme: dark;
+
+  --page: #0e1a14;
+  --surface: #12261c;
+  --surface-edge: #2c5240;
+  --text: #f1f4ec;
+  --muted: #a7bbaf;
+  --accent: #e8c15a;
+  --accent-ink: #1b1606;
+  --danger: #ef8a78;
+  --ok: #7fd6a0;
+
+  --control-bg: #12261c;
+  --control-edge: #3c6a53;
+
+  --tray-a: #102f21;
+  --tray-b: #102f21;
+  --tray-edge: #0a2016;
+  --tray-title: #a7bbaf;
+
+  --claim-bg: #12261c;
+  --claim-ink: #f1f4ec;
+  --claim-muted: #a7bbaf;
+  --claim-edge: #2c5240;
+  --claim-dice-bg: #12261c;
+  --kicker: #e8c15a;
+
+  --die-body: #c8202a;    /* casino red, with white pips */
+  --die-pip: #ffffff;
+  --die-edge: #f3ecd9;    /* a pale rim: against red felt-green, hue alone is not enough */
+  --die-edge-width: 3;
+  --die-radius: 3px;      /* precision-cut, sharp corners */
+  --unseen-body: #2b3b33;
+  --unseen-edge: #9bc2ad;
+  --unseen-mark: #a7bbaf;
+
+  --log-bg: #12261c;
+  --log-ink: #a7bbaf;
+
+  --font-display: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --display-weight: 600;
+  --radius: 14px;
+}
+
+/* Lives are hearts. */
+:root[data-theme="casino"] .life::before { content: "♥"; color: var(--danger); letter-spacing: 2px; }
+
+/* The table top is a woven felt, so it differs from the smooth dice by texture and not only by colour. */
+:root[data-theme="casino"] .tray-visible {
+  background:
+    radial-gradient(circle at 1.5px 1.5px, #ffffff24 1.1px, transparent 1.5px) 0 0 / 7px 7px,
+    var(--tray-a);
+}
+
+/* The cup is a striped felt. */
+:root[data-theme="casino"] .tray-hidden {
+  background: repeating-linear-gradient(135deg, var(--tray-b) 0 12px, #143a29 12px 24px);
+}

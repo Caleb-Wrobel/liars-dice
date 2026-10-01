@@ -1,106 +1,119 @@
-:root {
-  color-scheme: dark;
-  --bg: #0e1a14;
-  --felt: #17402c;
-  --felt-edge: #0d2a1c;
-  --panel: #12261c;
-  --ink: #f1f4ec;
-  --muted: #a7bbaf;
-  --accent: #e8c15a;
-  --ok: #7fd6a0;
-  --bad: #ef8a78;
-  --die: #f7f4ea;
-  --pip: #1b1b1b;
-  --radius: 14px;
-  --gap: 14px;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
+/*
+ * Structure and layout only. Every colour, font and decoration comes from the active theme
+ * (src/themes/*.css), which sets the custom properties used below and may add rules scoped by
+ * :root[data-theme="..."]. To add a skin, copy a theme file, change the values, and register it
+ * in src/theme.ts.
+ */
+:root { --gap: 14px; }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); min-height: 100dvh; }
+body {
+  margin: 0; min-height: 100dvh; line-height: 1.4;
+  background: var(--page); color: var(--text); font-family: var(--font-body);
+}
 h1, h2, p { margin: 0; }
+h1, h2, legend, .claim-text { font-family: var(--font-display); font-weight: var(--display-weight, 400); }
 button, select, input { font: inherit; color: inherit; }
 
 main { max-width: 720px; margin: 0 auto; padding: 16px; display: grid; gap: var(--gap); }
 
 button {
-  min-height: 44px; padding: 8px 16px; border-radius: 10px; cursor: pointer;
-  border: 1px solid #3c6a53; background: var(--panel);
+  min-height: 44px; padding: 8px 16px; border-radius: var(--radius); cursor: pointer;
+  border: 2px solid var(--control-edge); background: var(--control-bg);
 }
 button:hover:not(:disabled) { border-color: var(--accent); }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
-button.primary { background: var(--accent); color: #1b1606; border-color: var(--accent); font-weight: 600; }
-button.link { background: none; border: none; color: var(--muted); text-decoration: underline; min-height: 44px; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+button.link { background: none; border: none; color: var(--muted); text-decoration: underline; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 select, input[type="text"], input:not([type]) {
-  min-height: 44px; padding: 6px 10px; border-radius: 10px; border: 1px solid #3c6a53; background: var(--panel);
+  min-height: 44px; padding: 6px 10px; border-radius: var(--radius);
+  border: 2px solid var(--control-edge); background: var(--control-bg);
 }
 label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
 
 /* Setup */
 .setup { padding-top: 48px; }
-.setup h1 { font-size: 2.2rem; }
+.setup h1 { font-size: 2.4rem; color: var(--accent); }
 .tagline { color: var(--muted); }
 .setup form { display: grid; gap: var(--gap); margin-top: 8px; }
-fieldset { border: 1px solid #2c5240; border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
+fieldset { border: 2px solid var(--surface-edge); border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
 legend { color: var(--muted); padding: 0 6px; }
-.choice { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 10px; color: var(--ink); }
+.choice { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 10px; color: var(--text); }
 .choice input { margin-top: 4px; width: 20px; height: 20px; accent-color: var(--accent); }
 
-/* Scoreboard and claim */
+/* Scoreboard and lives */
 .scoreboard { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.player { padding: 8px 14px; border-radius: 999px; background: var(--panel); border: 1px solid #2c5240; display: flex; gap: 10px; }
+.player {
+  padding: 8px 14px; border-radius: 999px; display: flex; gap: 10px; align-items: center;
+  background: var(--surface); border: 2px solid var(--surface-edge);
+}
 .player.active { border-color: var(--accent); }
-.hearts { color: var(--bad); letter-spacing: 2px; }
+.lives { display: inline-flex; gap: 4px; align-items: center; }
+.life { display: inline-block; } /* each theme draws its own: a coin, a heart, ... */
+
 .table-controls { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .pace { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
 .pace select { min-height: 36px; padding: 2px 8px; }
 
-.claim-card { background: var(--panel); border: 1px solid #2c5240; border-radius: var(--radius); padding: 16px; display: grid; gap: 6px; }
+/* The standing claim */
+.claim-card {
+  display: grid; gap: 6px; padding: 16px; border-radius: var(--radius);
+  background: var(--claim-bg); color: var(--claim-ink); border: 2px solid var(--claim-edge);
+}
+.claim-card .label, .claim-card .by, .claim-card .hint { color: var(--claim-muted); }
 .label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
-.claim-text { font-size: 1.4rem; font-weight: 600; }
+.claim-text { font-size: 1.3rem; }
 .by, .hint { color: var(--muted); font-size: 0.9rem; }
 .thinking { color: var(--accent); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.claim-card .thinking { color: var(--claim-ink); font-style: italic; }
 .decide-buttons, .roll-buttons, .claim-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
 
-.claim-dice { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0; }
+.claim-dice {
+  display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0; padding: 6px; width: fit-content;
+  border-radius: var(--radius); background: var(--claim-dice-bg);
+}
 .claim-dice .die { width: 38px; height: 38px; }
-.die-kicker .die-body { stroke: var(--accent); stroke-dasharray: 7 5; stroke-width: 4; }
+.die-kicker .die-body { stroke: var(--kicker); stroke-dasharray: 7 5; stroke-width: 4; }
 
 /* Trays and dice */
 .trays { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
 .tray {
-  background: var(--felt); border: 2px solid var(--felt-edge); border-radius: var(--radius);
-  padding: 10px; min-height: 130px; display: grid; align-content: start; gap: 8px;
+  border: 3px solid var(--tray-edge); border-radius: var(--radius); padding: 10px;
+  min-height: 130px; display: grid; align-content: start; gap: 8px;
 }
-.tray h2 { font-size: 0.8rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.tray-hidden { background: repeating-linear-gradient(135deg, var(--felt) 0 12px, #1b4a34 12px 24px); }
+.tray-visible { background: var(--tray-a); }
+.tray-hidden { background: var(--tray-b); }
+.tray h2 { font-size: 0.8rem; color: var(--tray-title); text-transform: uppercase; letter-spacing: 0.08em; }
 .tray.over { border-color: var(--accent); }
 .tray-dice { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .die-button {
-  padding: 0; min-height: 0; width: 56px; border: none; background: none; display: grid; gap: 2px; justify-items: center;
+  padding: 0; min-height: 0; width: 52px; border: none; background: none; display: grid; gap: 2px; justify-items: center;
   touch-action: none; /* lets a finger drag the die instead of scrolling the page */
 }
 .die-button:disabled { opacity: 1; cursor: default; }
 .die-button.movable { cursor: grab; }
 .die-button.dragging { cursor: grabbing; z-index: 10; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5)); }
-.die { width: 56px; height: 56px; display: block; }
-.die-body { fill: var(--die); stroke: #00000040; stroke-width: 2; }
-.die-pip { fill: var(--pip); }
-.die-unseen .die-body { fill: #2b3b33; stroke: #54786a; }
-.die-mark { fill: var(--muted); font-size: 52px; font-weight: 700; }
-.die-letter { font-size: 0.8rem; color: var(--ink); opacity: 0.7; line-height: 1; }
+.die { width: 52px; height: 52px; display: block; }
+.die-body { fill: var(--die-body); stroke: var(--die-edge); stroke-width: var(--die-edge-width); rx: var(--die-radius); }
+.die-pip { fill: var(--die-pip); }
+.die-unseen .die-body { fill: var(--unseen-body); stroke: var(--unseen-edge); }
+.die-mark { fill: var(--unseen-mark); font-size: 52px; font-weight: 700; }
+.die-letter { font-size: 0.8rem; color: var(--tray-title); line-height: 1; }
 
 /* Step rail */
 .step-rail { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; font-size: 0.8rem; }
-.step-rail li { flex: 1; text-align: center; padding: 6px 4px; border-radius: 8px; background: var(--panel); color: #5f7a6b; }
-.step-rail li.done { color: var(--muted); text-decoration: line-through; }
-.step-rail li.open { color: var(--ink); border: 1px dashed #3c6a53; }
-.step-rail li.current { color: #1b1606; background: var(--accent); font-weight: 600; }
+.step-rail li {
+  flex: 1; text-align: center; padding: 6px 4px; border-radius: var(--radius);
+  background: var(--surface); color: var(--muted); border: 1px solid transparent;
+}
+.step-rail li.done { text-decoration: line-through; opacity: 0.7; }
+.step-rail li.open { color: var(--text); border: 1px dashed var(--control-edge); }
+.step-rail li.current { color: var(--accent-ink); background: var(--accent); font-weight: 700; }
 
-/* Actions and claim picker */
+/* Actions and the claim picker */
 .actions { display: grid; gap: var(--gap); }
 .claim-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; align-items: end; }
 .claim-picker label { min-width: 0; } /* let a select shrink to its column instead of spilling into the next one */
@@ -108,17 +121,24 @@ legend { color: var(--muted); padding: 0 6px; }
 .claim-picker legend { grid-column: 1 / -1; }
 .claim-picker .claim-buttons, .claim-picker .hint { grid-column: 1 / -1; }
 
-.error { color: var(--bad); }
-.log { list-style: none; margin: 0; padding: 0; color: var(--muted); font-size: 0.9rem; display: grid; gap: 2px; }
+.error { color: var(--danger); }
+.log {
+  list-style: none; margin: 0; padding: 10px 12px; font-size: 0.9rem; display: grid; gap: 2px;
+  color: var(--log-ink); background: var(--log-bg); border-radius: var(--radius);
+}
+.log:empty { display: none; }
 
 /* Pull dialog */
-.backdrop { position: fixed; inset: 0; background: #000a; display: grid; place-items: center; padding: 16px; }
-.dialog { background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius); padding: 20px; max-width: 420px; width: 100%; display: grid; gap: 12px; }
+.backdrop { position: fixed; inset: 0; background: #000b; display: grid; place-items: center; padding: 16px; }
+.dialog {
+  background: var(--surface); color: var(--text); border: 3px solid var(--accent); border-radius: var(--radius);
+  padding: 20px; max-width: 420px; width: 100%; display: grid; gap: 12px;
+}
 .dialog-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
 .dice-row { display: flex; gap: 8px; justify-content: center; }
 .dice-row .die { width: 52px; height: 52px; }
 .ok { color: var(--ok); }
-.bad { color: var(--bad); }
+.bad { color: var(--danger); }
 
 @media (max-width: 480px) {
   /* Stack the trays so all five dice fit on one row. */

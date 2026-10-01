@@ -1,0 +1,108 @@
+/*
+ * Saloon: warm walnut, brass and leather, with a parchment slip for the standing claim.
+ * This is the default skin, so its tokens also sit on :root as the fallback for any
+ * unknown theme. Keep every colour a solid hex: src/themes/contrast.test.ts reads these
+ * values and checks the readable pairs.
+ */
+:root,
+:root[data-theme="saloon"] {
+  color-scheme: dark;
+
+  --page: #1d130d;
+  --surface: #2c1c12;
+  --surface-edge: #6b4a2b;
+  --text: #f3e6c8;
+  --muted: #c7b08a;
+  --accent: #d9a441;      /* brass */
+  --accent-ink: #2a1606;
+  --danger: #e8806a;
+  --ok: #8fcf8a;
+
+  --control-bg: #38241a;
+  --control-edge: #7a5530;
+
+  --tray-a: #5a3a22;      /* the table top */
+  --tray-b: #3a2418;      /* under the leather cup */
+  --tray-edge: #8a6238;
+  --tray-title: #d8c39b;
+
+  --claim-bg: #e9d8a8;    /* parchment */
+  --claim-ink: #2a1a0c;
+  --claim-muted: #5b4528;
+  --claim-edge: #a07a3c;
+  --claim-dice-bg: #3a2516;
+  --kicker: #d9a441;
+
+  --die-body: #efe3c2;    /* bone */
+  --die-pip: #2a1a10;
+  --die-edge: #b9a77a;
+  --die-edge-width: 2;
+  --die-radius: 16px;      /* softly worn corners */
+  --unseen-body: #2a1a12;
+  --unseen-edge: #c9944a;
+  --unseen-mark: #d9a441;
+
+  --log-bg: #26302c;      /* a slate board */
+  --log-ink: #dfe6dc;
+
+  --font-display: "Rye", Rockwell, Georgia, serif;
+  --font-body: "Alegreya", Georgia, "Times New Roman", serif;
+  --radius: 10px;
+}
+
+:root[data-theme="saloon"] body {
+  font-size: 1.05rem;
+  background:
+    radial-gradient(ellipse 90% 45% at 50% 0%, #4a2f1a77, transparent 70%),
+    repeating-linear-gradient(90deg, transparent 0 158px, #00000045 158px 160px),
+    var(--page);
+}
+
+/* Lives are brass coins. */
+:root[data-theme="saloon"] .life {
+  width: 0.9em; height: 0.9em; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f3d98a, #c1912f 60%, #7a5420);
+  border: 1px solid #5a3b14; box-shadow: inset 0 0 0 2px #fff3c933;
+}
+
+/* The standing claim is a slip of parchment pinned to the table. */
+:root[data-theme="saloon"] .claim-card {
+  background:
+    radial-gradient(ellipse at 20% 0%, #f4e7bd, transparent 60%),
+    var(--claim-bg);
+  box-shadow: 0 4px 0 #00000066, inset 0 0 0 4px #e9d8a8, inset 0 0 0 5px var(--claim-edge);
+}
+:root[data-theme="saloon"] .claim-text { font-size: 1.15rem; letter-spacing: 0.02em; }
+
+/* A plank table top, and a stitched leather cup. */
+:root[data-theme="saloon"] .tray-visible {
+  background: repeating-linear-gradient(0deg, transparent 0 44px, #00000055 44px 46px), var(--tray-a);
+  box-shadow: inset 0 3px 14px #000a;
+}
+:root[data-theme="saloon"] .tray-hidden {
+  background: radial-gradient(circle at 50% 15%, #5b3a24, var(--tray-b) 78%);
+  outline: 2px dashed #b98a4e; outline-offset: -10px;
+  box-shadow: inset 0 3px 14px #000a;
+}
+
+:root[data-theme="saloon"] button:not(.die-button) {
+  background: linear-gradient(#47301f, var(--control-bg));
+  box-shadow: inset 0 1px 0 #ffffff1f, 0 2px 0 #0007;
+}
+:root[data-theme="saloon"] button.primary:not(.die-button) {
+  background: linear-gradient(#ebbc5a, #c58c30);
+  box-shadow: inset 0 1px 0 #fff6, 0 2px 0 #0008;
+}
+:root[data-theme="saloon"] button.link { background: none; box-shadow: none; }
+
+/* Step plaques. */
+:root[data-theme="saloon"] .step-rail li { border: 1px solid var(--surface-edge); }
+:root[data-theme="saloon"] .step-rail li.current { border-color: #f0c968; }
+
+/* The table talk is chalk on slate, in a wooden frame. */
+:root[data-theme="saloon"] .log { border: 3px solid #6b4a2b; box-shadow: inset 0 0 12px #0008; }
+
+:root[data-theme="saloon"] .dialog {
+  border-color: var(--accent);
+  background: radial-gradient(ellipse at 50% 0%, #3b2616, var(--surface) 70%);
+}

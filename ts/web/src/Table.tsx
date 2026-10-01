@@ -130,8 +130,10 @@ export function Table({
         {game.names.map((name, i) => (
           <div key={name} className={`player${game.current === i && game.winner === null ? " active" : ""}`}>
             <span className="player-name">{name}</span>
-            <span className="hearts" aria-label={`${game.lives[i]} lives`}>
-              {game.lives[i]! > 0 ? "♥".repeat(game.lives[i]!) : "out"}
+            <span className="lives" role="img" aria-label={`${game.lives[i]} lives`}>
+              {game.lives[i]! > 0
+                ? Array.from({ length: game.lives[i]! }, (_, k) => <span key={k} className="life" aria-hidden="true" />)
+                : "out"}
             </span>
           </div>
         ))}
