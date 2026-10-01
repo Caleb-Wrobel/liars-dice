@@ -40,46 +40,56 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           Your name
           <input value={name} onChange={(e) => setName(e.target.value)} maxLength={16} />
         </label>
-        <label>
-          Lives
-          <select value={lives} onChange={(e) => setLives(Number(e.target.value))}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Opponents
-          <select value={opponents} onChange={(e) => setOpponents(Number(e.target.value))}>
-            {BOT_NAMES.map((_, i) => (
-              <option key={i} value={i + 1}>
-                {i + 1}: {BOT_NAMES.slice(0, i + 1).join(", ")}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Bot level
-          <select value={level} onChange={(e) => setLevel(e.target.value as BotLevel)}>
-            {BOT_LEVEL_NAMES.map((name) => (
-              <option key={name} value={name}>
-                {name[0]!.toUpperCase() + name.slice(1)}
-              </option>
-            ))}
-          </select>
-          <span className="hint">{LEVEL_BLURBS[level]}</span>
-        </label>
-        <label>
-          Bot pace
-          <select value={pace} onChange={(e) => setPace(e.target.value as Pace)}>
-            <option value="fast">Fast</option>
-            <option value="normal">Normal</option>
-            <option value="slow">Slow, so you can watch</option>
-            <option value="step">Step by step, you press Next move</option>
-          </select>
-        </label>
+        <div className="field-row">
+          <label>
+            Lives
+            <select value={lives} onChange={(e) => setLives(Number(e.target.value))}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Opponents
+            <select value={opponents} onChange={(e) => setOpponents(Number(e.target.value))}>
+              {BOT_NAMES.map((_, i) => (
+                <option key={i} value={i + 1}>
+                  {i + 1}: {BOT_NAMES.slice(0, i + 1).join(", ")}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="field-row">
+          <label>
+            Bot level
+            <select
+              value={level}
+              aria-describedby="level-hint"
+              onChange={(e) => setLevel(e.target.value as BotLevel)}
+            >
+              {BOT_LEVEL_NAMES.map((name) => (
+                <option key={name} value={name}>
+                  {name[0]!.toUpperCase() + name.slice(1)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Bot pace
+            <select value={pace} onChange={(e) => setPace(e.target.value as Pace)}>
+              <option value="fast">Fast</option>
+              <option value="normal">Normal</option>
+              <option value="slow">Slow, so you can watch</option>
+              <option value="step">Step by step, you press Next move</option>
+            </select>
+          </label>
+          <p id="level-hint" className="hint">
+            {LEVEL_BLURBS[level]}
+          </p>
+        </div>
         <fieldset>
           <legend>Rules</legend>
           <label className="choice">

@@ -129,6 +129,26 @@ describe("Setup table style", () => {
   });
 });
 
+describe("Setup layout", () => {
+  it("pairs the short fields so the form stays compact on a phone", () => {
+    render(<Setup onStart={() => {}} />);
+    const rowOf = (label: RegExp) => screen.getByLabelText(label).closest(".field-row");
+    expect(rowOf(/^Lives$/)).not.toBeNull();
+    expect(rowOf(/^Lives$/)).toBe(rowOf(/^Opponents$/));
+    expect(rowOf(/^Bot level$/)).not.toBeNull();
+    expect(rowOf(/^Bot level$/)).toBe(rowOf(/^Bot pace$/));
+    expect(rowOf(/^Lives$/)).not.toBe(rowOf(/^Bot level$/));
+  });
+
+  it("keeps the bot level description attached to its field", async () => {
+    render(<Setup onStart={() => {}} />);
+    const level = screen.getByLabelText("Bot level");
+    expect(level).toHaveAccessibleDescription(/balanced opponent/);
+    await userEvent.selectOptions(level, "stabby");
+    expect(level).toHaveAccessibleDescription(/Patient/);
+  });
+});
+
 describe("Setup rules link", () => {
   it("opens and closes the rules reference", async () => {
     render(<Setup onStart={() => {}} />);
