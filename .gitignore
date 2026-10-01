@@ -11,3 +11,6 @@ dist/
 # Editor and OS
 .vscode/
 .DS_Store
+
+# Throwaway screenshots, preview pages and browser profiles (see the screenshot notes in memory)
+.scratch/
