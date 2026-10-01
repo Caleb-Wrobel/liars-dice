@@ -59,10 +59,18 @@ export interface BotOptions {
   readonly pullBelow?: number;
 }
 
+/** What one step of a bot's turn did. */
+export type BotStep =
+  | { readonly kind: "acted" } // made a move; the turn continues
+  | { readonly kind: "claimed" } // made its claim, ending the turn
+  | { readonly kind: "pulled"; readonly result: PullResult }; // pulled the cup, ending the round
+
 export class Bot {
   readonly rng: Rng;
   readonly level: BotLevel;
   readonly style: BotStyle;
+  /** Where the bot is in its current turn. */
+  private phase: "start" | "arrange" | "roll" | "peek" | "claim" = "start";
 
   constructor({ rng = Math.random, level = "normal", pullBelow }: BotOptions = {}) {
     this.rng = rng;
@@ -87,38 +95,75 @@ export class Bot {
    * `say` receives public narration only, never the bot's dice.
    */
   play(game: Game, say: (text: string) => void = () => {}): PullResult | null {
-    if (game.step === Step.Decide) {
-      const noise = (this.rng() * 2 - 1) * this.style.noise;
-      const doubt = this.chanceTrue(game) < this.style.pullBelow + noise;
-      if (!game.available().includes("peer") || doubt) {
-        say("pulls the cup");
-        return game.pull();
+    for (;;) {
+      const outcome = this.step(game, say);
+      if (outcome.kind === "pulled") return outcome.result;
+      if (outcome.kind === "claimed") return null;
+    }
+  }
+
+  /**
+   * Take the bot's next visible move: pull, peer, rearrange, roll (or keep the dice), or claim.
+   * Moves nobody could see, like skipping the rearrange or the bot's own peek, are folded into the
+   * next visible one, so a caller can pause between steps to let a person follow along.
+   * `say` receives public narration only, never the bot's dice.
+   */
+  step(game: Game, say: (text: string) => void = () => {}): BotStep {
+    for (;;) {
+      switch (this.phase) {
+        case "start": {
+          if (game.step !== Step.Decide) {
+            this.phase = "roll"; // the opener has nothing to pull and nothing to rearrange
+            break;
+          }
+          const noise = (this.rng() * 2 - 1) * this.style.noise;
+          const doubt = this.chanceTrue(game) < this.style.pullBelow + noise;
+          if (!game.available().includes("peer") || doubt) {
+            say("pulls the cup");
+            return { kind: "pulled", result: game.pull() };
+          }
+          game.peer();
+          say("peers at the hidden dice");
+          this.phase = "arrange";
+          return { kind: "acted" };
+        }
+        case "arrange": {
+          this.phase = "roll";
+          if (game.available().includes("rearrange") && this.rng() < 0.5) {
+            game.rearrange(this.sample(ALL_DICE, this.rng() < 0.5 ? 1 : 2));
+            say(`rearranges the sets, showing ${game.visibleFaces.join(" ")}`);
+            return { kind: "acted" };
+          }
+          break;
+        }
+        case "roll": {
+          this.phase = "peek";
+          const keepHand =
+            game.rules.rollOptional &&
+            game.known.size === NUM_DICE &&
+            compareRanks(evaluate(game.dice), game.claim) > 0;
+          if (game.available().includes("roll") && !keepHand) {
+            game.roll("hidden");
+            say("rolls the hidden set");
+          } else {
+            say("keeps the dice as they are");
+          }
+          return { kind: "acted" };
+        }
+        case "peek": {
+          this.phase = "claim";
+          if (game.available().includes("peek")) game.peek();
+          break;
+        }
+        case "claim": {
+          this.phase = "start";
+          const claim = this.chooseClaim(game);
+          game.makeClaim(claim);
+          say(`claims ${formatRank(claim)}`);
+          return { kind: "claimed" };
+        }
       }
-      game.peer();
-      say("peers at the hidden dice");
     }
-
-    if (game.available().includes("rearrange") && this.rng() < 0.5) {
-      game.rearrange(this.sample(ALL_DICE, this.rng() < 0.5 ? 1 : 2));
-      say(`rearranges the sets, showing ${game.visibleFaces.join(" ")}`);
-    }
-
-    const keepHand =
-      game.rules.rollOptional &&
-      game.known.size === NUM_DICE &&
-      compareRanks(evaluate(game.dice), game.claim) > 0;
-    if (game.available().includes("roll") && !keepHand) {
-      game.roll("hidden");
-      say("rolls the hidden set");
-    } else {
-      say("keeps the dice as they are");
-    }
-    if (game.available().includes("peek")) game.peek();
-
-    const claim = this.chooseClaim(game);
-    game.makeClaim(claim);
-    say(`claims ${formatRank(claim)}`);
-    return null;
   }
 
   /** Claim near the real rank if it beats the standing claim, else bluff upward. */

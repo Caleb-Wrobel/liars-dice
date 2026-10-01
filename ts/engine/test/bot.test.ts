@@ -89,6 +89,30 @@ describe("Bot", () => {
     expect(winRate("stabby", "easy")).toBeGreaterThan(0.7);
   });
 
+  it("takes a turn one visible move at a time, ending the same way play() does", () => {
+    for (const rules of [basicRules(), advancedRules()]) {
+      for (let seed = 0; seed < 30; seed++) {
+        const whole = new Game(["A", "B"], rules, seededRng(seed));
+        const stepped = new Game(["A", "B"], rules, seededRng(seed));
+        new Bot({ rng: seededRng(seed + 1) }).play(whole);
+
+        const bot = new Bot({ rng: seededRng(seed + 1) });
+        const said: string[] = [];
+        let outcome = bot.step(stepped, (t) => said.push(t));
+        let moves = 1;
+        while (outcome.kind === "acted") {
+          outcome = bot.step(stepped, (t) => said.push(t));
+          moves++;
+        }
+        expect(outcome.kind).toBe("claimed");
+        expect(moves).toBeGreaterThanOrEqual(2); // at least the roll and the claim
+        expect(said).toHaveLength(moves); // every step is narrated, so it is worth pausing on
+        expect(stepped.claim).toEqual(whole.claim);
+        expect(stepped.dice).toEqual(whole.dice);
+      }
+    }
+  });
+
   it("must pull the top claim", () => {
     const g = new Game(["A", "B"], advancedRules(), seededRng(1));
     g.makeClaim(parseRank("five 6"));

@@ -180,6 +180,24 @@ export const definingFaceCount = (category: Category): number => DEFINING[catego
 /** Whether a category can carry a kicker. */
 export const hasKicker = (category: Category): boolean => HAS_KICKER.has(category);
 
+/**
+ * The dice a rank describes, with any kicker last: "a pair of 3s and a 5" is [3, 3, 5], and "no pair
+ * and a 5" is just [5]. Handy for drawing a claim as dice.
+ */
+export function rankDice(r: Rank): number[] {
+  const copies: Record<Category, readonly number[]> = {
+    [Category.NoPair]: [],
+    [Category.Pair]: [2],
+    [Category.TwoPair]: [2, 2],
+    [Category.ThreeKind]: [3],
+    [Category.FullHouse]: [3, 2],
+    [Category.FourKind]: [4],
+    [Category.FiveKind]: [5],
+  };
+  const dice = r.faces.flatMap((face, i) => Array<number>(copies[r.category][i]!).fill(face));
+  return r.kicker > 0 ? [...dice, r.kicker] : dice;
+}
+
 /** The smallest legal rank above `r`, or undefined at the top of the ladder. */
 export const nextRank = (r: Rank): Rank | undefined =>
   LADDER.find((candidate) => compareRanks(candidate, r) > 0);

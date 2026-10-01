@@ -14,6 +14,7 @@ import {
   nextRank,
   parseRank,
   rank,
+  rankDice,
   sameRank,
 } from "../src/index.ts";
 
@@ -112,6 +113,29 @@ describe("helpers for building claims", () => {
     expect([NoPair, Pair, TwoPair, ThreeKind, FourKind].every(hasKicker)).toBe(true);
     expect(hasKicker(FullHouse) || hasKicker(FiveKind)).toBe(false);
     expect(CATEGORY_LABELS[TwoPair]).toBe("Two pair");
+  });
+});
+
+describe("rankDice", () => {
+  it.each([
+    [rank(Pair, [3], 5), [3, 3, 5]],
+    [rank(Pair, [3]), [3, 3]],
+    [rank(TwoPair, [5, 2], 4), [5, 5, 2, 2, 4]],
+    [rank(ThreeKind, [4], 2), [4, 4, 4, 2]],
+    [rank(FullHouse, [4, 3]), [4, 4, 4, 3, 3]],
+    [rank(FourKind, [6], 1), [6, 6, 6, 6, 1]],
+    [rank(FiveKind, [2]), [2, 2, 2, 2, 2]],
+    [rank(NoPair, [], 5), [5]],
+    [NIL, []],
+  ])("%j", (r, dice) => {
+    expect(rankDice(r)).toEqual(dice);
+  });
+
+  it("agrees with evaluate, so the dice of a rank make that rank", () => {
+    for (const r of LADDER) {
+      const dice = rankDice(r);
+      if (dice.length === 5) expect(compareRanks(evaluate(dice), r)).toBe(0);
+    }
   });
 });
 
