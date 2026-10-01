@@ -1,11 +1,19 @@
 import { useState } from "react";
+import { BOT_LEVEL_NAMES, type BotLevel } from "@liars-dice/engine";
 import { BOT_NAMES, type Config } from "./session.ts";
+
+const LEVEL_BLURBS: Record<BotLevel, string> = {
+  easy: "Jumpy. Pulls on shaky claims and misreads the odds, so a truthful claim often catches it out.",
+  normal: "A balanced opponent.",
+  stabby: "Patient. Hides its strength, lets you climb, then stabs when your claim stops being believable.",
+};
 
 export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [name, setName] = useState("Alice");
   const [lives, setLives] = useState(3);
   const [advanced, setAdvanced] = useState(false);
   const [opponents, setOpponents] = useState(1);
+  const [level, setLevel] = useState<BotLevel>("normal");
 
   return (
     <main className="setup">
@@ -14,7 +22,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onStart({ name: name.trim() || "Alice", lives, advanced, opponents });
+          onStart({ name: name.trim() || "Alice", lives, advanced, opponents, level });
         }}
       >
         <label>
@@ -40,6 +48,17 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
               </option>
             ))}
           </select>
+        </label>
+        <label>
+          Bot level
+          <select value={level} onChange={(e) => setLevel(e.target.value as BotLevel)}>
+            {BOT_LEVEL_NAMES.map((name) => (
+              <option key={name} value={name}>
+                {name[0]!.toUpperCase() + name.slice(1)}
+              </option>
+            ))}
+          </select>
+          <span className="hint">{LEVEL_BLURBS[level]}</span>
         </label>
         <fieldset>
           <legend>Rules</legend>

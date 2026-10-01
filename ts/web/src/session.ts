@@ -7,6 +7,7 @@ import {
   basicRules,
   formatRank,
   seededRng,
+  type BotLevel,
   type DiceSet,
   type PullResult,
   type Rank,
@@ -24,6 +25,8 @@ export interface Config {
   readonly advanced: boolean;
   /** How many bots sit at the table, 1 to 5. Defaults to 1. */
   readonly opponents?: number;
+  /** How the bots play. Defaults to "normal". */
+  readonly level?: BotLevel;
   /** Makes dice and the bots deterministic. Used by tests. */
   readonly seed?: number;
 }
@@ -44,7 +47,7 @@ export function useSession(config: Config) {
     return {
       game: new Game([config.name, ...seats], rules, seeded ? seededRng(config.seed!) : undefined),
       // bots[i] sits in seat i + 1
-      bots: seats.map((_, i) => new Bot(seeded ? { rng: seededRng(config.seed! + 1 + i) } : {})),
+      bots: seats.map((_, i) => new Bot({ level: config.level, ...(seeded ? { rng: seededRng(config.seed! + 1 + i) } : {}) })),
     };
   });
   const [tick, setTick] = useState(0);

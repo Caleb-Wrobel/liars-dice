@@ -49,8 +49,11 @@ describe("Setup", () => {
     await userEvent.type(screen.getByLabelText("Your name"), "Caleb");
     await userEvent.selectOptions(screen.getByLabelText("Lives"), "5");
     await userEvent.selectOptions(screen.getByLabelText("Opponents"), "3");
+    expect(screen.getByText(/A balanced opponent/)).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText(/Bot level/), "stabby");
+    expect(screen.getByText(/Patient\. Hides its strength/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("radio", { name: /Advanced/ }));
     await userEvent.click(screen.getByRole("button", { name: "Play" }));
-    expect(started).toEqual({ name: "Caleb", lives: 5, advanced: true, opponents: 3 });
+    expect(started).toEqual({ name: "Caleb", lives: 5, advanced: true, opponents: 3, level: "stabby" });
   });
 });
