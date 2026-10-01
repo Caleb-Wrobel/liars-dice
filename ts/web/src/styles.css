@@ -37,7 +37,8 @@ label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
 .setup { padding-top: 48px; }
 .setup h1 { font-size: 2.4rem; color: var(--accent); }
 .tagline { color: var(--muted); }
-.how-to-play { justify-self: start; padding-left: 0; }
+.setup-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.setup-header .link { padding-right: 0; } /* so the text lines up with the form fields below */
 .setup form { display: grid; gap: var(--gap); margin-top: 8px; }
 fieldset { border: 2px solid var(--surface-edge); border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
 legend { color: var(--muted); padding: 0 6px; }

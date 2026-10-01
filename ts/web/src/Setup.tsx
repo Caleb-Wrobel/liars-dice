@@ -22,11 +22,13 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
 
   return (
     <main className="setup">
-      <h1>Liar's Dice</h1>
+      <header className="setup-header">
+        <h1>Liar's Dice</h1>
+        <button type="button" className="link" onClick={() => setShowRules(true)}>
+          How to play
+        </button>
+      </header>
       <p className="tagline">Pass the dice. Peer, roll, peek, claim. Bluff well.</p>
-      <button type="button" className="link how-to-play" onClick={() => setShowRules(true)}>
-        How to play
-      </button>
       {showRules && <RulesDialog onClose={() => setShowRules(false)} />}
       <form
         onSubmit={(e) => {
