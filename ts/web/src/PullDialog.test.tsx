@@ -18,7 +18,7 @@ const result: PullResult = {
 
 describe("PullDialog", () => {
   it("reveals every die and says who loses a life", () => {
-    render(<PullDialog result={result} names={names} final={false} onContinue={() => {}} />);
+    render(<PullDialog result={result} names={names} final={false} onContinue={() => {}} onRematch={() => {}} onQuit={() => {}} />);
     expect(screen.getByRole("dialog", { name: "Alice lifts the cup" })).toBeInTheDocument();
     expect(screen.getAllByLabelText(/showing/)).toHaveLength(5);
     expect(screen.getByText("a pair of 3s and a 5")).toBeInTheDocument();
@@ -29,16 +29,23 @@ describe("PullDialog", () => {
   it("calls a false claim a bluff and moves on to the next round", async () => {
     const onContinue = vi.fn();
     const bluff = { ...result, claimTrue: false, loser: 1 };
-    render(<PullDialog result={bluff} names={names} final={false} onContinue={onContinue} />);
+    render(<PullDialog result={bluff} names={names} final={false} onContinue={onContinue} onRematch={() => {}} onQuit={() => {}} />);
     expect(screen.getByText("a bluff")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Next round" }));
     expect(onContinue).toHaveBeenCalledOnce();
   });
 
-  it("ends the game when a player is eliminated", () => {
+  it("offers a rematch or new settings when the game is over", async () => {
+    const onRematch = vi.fn();
+    const onQuit = vi.fn();
     const out = { ...result, eliminated: true };
-    render(<PullDialog result={out} names={names} final onContinue={() => {}} />);
+    render(<PullDialog result={out} names={names} final onContinue={() => {}} onRematch={onRematch} onQuit={onQuit} />);
     expect(screen.getByText(/Alice loses a life and is out!/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Back to start" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next round" })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "Play again" }));
+    expect(onRematch).toHaveBeenCalledOnce();
+    await userEvent.click(screen.getByRole("button", { name: "Change settings" }));
+    expect(onQuit).toHaveBeenCalledOnce();
   });
 });

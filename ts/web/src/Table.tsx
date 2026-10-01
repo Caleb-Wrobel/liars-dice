@@ -74,7 +74,17 @@ function TrayBox({ id, title, children }: { id: Tray; title: string; children: R
   );
 }
 
-export function Table({ config, onQuit }: { config: Config; onQuit: () => void }) {
+export function Table({
+  config,
+  onQuit,
+  onRematch,
+}: {
+  config: Config;
+  /** Back to the setup screen. */
+  onQuit: () => void;
+  /** Start a fresh game with the same settings, keeping the bot pace as it is now. */
+  onRematch: (pace: Pace) => void;
+}) {
   const s = useSession(config);
   const { game } = s;
   const available = game.available();
@@ -266,7 +276,9 @@ export function Table({ config, onQuit }: { config: Config; onQuit: () => void }
           result={s.pulled}
           names={game.names}
           final={game.winner !== null}
-          onContinue={game.winner !== null ? onQuit : s.dismissPull}
+          onContinue={s.dismissPull}
+          onRematch={() => onRematch(s.pace)}
+          onQuit={onQuit}
         />
       )}
     </main>

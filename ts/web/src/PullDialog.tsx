@@ -9,11 +9,16 @@ export function PullDialog({
   names,
   final,
   onContinue,
+  onRematch,
+  onQuit,
 }: {
   result: PullResult;
   names: readonly string[];
+  /** The game is over: offer a rematch instead of the next round. */
   final: boolean;
   onContinue: () => void;
+  onRematch: () => void;
+  onQuit: () => void;
 }) {
   const name = (i: number) => names[i]!;
   return (
@@ -35,9 +40,20 @@ export function PullDialog({
         <p>
           {name(result.loser)} loses a life{result.eliminated ? " and is out!" : "."}
         </p>
-        <button type="button" className="primary" autoFocus onClick={onContinue}>
-          {final ? "Back to start" : "Next round"}
-        </button>
+        {final ? (
+          <div className="dialog-buttons">
+            <button type="button" className="primary" autoFocus onClick={onRematch}>
+              Play again
+            </button>
+            <button type="button" onClick={onQuit}>
+              Change settings
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="primary" autoFocus onClick={onContinue}>
+            Next round
+          </button>
+        )}
       </div>
     </div>
   );
