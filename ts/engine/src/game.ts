@@ -139,7 +139,7 @@ export class Game {
     const actions: Action[] = [];
     if (this.step <= Step.Rearrange) actions.push("rearrange");
     if (this.step <= Step.Roll) actions.push("roll");
-    if (this.step <= Step.Peek) actions.push("peek");
+    if (this.step <= Step.Peek && this.rollSatisfied()) actions.push("peek");
     if (this.claimUnlocked()) actions.push("claim");
     return actions;
   }
@@ -237,6 +237,8 @@ export class Game {
 
   peek(): number[] {
     this.begin(Step.Peek);
+    // Skipping ahead would strand the player: the roll could no longer be made.
+    if (!this.rollSatisfied()) throw new RuleError("you must roll before you peek");
     this.known = new Set(ALL_DICE);
     this.peeked = true;
     this.step = Step.Claim;
@@ -264,6 +266,10 @@ export class Game {
 
   private rollDie(): number {
     return FACES[Math.floor(this.rng() * FACES.length)]!;
+  }
+
+  private rollSatisfied(): boolean {
+    return this.rolled || this.rules.rollOptional;
   }
 
   private claimUnlocked(): boolean {

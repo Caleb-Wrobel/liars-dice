@@ -90,7 +90,7 @@ class Game:
             actions.append("rearrange")
         if self.step <= Step.ROLL:
             actions.append("roll")
-        if self.step <= Step.PEEK:
+        if self.step <= Step.PEEK and self._roll_satisfied():
             actions.append("peek")
         if self._claim_unlocked():
             actions.append("claim")
@@ -172,6 +172,9 @@ class Game:
 
     def peek(self) -> list[int]:
         self._begin(Step.PEEK)
+        if not self._roll_satisfied():
+            # Skipping ahead would strand the player: the roll could no longer be made.
+            raise RuleError("you must roll before you peek")
         self.known = frozenset(range(NUM_DICE))
         self.peeked = True
         self.step = Step.CLAIM
@@ -193,6 +196,9 @@ class Game:
         self.step = Step.DECIDE
 
     # --- internals ---------------------------------------------------------
+
+    def _roll_satisfied(self) -> bool:
+        return self.rolled or self.rules.roll_optional
 
     def _claim_unlocked(self) -> bool:
         if self.step == Step.DECIDE:

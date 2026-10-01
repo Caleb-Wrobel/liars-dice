@@ -27,7 +27,22 @@ def test_round_starts_with_nil_claim_and_opener_at_roll():
     g = make()
     assert g.claim == NIL and g.step == Step.ROLL
     assert g.visible == frozenset() and g.known == frozenset()
-    assert g.available() == ["roll", "peek"]
+    assert g.available() == ["roll"]  # basic: peeking before the roll would strand you
+
+
+def test_basic_cannot_peek_before_rolling():
+    g = make()
+    with pytest.raises(RuleError):
+        g.peek()
+    assert g.step == Step.ROLL and g.available() == ["roll"]   # still free to roll: not stranded
+    g.roll()
+    assert g.available() == ["peek"]
+
+
+def test_advanced_may_peek_before_rolling():
+    g = make(rules=Rules.advanced())
+    assert g.available() == ["roll", "peek", "claim"]
+    g.peek()
 
 
 def test_opener_cannot_pull_peer_or_rearrange():

@@ -35,7 +35,22 @@ describe("the opening turn", () => {
     expect(g.step).toBe(Step.Roll);
     expect(g.visible.size).toBe(0);
     expect(g.known.size).toBe(0);
-    expect(g.available()).toEqual(["roll", "peek"]);
+    expect(g.available()).toEqual(["roll"]); // basic: peeking before the roll would strand you
+  });
+
+  it("can't be stranded by peeking before a mandatory roll", () => {
+    const g = make();
+    expect(() => g.peek()).toThrow(RuleError);
+    expect(g.step).toBe(Step.Roll);
+    expect(g.available()).toEqual(["roll"]); // still free to roll
+    g.roll();
+    expect(g.available()).toEqual(["peek"]);
+  });
+
+  it("lets advanced players peek before rolling", () => {
+    const g = make(["A", "B", "C"], advancedRules());
+    expect(g.available()).toEqual(["roll", "peek", "claim"]);
+    g.peek();
   });
 
   it("cannot pull, peer or rearrange", () => {
