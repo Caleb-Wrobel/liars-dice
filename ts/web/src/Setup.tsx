@@ -1,21 +1,24 @@
 import { useState } from "react";
-import { BOT_LEVEL_NAMES, type BotLevel } from "@liars-dice/engine";
+import { BOT_LEVEL_NAMES } from "@liars-dice/engine";
 import { RulesDialog } from "./RulesDialog.tsx";
-import { BOT_NAMES, type Config, type Pace } from "./session.ts";
+import { BOT_NAMES, type Config, type LevelChoice, type Pace } from "./session.ts";
 import { THEMES, applyTheme, loadTheme, saveTheme, type ThemeId } from "./theme.ts";
 
-const LEVEL_BLURBS: Record<BotLevel, string> = {
+const LEVEL_BLURBS: Record<LevelChoice, string> = {
   easy: "Jumpy. Pulls on shaky claims and misreads the odds, so a truthful claim often catches it out.",
   normal: "A balanced opponent.",
   stabby: "Patient. Hides its strength, lets you climb, then stabs when your claim stops being believable.",
+  random: "Each bot gets its own level, picked at random. You find out who was who when the game ends.",
 };
+
+const LEVEL_CHOICES: readonly LevelChoice[] = [...BOT_LEVEL_NAMES, "random"];
 
 export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [name, setName] = useState("Alice");
   const [lives, setLives] = useState(3);
   const [advanced, setAdvanced] = useState(false);
   const [opponents, setOpponents] = useState(1);
-  const [level, setLevel] = useState<BotLevel>("normal");
+  const [level, setLevel] = useState<LevelChoice>("normal");
   const [pace, setPace] = useState<Pace>("normal");
   const [theme, setTheme] = useState<ThemeId>(() => loadTheme());
   const [showRules, setShowRules] = useState(false);
@@ -68,9 +71,9 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
             <select
               value={level}
               aria-describedby="level-hint"
-              onChange={(e) => setLevel(e.target.value as BotLevel)}
+              onChange={(e) => setLevel(e.target.value as LevelChoice)}
             >
-              {BOT_LEVEL_NAMES.map((name) => (
+              {LEVEL_CHOICES.map((name) => (
                 <option key={name} value={name}>
                   {name[0]!.toUpperCase() + name.slice(1)}
                 </option>

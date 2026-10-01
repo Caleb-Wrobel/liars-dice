@@ -39,6 +39,21 @@ describe("App", () => {
     expect(screen.getByRole("list", { name: "Table talk" })).toBeEmptyDOMElement();
   });
 
+  it("reveals which level each bot played once a random game ends", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0); // every draw picks the first level, easy
+    render(<App />);
+    await userEvent.selectOptions(screen.getByLabelText("Lives"), "1");
+    await userEvent.selectOptions(screen.getByLabelText("Bot level"), "random");
+    await userEvent.selectOptions(screen.getByLabelText("Bot pace"), "fast");
+    await userEvent.click(screen.getByRole("radio", { name: /Advanced/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Play" }));
+    await userEvent.selectOptions(screen.getByLabelText("Rank"), String(Category.FiveKind));
+    await userEvent.selectOptions(screen.getByLabelText("Face"), "6");
+    await userEvent.click(screen.getByRole("button", { name: "Claim five 6s" }));
+    expect(await screen.findByRole("dialog", { name: "Bob lifts the cup" })).toBeInTheDocument();
+    expect(screen.getByText("The bots were: Bob was Easy.")).toBeInTheDocument();
+  });
+
   it("goes back to setup from the end of a game", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     render(<App />);

@@ -6,6 +6,7 @@ import {
   advancedRules,
   basicRules,
   formatRank,
+  randomBotLevel,
   seededRng,
   type BotLevel,
   type DiceSet,
@@ -24,6 +25,9 @@ export const PACE_MS = { fast: 250, normal: 700, slow: 1600 } as const;
 /** Opponents are seated after the human, in this order. */
 export const BOT_NAMES = ["Bob", "Carol", "Dave", "Eve", "Frank"] as const;
 
+/** A fixed level for every bot, or "random" to give each bot its own, drawn when the game starts. */
+export type LevelChoice = BotLevel | "random";
+
 export interface Config {
   readonly name: string;
   readonly lives: number;
@@ -31,7 +35,7 @@ export interface Config {
   /** How many bots sit at the table, 1 to 5. Defaults to 1. */
   readonly opponents?: number;
   /** How the bots play. Defaults to "normal". */
-  readonly level?: BotLevel;
+  readonly level?: LevelChoice;
   /** How fast the bots move. Defaults to "normal". Can be changed during the game. */
   readonly pace?: Pace;
   /** Makes dice and the bots deterministic. Used by tests. */
@@ -46,15 +50,21 @@ export type Tray = "visible" | "hidden";
  * counter to re-render. The UI only reads the engine and calls these actions.
  */
 export function useSession(config: Config) {
-  const [{ game, bots }] = useState(() => {
+  const [{ game, bots, levels }] = useState(() => {
     const rules = config.advanced ? advancedRules(config.lives) : basicRules(config.lives);
     const seeded = config.seed !== undefined;
     const count = Math.min(Math.max(config.opponents ?? 1, 1), BOT_NAMES.length);
     const seats = BOT_NAMES.slice(0, count);
+    // With "random", every bot draws its own level, so a table can mix easy and stabby bots.
+    const draw = seeded ? seededRng(config.seed! + 500) : Math.random;
+    const levels: BotLevel[] = seats.map(() =>
+      config.level === "random" ? randomBotLevel(draw) : (config.level ?? "normal"),
+    );
     return {
       game: new Game([config.name, ...seats], rules, seeded ? seededRng(config.seed!) : undefined),
       // bots[i] sits in seat i + 1
-      bots: seats.map((_, i) => new Bot({ level: config.level, ...(seeded ? { rng: seededRng(config.seed! + 1 + i) } : {}) })),
+      bots: levels.map((level, i) => new Bot({ level, ...(seeded ? { rng: seededRng(config.seed! + 1 + i) } : {}) })),
+      levels,
     };
   });
   const [tick, setTick] = useState(0);
@@ -120,6 +130,8 @@ export function useSession(config: Config) {
     visibleSet,
     botSeat,
     botTurn: botSeat !== null,
+    /** The level each bot is actually playing at, seat by seat after yours. */
+    botLevels: levels,
     pace,
     setPace,
     setPaused,

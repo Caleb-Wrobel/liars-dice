@@ -35,6 +35,35 @@ describe("PullDialog", () => {
     expect(onContinue).toHaveBeenCalledOnce();
   });
 
+  it("reveals the bots' levels when the game is over and they were random", () => {
+    const out = { ...result, eliminated: true };
+    render(
+      <PullDialog
+        result={out}
+        names={names}
+        final
+        reveal={[
+          { name: "Bob", level: "stabby" },
+          { name: "Carol", level: "easy" },
+        ]}
+        onContinue={() => {}}
+        onRematch={() => {}}
+        onQuit={() => {}}
+      />,
+    );
+    expect(screen.getByText("The bots were: Bob was Stabby, Carol was Easy.")).toBeInTheDocument();
+  });
+
+  it("keeps the levels secret mid-game, and when they were never random", () => {
+    const reveal = [{ name: "Bob", level: "stabby" as const }];
+    const { rerender } = render(
+      <PullDialog result={result} names={names} final={false} reveal={reveal} onContinue={() => {}} onRematch={() => {}} onQuit={() => {}} />,
+    );
+    expect(screen.queryByText(/The bots were/)).toBeNull(); // the game isn't over
+    rerender(<PullDialog result={result} names={names} final onContinue={() => {}} onRematch={() => {}} onQuit={() => {}} />);
+    expect(screen.queryByText(/The bots were/)).toBeNull(); // nothing to reveal
+  });
+
   it("offers a rematch or new settings when the game is over", async () => {
     const onRematch = vi.fn();
     const onQuit = vi.fn();

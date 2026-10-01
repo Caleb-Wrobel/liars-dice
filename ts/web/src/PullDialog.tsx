@@ -1,4 +1,4 @@
-import { formatRank, type PullResult } from "@liars-dice/engine";
+import { formatRank, type BotLevel, type PullResult } from "@liars-dice/engine";
 import { Die } from "./Die.tsx";
 
 const LABELS = "abcde";
@@ -8,6 +8,7 @@ export function PullDialog({
   result,
   names,
   final,
+  reveal,
   onContinue,
   onRematch,
   onQuit,
@@ -16,6 +17,8 @@ export function PullDialog({
   names: readonly string[];
   /** The game is over: offer a rematch instead of the next round. */
   final: boolean;
+  /** At the end of a game with random bot levels: who was playing at which level. */
+  reveal?: readonly { name: string; level: BotLevel }[];
   onContinue: () => void;
   onRematch: () => void;
   onQuit: () => void;
@@ -40,6 +43,11 @@ export function PullDialog({
         <p>
           {name(result.loser)} loses a life{result.eliminated ? " and is out!" : "."}
         </p>
+        {final && reveal && reveal.length > 0 && (
+          <p>
+            The bots were: {reveal.map((r) => `${r.name} was ${r.level[0]!.toUpperCase()}${r.level.slice(1)}`).join(", ")}.
+          </p>
+        )}
         {final ? (
           <div className="dialog-buttons">
             <button type="button" className="primary" autoFocus onClick={onRematch}>

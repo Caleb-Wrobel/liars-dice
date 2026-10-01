@@ -129,6 +129,19 @@ describe("Setup table style", () => {
   });
 });
 
+describe("Setup random level", () => {
+  it("offers a random level that is explained and passed to the game", async () => {
+    let started: Config | null = null;
+    render(<Setup onStart={(config) => (started = config)} />);
+    const level = screen.getByLabelText("Bot level");
+    expect(within(level).getByRole("option", { name: "Random" })).toBeInTheDocument();
+    await userEvent.selectOptions(level, "random");
+    expect(level).toHaveAccessibleDescription(/Each bot gets its own level/);
+    await userEvent.click(screen.getByRole("button", { name: "Play" }));
+    expect(started).toMatchObject({ level: "random" });
+  });
+});
+
 describe("Setup layout", () => {
   it("pairs the short fields so the form stays compact on a phone", () => {
     render(<Setup onStart={() => {}} />);

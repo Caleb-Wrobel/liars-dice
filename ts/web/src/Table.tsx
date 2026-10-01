@@ -293,6 +293,11 @@ export function Table({
           result={s.pulled}
           names={game.names}
           final={game.winner !== null}
+          reveal={
+            config.level === "random"
+              ? game.names.slice(1).map((name, i) => ({ name, level: s.botLevels[i]! }))
+              : undefined
+          }
           onContinue={s.dismissPull}
           onRematch={() => onRematch(s.pace)}
           onQuit={onQuit}

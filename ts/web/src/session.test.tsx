@@ -91,6 +91,31 @@ describe("useSession", () => {
     expect(result.current.pulled !== null || spoke("Carol")).toBe(true);
   });
 
+  describe("bot levels", () => {
+    const levelsFor = (config: Config) => renderHook(() => useSession(config)).result.current.botLevels;
+
+    it("gives every bot the chosen level", () => {
+      expect(levelsFor({ ...advanced, opponents: 4, level: "stabby" })).toEqual(["stabby", "stabby", "stabby", "stabby"]);
+    });
+
+    it("defaults to normal", () => {
+      expect(levelsFor({ ...advanced, opponents: 2 })).toEqual(["normal", "normal"]);
+    });
+
+    it("draws a level for each bot when the choice is random", () => {
+      const levels = levelsFor({ ...advanced, opponents: 5, level: "random" });
+      expect(levels).toHaveLength(5);
+      for (const level of levels) expect(["easy", "normal", "stabby"]).toContain(level);
+    });
+
+    it("can seat different levels at one table, and repeats for the same seed", () => {
+      const tables = Array.from({ length: 12 }, (_, seed) => levelsFor({ ...advanced, opponents: 5, level: "random", seed }));
+      expect(tables.some((levels) => new Set(levels).size > 1)).toBe(true); // a mixed table
+      expect(new Set(tables.flat())).toEqual(new Set(["easy", "normal", "stabby"])); // every level turns up
+      expect(levelsFor({ ...advanced, opponents: 5, level: "random", seed: 4 })).toEqual(tables[4]);
+    });
+  });
+
   it("keeps the opponent count within the available bots", () => {
     const { result } = renderHook(() => useSession({ ...advanced, opponents: 99 }));
     expect(result.current.game.names).toHaveLength(6);
