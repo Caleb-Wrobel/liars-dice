@@ -1,0 +1,109 @@
+/*
+ * Spooky: candle-lit gothic. Near-black plum, bone and parchment, with the amber of a candle flame, and a
+ * jack-o'-lantern for every life. A first cut, for a design pass later.
+ * Keep every colour a solid hex: src/themes/contrast.test.ts reads these values.
+ */
+:root[data-theme="spooky"] {
+  color-scheme: dark;
+
+  --page: #120d14;
+  --surface: #1e1522;
+  --surface-edge: #5a4262;
+  --text: #f2e7d1;
+  --muted: #c4b3c6;
+  --accent: #f2a33a;      /* candle flame */
+  --accent-ink: #1c1004;
+  --danger: #ff9580;
+  --ok: #9ae0b0;
+
+  --control-bg: #2b1f31;
+  --control-ink: #f2e7d1;
+  --control-edge: #7d5c88;
+
+  --tray-a: #2d2133;      /* the table top, a dark stone */
+  --tray-b: #1a1220;      /* under the cauldron */
+  --tray-edge: #6a4f74;
+  --tray-title: #d3c2d5;
+
+  --claim-bg: #e8dcc0;    /* aged parchment */
+  --claim-ink: #26180e;
+  --claim-muted: #5c4630;
+  --claim-edge: #8a6d44;
+  --claim-dice-bg: #2d2133;
+  --kicker: #f2a33a;
+
+  --die-body: #eadfc7;    /* bone */
+  --die-pip: #1a1018;
+  --die-edge: #b9a98a;
+  --die-edge-width: 2;
+  --die-radius: 8px;
+  --unseen-body: #1a1220;
+  --unseen-edge: #a07fae;
+  --unseen-mark: #f2a33a;
+
+  --log-bg: #1a1420;      /* a gravestone slate */
+  --log-ink: #dacfdc;
+
+  --font-display: "Alegreya", Georgia, "Times New Roman", serif;
+  --font-body: "Alegreya", Georgia, "Times New Roman", serif;
+  --display-weight: 700;
+  --radius: 8px;
+}
+
+:root[data-theme="spooky"] body {
+  font-size: 1.05rem;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%, #f2a33a24, transparent 70%),
+    var(--page);
+}
+
+/*
+ * Lives are jack-o'-lanterns. The carved face is pale on orange and drawn as shapes, so a life reads by its
+ * face and not only by its colour. The picture is an inline SVG, so it scales with the text.
+ */
+:root[data-theme="spooky"] .life {
+  width: 1.25em; height: 1.15em;
+  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2022'%3E%3Crect%20x='10.6'%20y='0.4'%20width='2.8'%20height='4.2'%20rx='1'%20fill='%235a7a2e'/%3E%3Cellipse%20cx='7'%20cy='13'%20rx='6.4'%20ry='8'%20fill='%23c9640f'/%3E%3Cellipse%20cx='17'%20cy='13'%20rx='6.4'%20ry='8'%20fill='%23c9640f'/%3E%3Cellipse%20cx='12'%20cy='13'%20rx='6.2'%20ry='8.6'%20fill='%23f58a22'/%3E%3Cg%20fill='%23ffe08a'%3E%3Cpath%20d='M6%2011.6%20L10%2011.6%20L8%208.2Z'/%3E%3Cpath%20d='M14%2011.6%20L18%2011.6%20L16%208.2Z'/%3E%3Cpath%20d='M12%2012.8%20L10.9%2014.7%20L13.1%2014.7Z'/%3E%3Cpath%20d='M6.4%2015.6%20L9%2017.7%20L10.5%2015.9%20L12%2018%20L13.5%2015.9%20L15%2017.7%20L17.6%2015.6%20Q12%2021.6%206.4%2015.6Z'/%3E%3C/g%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 0 3px #f2a33a99);
+}
+
+/* The standing claim is an aged slip of parchment. */
+:root[data-theme="spooky"] .claim-card {
+  background:
+    radial-gradient(ellipse at 20% 0%, #f1e6c9, transparent 60%),
+    var(--claim-bg);
+  box-shadow: 0 4px 0 #00000077, inset 0 0 0 4px #e8dcc0, inset 0 0 0 5px var(--claim-edge);
+}
+:root[data-theme="spooky"] .claim-text { font-size: 1.15rem; letter-spacing: 0.02em; }
+
+/* A stone table top lit from one side, and a dark cauldron for the cup. */
+:root[data-theme="spooky"] .tray-visible {
+  background: radial-gradient(ellipse at 15% 0%, #4a3454aa, transparent 65%), var(--tray-a);
+  box-shadow: inset 0 3px 14px #000a;
+}
+:root[data-theme="spooky"] .tray-hidden {
+  background: radial-gradient(circle at 50% 15%, #3a2842, var(--tray-b) 78%);
+  outline: 2px dashed #9a78a6; outline-offset: -10px;
+  box-shadow: inset 0 3px 14px #000a;
+}
+
+:root[data-theme="spooky"] button:not(.die-button) {
+  background: linear-gradient(#3a2a42, var(--control-bg));
+  box-shadow: inset 0 1px 0 #ffffff1f, 0 2px 0 #0007;
+}
+:root[data-theme="spooky"] button.primary:not(.die-button) {
+  background: linear-gradient(#f7b855, #d98a25);
+  box-shadow: inset 0 1px 0 #fff6, 0 2px 0 #0008;
+}
+:root[data-theme="spooky"] button.link { background: none; box-shadow: none; }
+
+:root[data-theme="spooky"] .step-rail li { border: 1px solid var(--surface-edge); }
+:root[data-theme="spooky"] .step-rail li.current { border-color: #f7b855; }
+
+/* The table talk is chalk on a gravestone. */
+:root[data-theme="spooky"] .log { border: 3px solid #5a4262; box-shadow: inset 0 0 12px #0008; }
+
+:root[data-theme="spooky"] .dialog {
+  border-color: var(--accent);
+  background: radial-gradient(ellipse at 50% 0%, #2f2236, var(--surface) 70%);
+}
