@@ -12,6 +12,7 @@ import type { ThemeId } from "./theme.ts";
 export const PLAYER_NAMES: Readonly<Record<ThemeId, readonly [string, ...string[]]>> = {
   saloon: ["Ashleigh", "Marion", "Jessie", "Hollis", "Carroll", "Sidney", "Leslie", "Frankie"],
   casino: ["Jordan", "Casey", "Morgan", "Riley", "Quinn", "Jamie", "Taylor", "Avery"],
+  spooky: ["Raven", "Ash", "Sage", "Wren", "Ember", "Rowan", "Willow", "Briar"],
 };
 
 /** One entry of the pool, chosen at random. A pool of one always gives that one. */

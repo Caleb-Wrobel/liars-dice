@@ -8,6 +8,7 @@ import { applyTheme, loadTheme } from "./theme.ts";
 import "./styles.css";
 import "./themes/saloon.css";
 import "./themes/casino.css";
+import "./themes/spooky.css";
 
 applyTheme(loadTheme());
 
