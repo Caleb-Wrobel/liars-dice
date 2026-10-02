@@ -142,12 +142,54 @@ describe("Setup random level", () => {
   });
 });
 
+describe("Setup characters", () => {
+  const box = () => screen.getByRole("checkbox", { name: "Use Characters" });
+
+  it("starts with characters on, and passes the choice and the table style to the game", async () => {
+    let started: Config | null = null;
+    render(<Setup onStart={(config) => (started = config)} />);
+    expect(box()).toBeChecked();
+    await userEvent.click(screen.getByRole("button", { name: "Play" }));
+    expect(started).toMatchObject({ personas: true, theme: "saloon" });
+    await userEvent.click(box());
+    await userEvent.click(screen.getByRole("button", { name: "Play" }));
+    expect(started).toMatchObject({ personas: false });
+  });
+
+  it("defaults the pace to slow with characters and to normal without, until the player picks one", async () => {
+    render(<Setup onStart={() => {}} />);
+    const pace = () => screen.getByLabelText("Bot pace");
+    expect(pace()).toHaveValue("slow");
+    await userEvent.click(box());
+    expect(pace()).toHaveValue("normal");
+    await userEvent.click(box());
+    expect(pace()).toHaveValue("slow");
+    await userEvent.selectOptions(pace(), "fast");
+    await userEvent.click(box());
+    expect(pace()).toHaveValue("fast");
+  });
+
+  it("explains what the box does", async () => {
+    render(<Setup onStart={() => {}} />);
+    expect(screen.getByText(/characters from this table/)).toBeInTheDocument();
+    await userEvent.click(box());
+    expect(screen.getByText(/plain bots at the level you pick/)).toBeInTheDocument();
+  });
+
+  it("lists only the number of opponents, since the characters are drawn at the start", () => {
+    render(<Setup onStart={() => {}} />);
+    const options = within(screen.getByLabelText("Opponents")).getAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual(["1", "2", "3", "4", "5"]);
+  });
+});
+
 describe("Setup layout", () => {
   it("pairs the short fields so the form stays compact on a phone", () => {
     render(<Setup onStart={() => {}} />);
     const rowOf = (label: RegExp) => screen.getByLabelText(label).closest(".field-row");
     expect(rowOf(/^Lives$/)).not.toBeNull();
     expect(rowOf(/^Lives$/)).toBe(rowOf(/^Opponents$/));
+    expect(rowOf(/^Lives$/)).toBe(rowOf(/^Use Characters$/)); // the checkbox sits in that row, after Opponents
     expect(rowOf(/^Bot level$/)).not.toBeNull();
     expect(rowOf(/^Bot level$/)).toBe(rowOf(/^Bot pace$/));
     expect(rowOf(/^Lives$/)).not.toBe(rowOf(/^Bot level$/));
@@ -188,6 +230,15 @@ describe("Setup", () => {
     expect(screen.getByText(/Patient\. Hides its strength/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("radio", { name: /Advanced/ }));
     await userEvent.click(screen.getByRole("button", { name: "Play" }));
-    expect(started).toEqual({ name: "Caleb", lives: 5, advanced: true, opponents: 3, level: "stabby", pace: "slow" });
+    expect(started).toEqual({
+      name: "Caleb",
+      lives: 5,
+      advanced: true,
+      opponents: 3,
+      level: "stabby",
+      pace: "slow",
+      personas: true,
+      theme: "saloon",
+    });
   });
 });

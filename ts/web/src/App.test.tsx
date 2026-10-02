@@ -14,6 +14,7 @@ describe("App", () => {
     await userEvent.clear(screen.getByLabelText("Your name"));
     await userEvent.type(screen.getByLabelText("Your name"), "Sam");
     await userEvent.selectOptions(screen.getByLabelText("Lives"), "1");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Use Characters" })); // plain bots, named Bob
     await userEvent.selectOptions(screen.getByLabelText("Bot pace"), "fast");
     await userEvent.click(screen.getByRole("radio", { name: /Advanced/ }));
     await userEvent.click(screen.getByRole("button", { name: "Play" }));
@@ -43,6 +44,7 @@ describe("App", () => {
     vi.spyOn(Math, "random").mockReturnValue(0); // every draw picks the first level, easy
     render(<App />);
     await userEvent.selectOptions(screen.getByLabelText("Lives"), "1");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Use Characters" })); // plain bots, named Bob
     await userEvent.selectOptions(screen.getByLabelText("Bot level"), "random");
     await userEvent.selectOptions(screen.getByLabelText("Bot pace"), "fast");
     await userEvent.click(screen.getByRole("radio", { name: /Advanced/ }));
@@ -69,5 +71,14 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "Change settings" }));
     expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
     expect(screen.getByLabelText("Your name")).toBeInTheDocument();
+  });
+
+  it("seats characters from the table's cast by default, and plain bots when the box is cleared", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0); // the draw takes the first archetype, the Saloon's Calico Kate
+    render(<App />);
+    expect(screen.getByRole("checkbox", { name: "Use Characters" })).toBeChecked();
+    await userEvent.click(screen.getByRole("button", { name: "Play" }));
+    expect(screen.getByText("Calico Kate")).toBeInTheDocument();
+    expect(screen.queryByText("Bob")).not.toBeInTheDocument();
   });
 });
