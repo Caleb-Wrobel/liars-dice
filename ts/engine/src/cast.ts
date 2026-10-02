@@ -2,6 +2,9 @@
  * The fixed cast of five opponents. Names, archetypes and bios are drafts for Caleb to approve.
  * Each character's habits are a few numbers on top of a level; none of them changes how readily the
  * bot pulls the cup, so a character is not stronger or weaker than its level.
+ *
+ * One deliberate exception: Straight-Up Sam stays about 1 to 3 points ahead at tables of 3 or more, because the
+ * honest man being the best at liar's dice is the joke. Tuned by tables sweeps; the rest of the cast is within noise.
  */
 import type { Personality } from "./personality.ts";
 import type { Rng } from "./rng.ts";
@@ -12,21 +15,21 @@ export const CAST: readonly Personality[] = [
     name: "Calico Kate",
     archetype: "The Bluffer",
     bio: "Makes big jumps and rarely lets you see her sweat. Always has a story, and loves telling it.",
-    habits: { bluff: [3, 5, 8], sandbag: [1, 2, 3], rearrange: 0.7 },
+    habits: { bluff: [2, 3, 5, 6], sandbag: [0, 1, 2, 3], rearrange: 0.7 },
   },
   {
     id: "straight-up-sam",
     name: "Straight-Up Sam",
     archetype: "The Honest Man",
     bio: "Claims what he holds. When he can't beat you he edges up one rung, and it shows.",
-    habits: { bluff: [1, 2], sandbag: [0, 1, 2], rearrange: 0.3 },
+    habits: { bluff: [1, 1, 2, 3], sandbag: [0, 1, 1, 2, 3], rearrange: 0.3 },
   },
   {
     id: "quiet-mabel",
     name: "Quiet Mabel",
     archetype: "The Sandbagger",
     bio: "Says less than she holds and lets you climb. Hard to tell what she is sitting on.",
-    habits: { bluff: [1, 2, 3], sandbag: [2, 3, 4, 6], rearrange: 0.2 },
+    habits: { bluff: [1, 2, 3], sandbag: [1, 2, 3, 4], rearrange: 0.2 },
   },
   {
     id: "lucky-lou",
@@ -40,7 +43,7 @@ export const CAST: readonly Personality[] = [
     name: "Deadeye Dan",
     archetype: "The Creeper",
     bio: "Inches up the ladder one rung at a time and never shows his hand.",
-    habits: { bluff: [1], sandbag: [0, 1, 2, 3], rearrange: 0.5 },
+    habits: { bluff: [1], sandbag: [1, 2, 3], rearrange: 0.5 },
   },
 ];
 
