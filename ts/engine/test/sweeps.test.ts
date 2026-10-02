@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { CAST } from "../src/index.ts";
+import { ARCHETYPES } from "../src/index.ts";
 import { compareResults, summaryLines, wilson } from "../sim/summarize.mjs";
 import { jobsFor, merge, runJob, type Job } from "../sim/sweeps.ts";
 
 const job = (id: string): Job => jobsFor("all").find((j) => j.id === id)!;
 
 describe("jobsFor", () => {
-  it("lists every character and a plain baseline at every level for duels", () => {
+  it("lists every archetype and a plain baseline at every level for duels", () => {
     const jobs = jobsFor("duel");
-    expect(jobs).toHaveLength((CAST.length + 1) * 3);
+    expect(jobs).toHaveLength((ARCHETYPES.length + 1) * 3);
     expect(jobs.filter((j) => j.who === "plain")).toHaveLength(3);
   });
 
@@ -16,8 +16,8 @@ describe("jobsFor", () => {
     expect(jobsFor("tables").map((j) => j.size)).toEqual([2, 3, 4, 5]);
   });
 
-  it("measures tells for the characters only, since a plain bot has no personality", () => {
-    expect(jobsFor("tells")).toHaveLength(CAST.length * 3);
+  it("measures tells for the archetypes only, since a plain bot has no archetype", () => {
+    expect(jobsFor("tells")).toHaveLength(ARCHETYPES.length * 3);
     expect(jobsFor("tells").some((j) => j.who === "plain")).toBe(false);
   });
 
@@ -29,7 +29,7 @@ describe("jobsFor", () => {
 });
 
 describe("runJob", () => {
-  const jobs = ["duel|calico-kate|normal", "tables|3", "tells|lucky-lou|easy"];
+  const jobs = ["duel|bluffer|normal", "tables|3", "tells|gambler|easy"];
 
   it.each(jobs)("is deterministic for %s", (id) => {
     expect(runJob(job(id), 0, 6)).toEqual(runJob(job(id), 0, 6));
@@ -52,12 +52,12 @@ describe("runJob", () => {
     const counts = runJob(job("tables|4"), 0, 15);
     expect(counts.games).toBe(15);
     expect(counts.unfinished ?? 0).toBe(0);
-    const keys = (prefix: string) => CAST.map((p) => counts[`${prefix}|${p.id}`] ?? 0);
+    const keys = (prefix: string) => ARCHETYPES.map((p) => counts[`${prefix}|${p.id}`] ?? 0);
     expect(keys("seat").reduce((a, b) => a + b)).toBe(15 * 4);
     expect(keys("win").reduce((a, b) => a + b)).toBe(15);
   });
 
-  it("keeps the table counts for levels consistent with the counts for characters", () => {
+  it("keeps the table counts for levels consistent with the counts for archetypes", () => {
     const counts = runJob(job("tables|3"), 0, 15);
     const sum = (prefix: string) => ["easy", "normal", "stabby"].reduce((a, l) => a + (counts[`${prefix}|level:${l}`] ?? 0), 0);
     expect(sum("seat")).toBe(15 * 3);
@@ -65,7 +65,7 @@ describe("runJob", () => {
   });
 
   it("records tells that are consistent with each other", () => {
-    const c = runJob(job("tells|calico-kate|normal"), 0, 30);
+    const c = runJob(job("tells|bluffer|normal"), 0, 30);
     expect(c.games).toBe(30);
     expect(c.claims).toBeGreaterThan(0);
     expect(c.claimsTrue ?? 0).toBeLessThanOrEqual(c.claims!);
@@ -98,13 +98,13 @@ describe("summarize", () => {
 
   it("turns real results into a readable report", () => {
     const results = {
-      "duel|calico-kate|normal": runJob(job("duel|calico-kate|normal"), 0, 10),
+      "duel|bluffer|normal": runJob(job("duel|bluffer|normal"), 0, 10),
       "tables|3": runJob(job("tables|3"), 0, 10),
-      "tells|calico-kate|normal": runJob(job("tells|calico-kate|normal"), 0, 10),
+      "tells|bluffer|normal": runJob(job("tells|bluffer|normal"), 0, 10),
     };
     const text = summaryLines(results).join("\n");
     expect(text).toContain("DUELS");
-    expect(text).toContain("calico-kate");
+    expect(text).toContain("bluffer");
     expect(text).toContain("TABLE OF 3 BOTS");
     expect(text).toContain("TELLS");
   });
