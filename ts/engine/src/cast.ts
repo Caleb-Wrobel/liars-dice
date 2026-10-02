@@ -12,7 +12,7 @@ export const CAST: readonly Personality[] = [
     name: "Calico Kate",
     archetype: "The Bluffer",
     bio: "Makes big jumps and rarely lets you see her sweat. Always has a story, and loves telling it.",
-    habits: { bluff: [3, 5, 8], sandbag: [1, 2, 3], rearrange: 0.7 },
+    habits: { bluff: [3, 4, 6], sandbag: [1, 2, 3], rearrange: 0.7 },
   },
   {
     id: "straight-up-sam",
@@ -26,7 +26,7 @@ export const CAST: readonly Personality[] = [
     name: "Quiet Mabel",
     archetype: "The Sandbagger",
     bio: "Says less than she holds and lets you climb. Hard to tell what she is sitting on.",
-    habits: { bluff: [1, 2, 3], sandbag: [2, 3, 4, 6], rearrange: 0.2 },
+    habits: { bluff: [1, 2, 3], sandbag: [1, 2, 3, 4], rearrange: 0.2 },
   },
   {
     id: "lucky-lou",
@@ -40,7 +40,7 @@ export const CAST: readonly Personality[] = [
     name: "Deadeye Dan",
     archetype: "The Creeper",
     bio: "Inches up the ladder one rung at a time and never shows his hand.",
-    habits: { bluff: [1], sandbag: [0, 1, 2, 3], rearrange: 0.5 },
+    habits: { bluff: [1], sandbag: [1, 2, 3], rearrange: 0.5 },
   },
 ];
 
