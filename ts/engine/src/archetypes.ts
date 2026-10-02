@@ -57,23 +57,28 @@ export function drawArchetypes(count: number, rng: Rng = Math.random): Archetype
   return drawn;
 }
 
-/** How an archetype reads on the Meet page, each from 1 to 5 relative to the rest of the set. */
+/**
+ * How an archetype reads, each meter from 1 to 5 relative to the rest of the set.
+ *
+ * Naming: a meter is a gerund, the "-ing" form of a verb used as a noun (bluffing, withholding, gambling). It names
+ * something the bot does, not a trait it has. A meter added later follows the same pattern.
+ */
 export interface Weights {
   /** How big its bluffs are. */
   readonly bluffing: number;
   /** How much it understates its hand, claiming less than it holds. */
   readonly withholding: number;
   /** How much it gambles with the dice: claiming blind, skipping rolls, fidgeting. */
-  readonly recklessness: number;
+  readonly gambling: number;
 }
 
 const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
-/** The raw habit behind each weight. A higher number means more of that trait. */
+/** The raw habit behind each weight. A higher number means more of that behaviour. */
 const RAW: Record<keyof Weights, (p: Archetype) => number> = {
   bluffing: (p) => mean(p.habits.bluff ?? [2.4]),
   withholding: (p) => mean(p.habits.sandbag ?? [1.2]),
-  recklessness: ({ habits: h }) => (h.gambleRoll ?? 0) + 2 * (h.blindClaim ?? 0) + 0.3 * (h.rearrange ?? 0.5),
+  gambling: ({ habits: h }) => (h.gambleRoll ?? 0) + 2 * (h.blindClaim ?? 0) + 0.3 * (h.rearrange ?? 0.5),
 };
 
 /**
@@ -89,5 +94,5 @@ export function weightsOf(archetype: Archetype, among: readonly Archetype[] = AR
     const high = Math.max(...values);
     return high === low ? 3 : Math.round(1 + (4 * (raw(archetype) - low)) / (high - low));
   };
-  return { bluffing: weigh(RAW.bluffing), withholding: weigh(RAW.withholding), recklessness: weigh(RAW.recklessness) };
+  return { bluffing: weigh(RAW.bluffing), withholding: weigh(RAW.withholding), gambling: weigh(RAW.gambling) };
 }

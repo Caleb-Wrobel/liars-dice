@@ -24,12 +24,12 @@ character, and players learn the rest by watching them play. This page is for th
 
 ## The characters
 
-| Character | Title | Archetype | Bluffing | Withholding | Recklessness |
+| Character | Title | Archetype | Bluffing | Withholding | Gambling |
 |---|---|---|---|---|---|
 ${rows
   .map(
     ({ archetype, persona, w }) =>
-      `| ${persona.name} | ${persona.title} | ${archetype.name} | ${w.bluffing} / 5 | ${w.withholding} / 5 | ${w.recklessness} / 5 |`,
+      `| ${persona.name} | ${persona.title} | ${archetype.name} | ${w.bluffing} / 5 | ${w.withholding} / 5 | ${w.gambling} / 5 |`,
   )
   .join("\n")}
 
@@ -40,7 +40,7 @@ amount. Adding an archetype can change every score.
 
 - **Bluffing:** how big its bluffs are.
 - **Withholding:** how much it understates its hand, claiming less than it holds so you keep climbing.
-- **Recklessness:** how much it gambles with the dice, such as claiming without looking, skipping a roll or fidgeting.
+- **Gambling:** how much it gambles with the dice, such as claiming without looking, skipping a roll or fidgeting.
 
 The scores are computed from the habits the bot really plays with, so they cannot disagree with it. A character's
 habits never change how strong it is. Strength belongs to the bot level you pick on the setup screen.
