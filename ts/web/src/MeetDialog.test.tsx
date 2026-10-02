@@ -1,4 +1,4 @@
-import { ARCHETYPES } from "@liars-dice/engine";
+import { ARCHETYPES, seededRng, type ArchetypeId } from "@liars-dice/engine";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
@@ -35,6 +35,51 @@ describe.each(THEMES.map((t) => [t.id, t.meet] as const))("the %s Meet page", (t
   it("does not show how the characters play beyond their bios", () => {
     render(<MeetDialog theme={themeId} onClose={() => {}} />);
     expect(screen.queryByText(/bluffing|withholding|gambling/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("the order of the Meet page", () => {
+  /** The archetypes in the order a theme's cards appear, found by matching each card's name to its persona. */
+  const shownOrder = (theme: "saloon" | "casino" | "spooky", rng: () => number): ArchetypeId[] => {
+    const { unmount } = render(<MeetDialog theme={theme} onClose={() => {}} rng={rng} />);
+    const names = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    unmount();
+    return names.map((name) => ARCHETYPES.find(({ id }) => PERSONAS[theme][id].name === name)!.id);
+  };
+
+  it("shows every character exactly once, whatever the order", () => {
+    for (let seed = 0; seed < 10; seed++) {
+      const order = shownOrder("saloon", seededRng(seed));
+      expect([...order].sort()).toEqual(ARCHETYPES.map((a) => a.id).sort());
+    }
+  });
+
+  it("is not the archetypes' fixed order, so a card's position does not give its archetype away", () => {
+    const fixed = ARCHETYPES.map((a) => a.id).join();
+    const orders = Array.from({ length: 30 }, (_, seed) => shownOrder("saloon", seededRng(seed)).join());
+    expect(orders.some((o) => o !== fixed)).toBe(true);
+    expect(new Set(orders).size).toBeGreaterThan(10);
+  });
+
+  it("does not always lead with the same archetype, in any table style", () => {
+    for (const theme of ["saloon", "casino", "spooky"] as const) {
+      const firsts = new Set(Array.from({ length: 30 }, (_, seed) => shownOrder(theme, seededRng(seed))[0]));
+      expect(firsts.size, theme).toBeGreaterThan(2);
+    }
+  });
+
+  it("keeps the order steady while the page stays open, and may change the next time it opens", () => {
+    const rng = seededRng(3);
+    const { rerender } = render(<MeetDialog theme="saloon" onClose={() => {}} rng={rng} />);
+    const read = () => screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    const first = read();
+    rerender(<MeetDialog theme="saloon" onClose={() => {}} rng={rng} />);
+    expect(read()).toEqual(first);
+  });
+
+  it("shuffles by default, without being given a random source", () => {
+    render(<MeetDialog theme="saloon" onClose={() => {}} />);
+    expect(screen.getAllByRole("listitem")).toHaveLength(ARCHETYPES.length);
   });
 });
 

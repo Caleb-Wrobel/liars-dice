@@ -86,6 +86,25 @@ describe("drawArchetypes", () => {
     expect(new Set(Array.from({ length: 20 }, (_, seed) => ids(seed).join())).size).toBeGreaterThan(5);
   });
 
+  it("puts each archetype in each position about equally often, so order never gives one away", () => {
+    const rng = seededRng(33);
+    const counts = new Map<string, number>();
+    const draws = 5000;
+    for (let i = 0; i < draws; i++) {
+      drawArchetypes(ARCHETYPES.length, rng).forEach((a, position) => {
+        counts.set(`${a.id}@${position}`, (counts.get(`${a.id}@${position}`) ?? 0) + 1);
+      });
+    }
+    // Each of the 25 archetype and position pairs should land near 1000 times (a fifth of the draws).
+    for (const { id } of ARCHETYPES) {
+      for (let position = 0; position < ARCHETYPES.length; position++) {
+        const share = (counts.get(`${id}@${position}`) ?? 0) / draws;
+        expect(share, `${id} at position ${position}`).toBeGreaterThan(0.17);
+        expect(share, `${id} at position ${position}`).toBeLessThan(0.23);
+      }
+    }
+  });
+
   it("gives everyone a fair share of the seats", () => {
     const rng = seededRng(21);
     const seats = new Map<string, number>();
