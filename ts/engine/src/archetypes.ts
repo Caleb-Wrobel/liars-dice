@@ -3,8 +3,10 @@
  * of a level; none changes how readily the bot pulls the cup, so an archetype is not stronger or weaker than its level.
  * Themes dress them as personas (names, bios and so on) in the web app.
  *
- * One deliberate exception: the honest archetype stays about 1 to 3 points ahead at tables of 3 or more, because the
- * honest man being the best at liar's dice is the joke. Tuned by tables sweeps; the rest are within noise.
+ * Two small departures from neutral, both measured. The honest archetype stays 1 to 2 points ahead of a fair share at
+ * every table size, because the honest man being the best at liar's dice is the joke. The gambler runs about 1 point
+ * behind at tables of 2 or 3. The other three are within about 0.7 points of fair. Measured by the tables sweep at
+ * 40,000 games per job; see the balance snapshot in sim/README.md for the numbers, and re-run it after any change here.
  */
 import type { Archetype } from "./archetype.ts";
 import type { Rng } from "./rng.ts";

@@ -49,3 +49,26 @@ one tell that sweep cannot see.
 node sim/run-sweep.mjs --sweep tells --games 5000 --workers 7 --out tells.json
 node sim/summarize.mjs tells.json
 ```
+
+## Balance snapshot
+
+Does anyone have an edge at a table? The `tables` sweep at 40,000 games per job, each seat a random archetype at a random
+level, with basic and advanced rules mixed. The numbers are the win rate minus a fair share, in percentage points, and at
+this size the noise is about 0.5. Strength belongs to the level, so the gaps between archetypes are small next to the
+29 points between Stabby and Easy at a table of five.
+
+| Archetype | 2 bots | 3 bots | 4 bots | 5 bots |
+|---|---|---|---|---|
+| Honest | +0.9 | +1.7 | +1.0 | +1.0 |
+| Creeper | +0.9 | 0.0 | 0.0 | +0.1 |
+| Bluffer | -0.5 | +0.1 | -0.2 | -0.4 |
+| Sandbagger | +0.1 | -0.7 | -0.5 | -0.3 |
+| Gambler | -1.3 | -1.1 | -0.2 | -0.5 |
+
+The honest archetype's edge is deliberate. The gambler runs about a point behind at the smaller tables, and has been left as it
+is. Re-run after any change to `archetypes.ts` or the bots, since the numbers will move:
+
+```
+node sim/run-sweep.mjs --sweep tables --games 40000 --workers 7 --out tables.json
+node sim/summarize.mjs tables.json
+```
