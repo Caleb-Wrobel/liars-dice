@@ -41,6 +41,15 @@ describe("useSession", () => {
     expect(game.available()).toContain("claim");
   });
 
+  it("logs the roll as the cup in basic play and as the set in advanced play", () => {
+    const basicHook = renderHook(() => useSession(basic)).result;
+    act(() => basicHook.current.roll("hidden"));
+    expect(basicHook.current.log).toContain("Alice rolls the cup");
+    const advancedHook = renderHook(() => useSession(advanced)).result;
+    act(() => advancedHook.current.roll("hidden"));
+    expect(advancedHook.current.log).toContain("Alice rolls the hidden set");
+  });
+
   it("takes the compulsory peek for you when you roll under basic rules", () => {
     const { result } = renderHook(() => useSession(basic));
     const { game } = result.current;

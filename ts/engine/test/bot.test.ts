@@ -9,6 +9,7 @@ import {
   advancedRules,
   basicRules,
   parseRank,
+  rollPhrase,
   seededRng,
   type PullResult,
 } from "../src/index.ts";
@@ -167,5 +168,27 @@ describe("randomBotLevel", () => {
 
   it("works with the default random source", () => {
     expect(BOT_LEVEL_NAMES).toContain(randomBotLevel());
+  });
+});
+
+describe("how rolls read in a log", () => {
+  it("calls the only roll of basic play the cup, and names the set in advanced play", () => {
+    expect(rollPhrase(basicRules(), "hidden")).toBe("the cup");
+    expect(rollPhrase(advancedRules(), "hidden")).toBe("the hidden set");
+    expect(rollPhrase(advancedRules(), "visible")).toBe("the visible set");
+  });
+
+  it.each([
+    ["basic", basicRules(), "rolls the cup", "rolls the hidden set"],
+    ["advanced", advancedRules(), "rolls the hidden set", "rolls the cup"],
+  ])("makes a bot say it in %s play", (_name, rules, expected, unexpected) => {
+    const lines: string[] = [];
+    for (let seed = 0; seed < 10; seed++) {
+      const g = new Game(["A", "B"], rules, seededRng(seed));
+      const bots = [0, 1].map((i) => new Bot({ rng: seededRng(seed * 10 + i) }));
+      for (let turns = 0; turns < 400 && g.winner === null; turns++) bots[g.current]!.step(g, (text) => lines.push(text));
+    }
+    expect(lines).toContain(expected);
+    expect(lines).not.toContain(unexpected);
   });
 });
