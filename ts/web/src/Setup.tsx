@@ -139,28 +139,30 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
             </span>
           </label>
         </fieldset>
-        <label>
-          Table style
-          <select
-            value={theme}
-            onChange={(e) => {
-              const id = e.target.value as ThemeId;
-              setTheme(id);
-              applyTheme(id);
-              saveTheme(id);
-            }}
-          >
-            {THEMES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+        <div className="field-row">
+          <label>
+            Table style
+            <select
+              value={theme}
+              onChange={(e) => {
+                const id = e.target.value as ThemeId;
+                setTheme(id);
+                applyTheme(id);
+                saveTheme(id);
+              }}
+            >
+              {THEMES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="link meet-link" onClick={() => setShowMeet(true)}>
+            Meet the {THEMES.find((t) => t.id === theme)!.meet}
+          </button>
           <span className="hint">{THEMES.find((t) => t.id === theme)?.blurb}</span>
-        </label>
-        <button type="button" className="link meet-link" onClick={() => setShowMeet(true)}>
-          {THEMES.find((t) => t.id === theme)!.meet}
-        </button>
+        </div>
         <button type="submit" className="primary">
           Play
         </button>

@@ -57,16 +57,23 @@ describe("the Meet dialog", () => {
 describe("the Meet link on the setup form", () => {
   it("is named after the table style and follows it when the style changes", async () => {
     render(<Setup onStart={() => {}} />);
-    expect(screen.getByRole("button", { name: "Rogues' Gallery" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Meet the Rogues' Gallery" })).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText(/^Table style/), "casino");
-    expect(screen.getByRole("button", { name: "High Rollers" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Rogues' Gallery" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Meet the High Rollers" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Meet the Rogues' Gallery" })).not.toBeInTheDocument();
+  });
+
+  it("sits on the same row as the Table style control", () => {
+    render(<Setup onStart={() => {}} />);
+    const row = screen.getByLabelText(/^Table style/).closest(".field-row");
+    expect(row).not.toBeNull();
+    expect(row).toBe(screen.getByRole("button", { name: /^Meet the/ }).closest(".field-row"));
   });
 
   it("opens the current style's characters and returns focus to the link when closed", async () => {
     render(<Setup onStart={() => {}} />);
     await userEvent.selectOptions(screen.getByLabelText(/^Table style/), "casino");
-    const link = screen.getByRole("button", { name: "High Rollers" });
+    const link = screen.getByRole("button", { name: "Meet the High Rollers" });
     await userEvent.click(link);
     const dialog = screen.getByRole("dialog", { name: "High Rollers" });
     expect(within(dialog).getByRole("heading", { name: PERSONAS.casino.bluffer.name })).toBeInTheDocument();
