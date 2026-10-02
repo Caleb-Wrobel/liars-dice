@@ -8,7 +8,10 @@ const PIPS: Record<number, readonly (readonly [number, number])[]> = {
   6: [[28, 24], [72, 24], [28, 50], [72, 50], [28, 76], [72, 76]],
 };
 
-/** A die face, or an unseen die when `face` is null. */
+/**
+ * A die face, or an unseen die when `face` is null. `label` is only for screen readers: it names the die, such as
+ * "3" for "die 3, showing 5", so a die can still be told apart when it moves between trays.
+ */
 export function Die({ face, label, kicker = false }: { face: number | null; label: string; kicker?: boolean }) {
   return (
     <svg

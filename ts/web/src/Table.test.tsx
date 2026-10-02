@@ -39,6 +39,18 @@ describe("Table", () => {
     expect(follows(rollHidden, screen.getByRole("button", { name: "Peek at hidden dice" }))).toBe(true);
   });
 
+  it("names the dice by number and shows no letters under them", () => {
+    // The a to e letters were for the command line, where you type them. Here you move the dice themselves, so a
+    // letter names nothing. Screen readers still need to tell the dice apart as they move between trays.
+    const { container } = render(<Table config={basic} onQuit={() => {}} onRematch={() => {}} />);
+    expect(container.querySelector(".die-letter")).toBeNull();
+    const names = screen.getAllByRole("img", { name: /^die / }).map((die) => die.getAttribute("aria-label"));
+    expect(names).toEqual(["1", "2", "3", "4", "5"].map((n) => `die ${n}, unseen`));
+    for (const die of screen.getAllByRole("button", { name: /^die / })) {
+      expect(die.textContent, "no letter under the die").not.toMatch(/[a-e]/i);
+    }
+  });
+
   it("offers Peek straight away in advanced play", () => {
     render(<Table config={{ ...basic, advanced: true }} onQuit={() => {}} onRematch={() => {}} />);
     expect(screen.getByRole("button", { name: "Peek at hidden dice" })).toBeInTheDocument();
@@ -46,7 +58,7 @@ describe("Table", () => {
 
   it("doesn't let you move dice before the rearrange step", () => {
     render(<Table config={basic} onQuit={() => {}} onRematch={() => {}} />);
-    for (const die of screen.getAllByRole("button", { name: /^die [a-e]/ })) {
+    for (const die of screen.getAllByRole("button", { name: /^die [1-5]/ })) {
       expect(die).toBeDisabled();
     }
   });

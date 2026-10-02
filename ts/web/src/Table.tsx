@@ -18,7 +18,6 @@ import { PullDialog } from "./PullDialog.tsx";
 import { RulesDialog } from "./RulesDialog.tsx";
 import { HUMAN, PACES, useSession, type Config, type Pace, type Tray } from "./session.ts";
 
-const LABELS = "abcde";
 const PACE_LABELS: Record<Pace, string> = { fast: "Fast", normal: "Normal", slow: "Slow", step: "Step by step" };
 
 /** The fixed turn order, with the engine action each step stands for. */
@@ -57,10 +56,7 @@ function DraggableDie({
       {...attributes}
       {...listeners}
     >
-      <Die face={face} label={LABELS[index]!} />
-      <span className="die-letter" aria-hidden="true">
-        {LABELS[index]}
-      </span>
+      <Die face={face} label={String(index + 1)} />
     </button>
   );
 }
