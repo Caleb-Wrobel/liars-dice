@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BOT_LEVEL_NAMES } from "@liars-dice/engine";
+import { MeetDialog } from "./MeetDialog.tsx";
 import { RulesDialog } from "./RulesDialog.tsx";
 import { BOT_NAMES, type Config, type LevelChoice, type Pace } from "./session.ts";
 import { THEMES, applyTheme, loadTheme, saveTheme, type ThemeId } from "./theme.ts";
@@ -26,6 +27,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [paceChosen, setPaceChosen] = useState(false);
   const [theme, setTheme] = useState<ThemeId>(() => loadTheme());
   const [showRules, setShowRules] = useState(false);
+  const [showMeet, setShowMeet] = useState(false);
 
   return (
     <main className="setup">
@@ -37,6 +39,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
       </header>
       <p className="tagline">Pass the dice. Peer, roll, peek, claim. Bluff well.</p>
       {showRules && <RulesDialog onClose={() => setShowRules(false)} />}
+      {showMeet && <MeetDialog theme={theme} onClose={() => setShowMeet(false)} />}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -155,6 +158,9 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           </select>
           <span className="hint">{THEMES.find((t) => t.id === theme)?.blurb}</span>
         </label>
+        <button type="button" className="link meet-link" onClick={() => setShowMeet(true)}>
+          {THEMES.find((t) => t.id === theme)!.meet}
+        </button>
         <button type="submit" className="primary">
           Play
         </button>

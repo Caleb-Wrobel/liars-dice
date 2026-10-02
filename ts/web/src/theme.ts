@@ -1,7 +1,10 @@
-/** The skins the game can wear. Each one has a stylesheet in src/themes/ that sets the same tokens. */
+/**
+ * The skins the game can wear. Each one has a stylesheet in src/themes/ that sets the same tokens, and a cast
+ * of characters in src/personas/. `meet` is what its Meet page is called.
+ */
 export const THEMES = [
-  { id: "saloon", label: "Saloon", blurb: "Warm walnut, brass and leather." },
-  { id: "casino", label: "Casino", blurb: "Green felt and gold." },
+  { id: "saloon", label: "Saloon", blurb: "Warm walnut, brass and leather.", meet: "Rogues' Gallery" },
+  { id: "casino", label: "Casino", blurb: "Green felt and gold.", meet: "High Rollers" },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];
