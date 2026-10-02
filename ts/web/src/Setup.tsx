@@ -19,7 +19,11 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [advanced, setAdvanced] = useState(false);
   const [opponents, setOpponents] = useState(1);
   const [level, setLevel] = useState<LevelChoice>("normal");
-  const [pace, setPace] = useState<Pace>("normal");
+  const [characters, setCharacters] = useState(true);
+  // With characters, slow is the default so players can watch the table and get to know who they are up against.
+  // Once the player picks a pace themselves, ticking or unticking the box stops changing it.
+  const [pace, setPace] = useState<Pace>("slow");
+  const [paceChosen, setPaceChosen] = useState(false);
   const [theme, setTheme] = useState<ThemeId>(() => loadTheme());
   const [showRules, setShowRules] = useState(false);
 
@@ -36,17 +40,17 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onStart({ name: name.trim() || "Alice", lives, advanced, opponents, level, pace });
+          onStart({ name: name.trim() || "Alice", lives, advanced, opponents, level, pace, personas: characters, theme });
         }}
       >
         <label>
           Your name
           <input value={name} onChange={(e) => setName(e.target.value)} maxLength={16} />
         </label>
-        <div className="field-row">
+        <div className="field-row compact">
           <label>
             Lives
-            <select value={lives} onChange={(e) => setLives(Number(e.target.value))}>
+            <select className="digit" value={lives} onChange={(e) => setLives(Number(e.target.value))}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n}>
                   {n}
@@ -56,15 +60,32 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           </label>
           <label>
             Opponents
-            <select value={opponents} onChange={(e) => setOpponents(Number(e.target.value))}>
+            <select className="digit" value={opponents} onChange={(e) => setOpponents(Number(e.target.value))}>
               {BOT_NAMES.map((_, i) => (
                 <option key={i} value={i + 1}>
-                  {i + 1}: {BOT_NAMES.slice(0, i + 1).join(", ")}
+                  {i + 1}
                 </option>
               ))}
             </select>
           </label>
+          <label className="choice characters">
+            <input
+              type="checkbox"
+              checked={characters}
+              aria-describedby="characters-hint"
+              onChange={(e) => {
+                setCharacters(e.target.checked);
+                if (!paceChosen) setPace(e.target.checked ? "slow" : "normal");
+              }}
+            />
+            <span>Use Characters</span>
+          </label>
         </div>
+        <p id="characters-hint" className="hint">
+          {characters
+            ? "Your opponents are characters from this table, each with habits of their own."
+            : "Your opponents are plain bots at the level you pick."}
+        </p>
         <div className="field-row">
           <label>
             Bot level
@@ -82,7 +103,13 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           </label>
           <label>
             Bot pace
-            <select value={pace} onChange={(e) => setPace(e.target.value as Pace)}>
+            <select
+              value={pace}
+              onChange={(e) => {
+                setPace(e.target.value as Pace);
+                setPaceChosen(true);
+              }}
+            >
               <option value="fast">Fast</option>
               <option value="normal">Normal</option>
               <option value="slow">Slow, so you can watch</option>

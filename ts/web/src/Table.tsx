@@ -138,7 +138,7 @@ export function Table({
     <main className="table">
       <header className="scoreboard">
         {game.names.map((name, i) => (
-          <div key={name} className={`player${game.current === i && game.winner === null ? " active" : ""}`}>
+          <div key={i} className={`player${game.current === i && game.winner === null ? " active" : ""}`}>
             <span className="player-name">{name}</span>
             <span className="lives" role="img" aria-label={`${game.lives[i]} lives`}>
               {game.lives[i]! > 0

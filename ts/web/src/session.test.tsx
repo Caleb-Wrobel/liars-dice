@@ -1,6 +1,7 @@
 import { Step, parseRank } from "@liars-dice/engine";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { PERSONAS } from "./personas/index.ts";
 import { HUMAN, PACE_MS, useSession, type Config } from "./session.ts";
 
 const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1 };
@@ -225,5 +226,49 @@ describe("useSession", () => {
     expect(result.current.game.lives.reduce((a, b) => a + b, 0)).toBe(before - 1);
     act(() => result.current.dismissPull());
     expect(result.current.pulled).toBeNull();
+  });
+});
+
+describe("characters", () => {
+  const seated = (config: Config) => renderHook(() => useSession(config)).result.current.game.names.slice(1);
+  const nameSet = (theme: "saloon" | "casino") => new Set(Object.values(PERSONAS[theme]).map((p) => p.name));
+
+  it("names the bots from the table's cast instead of Bob and Carol", () => {
+    for (const theme of ["saloon", "casino"] as const) {
+      for (const opponents of [1, 3, 5]) {
+        const names = seated({ ...basic, opponents, personas: true, theme });
+        expect(names, `${theme} ${opponents}`).toHaveLength(opponents);
+        expect(new Set(names).size).toBe(opponents);
+        for (const name of names) expect(nameSet(theme).has(name), name).toBe(true);
+      }
+    }
+  });
+
+  it("seats the whole cast at a full table, and the same cast again for the same seed", () => {
+    const full = seated({ ...basic, opponents: 5, personas: true, theme: "saloon" });
+    expect([...full].sort()).toEqual([...nameSet("saloon")].sort());
+    const again = (seed: number) => seated({ ...basic, seed, opponents: 3, personas: true, theme: "casino" });
+    expect(again(7)).toEqual(again(7));
+    expect(new Set(Array.from({ length: 12 }, (_, seed) => again(seed).join())).size).toBeGreaterThan(3);
+  });
+
+  it("uses the default theme when none is given", () => {
+    const [name] = seated({ ...basic, personas: true });
+    expect(nameSet("saloon").has(name!)).toBe(true);
+  });
+
+  it("is off unless asked for, and then keeps today's plain bots exactly", () => {
+    expect(seated({ ...basic, opponents: 3 })).toEqual(["Bob", "Carol", "Dave"]);
+    expect(seated({ ...basic, opponents: 3, personas: false, theme: "casino" })).toEqual(["Bob", "Carol", "Dave"]);
+  });
+
+  it("lets a table of characters play at the level the player chose", () => {
+    vi.useFakeTimers();
+    const hook = renderHook(() => useSession({ ...advanced, opponents: 2, personas: true, theme: "saloon", level: "stabby" }));
+    expect(hook.result.current.botLevels).toEqual(["stabby", "stabby"]);
+    act(() => hook.result.current.claim(parseRank("none 1")));
+    letBotsPlay(hook);
+    const bot = hook.result.current.game.names[1]!;
+    expect(hook.result.current.log.some((line) => line.startsWith(`${bot} `))).toBe(true);
   });
 });

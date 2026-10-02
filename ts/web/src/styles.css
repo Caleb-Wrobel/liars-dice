@@ -57,6 +57,10 @@ label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
 .field-row label { min-width: 0; } /* let a select shrink to its column */
 .field-row select { width: 100%; }
 .field-row .hint { grid-column: 1 / -1; }
+/* Lives, Opponents and the Characters box sit in one row, the selects only as wide as a digit, and wrap when it is tight. */
+.field-row.compact { display: flex; flex-wrap: wrap; align-items: end; }
+.field-row.compact select.digit { width: auto; }
+.field-row.compact .characters { min-height: 44px; align-items: center; }
 @media (max-width: 290px) { .field-row { grid-template-columns: 1fr; } } /* too narrow even for two short columns */
 fieldset { border: 2px solid var(--surface-edge); border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
 legend { color: var(--muted); padding: 0 6px; }
