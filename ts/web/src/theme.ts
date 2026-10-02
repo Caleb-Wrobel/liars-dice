@@ -5,6 +5,7 @@
 export const THEMES = [
   { id: "saloon", label: "Saloon", blurb: "Warm walnut, brass and leather.", meet: "Rogues' Gallery" },
   { id: "casino", label: "Casino", blurb: "Green felt and gold.", meet: "High Rollers" },
+  { id: "spooky", label: "Spooky", blurb: "Candlelight, bone and a pumpkin for every life.", meet: "Graveyard Shift" },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];
