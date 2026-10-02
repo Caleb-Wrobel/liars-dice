@@ -19,7 +19,7 @@ export const CAST: readonly Personality[] = [
     name: "Straight-Up Sam",
     archetype: "The Honest Man",
     bio: "Claims what he holds. When he can't beat you he edges up one rung, and it shows.",
-    habits: { bluff: [1, 1, 2, 3], sandbag: [0, 1, 2], rearrange: 0.3 },
+    habits: { bluff: [1, 1, 2, 3], sandbag: [0, 1, 2], rearrange: 0.5 },
   },
   {
     id: "quiet-mabel",
