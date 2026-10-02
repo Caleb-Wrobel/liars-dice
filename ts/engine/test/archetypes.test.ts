@@ -96,7 +96,7 @@ describe("drawArchetypes", () => {
 });
 
 describe("weightsOf", () => {
-  const KEYS = ["bluffing", "candor", "recklessness"] as const;
+  const KEYS = ["bluffing", "withholding", "gambling"] as const;
 
   it("scores every archetype from 1 to 5", () => {
     for (const p of ARCHETYPES) {
@@ -119,21 +119,21 @@ describe("weightsOf", () => {
     expect(w("bluffer").bluffing).toBe(5);
     expect(w("honest").bluffing).toBeLessThanOrEqual(2);
     expect(w("creeper").bluffing).toBe(1);
-    expect(w("honest").candor).toBe(5);
-    expect(w("sandbagger").candor).toBe(1);
-    expect(w("gambler").recklessness).toBe(5);
-    expect(w("sandbagger").recklessness).toBeLessThanOrEqual(2);
+    expect(w("honest").withholding).toBe(1);
+    expect(w("sandbagger").withholding).toBe(5);
+    expect(w("gambler").gambling).toBe(5);
+    expect(w("sandbagger").gambling).toBeLessThanOrEqual(2);
   });
 
   it("rises with the habit that drives it", () => {
     const make = (habits: Archetype["habits"]): Archetype => ({ id: "x", name: "X", brief: "", habits });
     expect(weightsOf(make({ bluff: [8] })).bluffing).toBeGreaterThan(weightsOf(make({ bluff: [1] })).bluffing);
-    expect(weightsOf(make({ sandbag: [0] })).candor).toBeGreaterThan(weightsOf(make({ sandbag: [6] })).candor);
-    expect(weightsOf(make({ blindClaim: 1 })).recklessness).toBeGreaterThan(weightsOf(make({})).recklessness);
+    expect(weightsOf(make({ sandbag: [6] })).withholding).toBeGreaterThan(weightsOf(make({ sandbag: [0] })).withholding);
+    expect(weightsOf(make({ blindClaim: 1 })).gambling).toBeGreaterThan(weightsOf(make({})).gambling);
   });
 
   it("scores an archetype that is alone against itself as middling", () => {
     const only = byId("bluffer");
-    expect(weightsOf(only, [only])).toEqual({ bluffing: 3, candor: 3, recklessness: 3 });
+    expect(weightsOf(only, [only])).toEqual({ bluffing: 3, withholding: 3, gambling: 3 });
   });
 });
