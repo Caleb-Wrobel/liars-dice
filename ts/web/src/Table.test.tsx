@@ -57,7 +57,7 @@ describe("Table", () => {
   });
 
   it("names the dice by number and shows no letters under them", () => {
-    // The a to e letters were for the command line, where you type them. Here you move the dice themselves, so a
+    // The a to e letters were for the old command-line version, where you type them. Here you move the dice themselves, so a
     // letter names nothing. Screen readers still need to tell the dice apart as they move between trays.
     const { container } = render(<Table config={basic} onQuit={() => {}} onRematch={() => {}} />);
     expect(container.querySelector(".die-letter")).toBeNull();
