@@ -102,7 +102,8 @@ legend { color: var(--muted); padding: 0 6px; }
 .trays { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
 .tray {
   border: 3px solid var(--tray-edge); border-radius: var(--radius); padding: 10px;
-  min-height: 130px; display: grid; align-content: start; gap: 8px;
+  min-height: 104px; /* the title and one die, so an empty tray is still big enough to drop a die on */
+  display: grid; align-content: start; gap: 8px;
 }
 .tray-visible { background: var(--tray-a); }
 .tray-hidden { background: var(--tray-b); }
@@ -181,7 +182,6 @@ legend { color: var(--muted); padding: 0 6px; }
 @media (max-width: 480px) {
   /* Stack the trays so all five dice fit on one row. */
   .trays { grid-template-columns: 1fr; gap: 8px; }
-  .tray { min-height: 96px; } /* keep an empty tray big enough to drop a die on */
   .die-button { width: 48px; }
   .die { width: 48px; height: 48px; }
 }
