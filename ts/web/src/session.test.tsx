@@ -1,6 +1,7 @@
 import { Step, parseRank } from "@liars-dice/engine";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { PERSONAS } from "./personas/index.ts";
 import { HUMAN, PACE_MS, useSession, type Config } from "./session.ts";
 
 const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1 };
@@ -24,26 +25,48 @@ function afterBotsAnswer(config: Config) {
   vi.useFakeTimers();
   const hook = renderHook(() => useSession(config));
   const { result } = hook;
-  if (!config.advanced) {
-    act(() => result.current.roll("hidden"));
-    act(() => result.current.peek());
-  }
+  if (!config.advanced) act(() => result.current.roll("hidden")); // basic rules: the roll takes the peek
   act(() => result.current.claim(parseRank("none 1")));
   letBotsPlay(hook);
   return hook;
 }
 
 describe("useSession", () => {
-  it("opens at the roll step, and basic rules lock claiming until roll and peek", () => {
+  it("opens at the roll step, and basic rules lock claiming until you roll", () => {
     const { result } = renderHook(() => useSession(basic));
     const { game } = result.current;
     expect(game.current).toBe(HUMAN);
     expect(game.step).toBe(Step.Roll);
     expect(game.available()).not.toContain("claim");
     act(() => result.current.roll("hidden"));
-    expect(game.available()).not.toContain("claim");
-    act(() => result.current.peek());
     expect(game.available()).toContain("claim");
+  });
+
+  it("logs the roll as the cup in basic play and as the set in advanced play", () => {
+    const basicHook = renderHook(() => useSession(basic)).result;
+    act(() => basicHook.current.roll("hidden"));
+    expect(basicHook.current.log).toContain("Alice rolls the cup");
+    const advancedHook = renderHook(() => useSession(advanced)).result;
+    act(() => advancedHook.current.roll("hidden"));
+    expect(advancedHook.current.log).toContain("Alice rolls the hidden set");
+  });
+
+  it("takes the compulsory peek for you when you roll under basic rules", () => {
+    const { result } = renderHook(() => useSession(basic));
+    const { game } = result.current;
+    act(() => result.current.roll("hidden"));
+    expect(game.peeked).toBe(true);
+    expect(game.known.size).toBe(5); // you have seen every die
+  });
+
+  it("leaves the peek to you under advanced rules, where it is optional", () => {
+    const { result } = renderHook(() => useSession(advanced));
+    const { game } = result.current;
+    act(() => result.current.roll("hidden"));
+    expect(game.peeked).toBe(false);
+    expect(game.available()).toContain("peek");
+    act(() => result.current.peek());
+    expect(game.peeked).toBe(true);
   });
 
   it("lets advanced rules claim blind, without rolling or peeking", () => {
@@ -225,5 +248,49 @@ describe("useSession", () => {
     expect(result.current.game.lives.reduce((a, b) => a + b, 0)).toBe(before - 1);
     act(() => result.current.dismissPull());
     expect(result.current.pulled).toBeNull();
+  });
+});
+
+describe("characters", () => {
+  const seated = (config: Config) => renderHook(() => useSession(config)).result.current.game.names.slice(1);
+  const nameSet = (theme: "saloon" | "casino") => new Set(Object.values(PERSONAS[theme]).map((p) => p.name));
+
+  it("names the bots from the table's cast instead of Bob and Carol", () => {
+    for (const theme of ["saloon", "casino"] as const) {
+      for (const opponents of [1, 3, 5]) {
+        const names = seated({ ...basic, opponents, personas: true, theme });
+        expect(names, `${theme} ${opponents}`).toHaveLength(opponents);
+        expect(new Set(names).size).toBe(opponents);
+        for (const name of names) expect(nameSet(theme).has(name), name).toBe(true);
+      }
+    }
+  });
+
+  it("seats the whole cast at a full table, and the same cast again for the same seed", () => {
+    const full = seated({ ...basic, opponents: 5, personas: true, theme: "saloon" });
+    expect([...full].sort()).toEqual([...nameSet("saloon")].sort());
+    const again = (seed: number) => seated({ ...basic, seed, opponents: 3, personas: true, theme: "casino" });
+    expect(again(7)).toEqual(again(7));
+    expect(new Set(Array.from({ length: 12 }, (_, seed) => again(seed).join())).size).toBeGreaterThan(3);
+  });
+
+  it("uses the default theme when none is given", () => {
+    const [name] = seated({ ...basic, personas: true });
+    expect(nameSet("saloon").has(name!)).toBe(true);
+  });
+
+  it("is off unless asked for, and then keeps today's plain bots exactly", () => {
+    expect(seated({ ...basic, opponents: 3 })).toEqual(["Bob", "Carol", "Dave"]);
+    expect(seated({ ...basic, opponents: 3, personas: false, theme: "casino" })).toEqual(["Bob", "Carol", "Dave"]);
+  });
+
+  it("lets a table of characters play at the level the player chose", () => {
+    vi.useFakeTimers();
+    const hook = renderHook(() => useSession({ ...advanced, opponents: 2, personas: true, theme: "saloon", level: "stabby" }));
+    expect(hook.result.current.botLevels).toEqual(["stabby", "stabby"]);
+    act(() => hook.result.current.claim(parseRank("none 1")));
+    letBotsPlay(hook);
+    const bot = hook.result.current.game.names[1]!;
+    expect(hook.result.current.log.some((line) => line.startsWith(`${bot} `))).toBe(true);
   });
 });

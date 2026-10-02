@@ -1,8 +1,6 @@
 import { formatRank, type BotLevel, type PullResult } from "@liars-dice/engine";
 import { Die } from "./Die.tsx";
 
-const LABELS = "abcde";
-
 /** Shown after a pull: everything is revealed and a life is lost. */
 export function PullDialog({
   result,
@@ -30,7 +28,7 @@ export function PullDialog({
         <h2 id="pull-title">{name(result.puller)} lifts the cup</h2>
         <div className="dice-row">
           {result.dice.map((face, i) => (
-            <Die key={i} face={face} label={LABELS[i]!} />
+            <Die key={i} face={face} label={String(i + 1)} />
           ))}
         </div>
         <p>

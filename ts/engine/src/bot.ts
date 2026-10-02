@@ -5,10 +5,12 @@
  * and its own dice once it has peered or peeked. It never reads hidden dice it
  * hasn't seen.
  */
-import { Game, Step, type PullResult } from "./game.ts";
+import { Game, Step, rollPhrase, type PullResult } from "./game.ts";
+import type { Archetype, Habits } from "./archetype.ts";
 import {
   FACES,
   LADDER,
+  NIL,
   NUM_DICE,
   compareRanks,
   evaluate,
@@ -62,6 +64,8 @@ export interface BotOptions {
   readonly level?: BotLevel;
   /** Overrides the level's pull threshold. */
   readonly pullBelow?: number;
+  /** Habits that give the bot character, without changing how strong it is. */
+  readonly archetype?: Archetype;
 }
 
 /** What one step of a bot's turn did. */
@@ -74,13 +78,22 @@ export class Bot {
   readonly rng: Rng;
   readonly level: BotLevel;
   readonly style: BotStyle;
+  readonly archetype: Archetype | null;
+  private readonly habits: Habits;
   /** Where the bot is in its current turn. */
   private phase: "start" | "arrange" | "roll" | "peek" | "claim" = "start";
 
-  constructor({ rng = Math.random, level = "normal", pullBelow }: BotOptions = {}) {
+  constructor({ rng = Math.random, level = "normal", pullBelow, archetype }: BotOptions = {}) {
     this.rng = rng;
     this.level = level;
-    this.style = pullBelow === undefined ? BOT_LEVELS[level] : { ...BOT_LEVELS[level], pullBelow };
+    this.archetype = archetype ?? null;
+    this.habits = archetype?.habits ?? {};
+    const base: BotStyle = pullBelow === undefined ? BOT_LEVELS[level] : { ...BOT_LEVELS[level], pullBelow };
+    this.style = {
+      ...base,
+      ...(this.habits.bluff ? { bluff: this.habits.bluff } : {}),
+      ...(this.habits.sandbag ? { sandbag: this.habits.sandbag } : {}),
+    };
   }
 
   /** Estimate how likely the standing claim is, given only the visible dice. */
@@ -134,7 +147,7 @@ export class Bot {
         }
         case "arrange": {
           this.phase = "roll";
-          if (game.available().includes("rearrange") && this.rng() < 0.5) {
+          if (game.available().includes("rearrange") && this.rng() < (this.habits.rearrange ?? 0.5)) {
             game.rearrange(this.sample(ALL_DICE, this.rng() < 0.5 ? 1 : 2));
             say(`rearranges the sets, showing ${game.visibleFaces.join(" ")}`);
             return { kind: "acted" };
@@ -147,9 +160,15 @@ export class Bot {
             game.rules.rollOptional &&
             game.known.size === NUM_DICE &&
             compareRanks(evaluate(game.dice), game.claim) > 0;
-          if (game.available().includes("roll") && !keepHand) {
+          // A gambler sometimes keeps the dice it has even though they won't beat the claim.
+          const gamble =
+            !keepHand &&
+            game.rules.rollOptional &&
+            this.habits.gambleRoll !== undefined &&
+            this.rng() < this.habits.gambleRoll;
+          if (game.available().includes("roll") && !keepHand && !gamble) {
             game.roll("hidden");
-            say("rolls the hidden set");
+            say(`rolls ${rollPhrase(game.rules, "hidden")}`);
           } else {
             say("keeps the dice as they are");
           }
@@ -157,7 +176,13 @@ export class Bot {
         }
         case "peek": {
           this.phase = "claim";
-          if (game.available().includes("peek")) game.peek();
+          // A reckless bot may claim without looking. Nobody opens blind: there is no claim to size up.
+          const blind =
+            game.rules.peekOptional &&
+            this.habits.blindClaim !== undefined &&
+            !sameRank(game.claim, NIL) &&
+            this.rng() < this.habits.blindClaim;
+          if (!blind && game.available().includes("peek")) game.peek();
           break;
         }
         case "claim": {
@@ -171,12 +196,16 @@ export class Bot {
     }
   }
 
-  /** Claim near the real rank if it beats the standing claim, else bluff upward. */
+  /**
+   * Claim near the real rank if the bot can see its dice and they beat the standing claim, else
+   * bluff upward. A bot that has not looked at its dice never uses them.
+   */
   chooseClaim(game: Game): Rank {
     const standing = LADDER.findIndex((r) => sameRank(r, game.claim)); // -1 for nil
-    const actual = LADDER.findIndex((r) => sameRank(r, evaluate(game.dice)));
+    const knowsDice = game.known.size === NUM_DICE;
+    const actual = knowsDice ? LADDER.findIndex((r) => sameRank(r, evaluate(game.dice))) : -1;
     const target =
-      actual > standing
+      knowsDice && actual > standing
         ? Math.max(standing + 1, actual - this.pick(this.style.sandbag))
         : Math.min(standing + this.pick(this.style.bluff), LADDER.length - 1);
     return LADDER[target]!;

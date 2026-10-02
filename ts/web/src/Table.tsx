@@ -18,7 +18,6 @@ import { PullDialog } from "./PullDialog.tsx";
 import { RulesDialog } from "./RulesDialog.tsx";
 import { HUMAN, PACES, useSession, type Config, type Pace, type Tray } from "./session.ts";
 
-const LABELS = "abcde";
 const PACE_LABELS: Record<Pace, string> = { fast: "Fast", normal: "Normal", slow: "Slow", step: "Step by step" };
 
 /** The fixed turn order, with the engine action each step stands for. */
@@ -57,10 +56,7 @@ function DraggableDie({
       {...attributes}
       {...listeners}
     >
-      <Die face={face} label={LABELS[index]!} />
-      <span className="die-letter" aria-hidden="true">
-        {LABELS[index]}
-      </span>
+      <Die face={face} label={String(index + 1)} />
     </button>
   );
 }
@@ -131,14 +127,14 @@ export function Table({
   const rollable = game.rules.rollable;
   const lockHint =
     !game.rolled && !game.rules.rollOptional
-      ? "Roll the hidden dice, then peek, before you claim."
+      ? "Roll the dice to see them before you claim."
       : "Peek at the hidden dice before you claim.";
 
   return (
     <main className="table">
       <header className="scoreboard">
         {game.names.map((name, i) => (
-          <div key={name} className={`player${game.current === i && game.winner === null ? " active" : ""}`}>
+          <div key={i} className={`player${game.current === i && game.winner === null ? " active" : ""}`}>
             <span className="player-name">{name}</span>
             <span className="lives" role="img" aria-label={`${game.lives[i]} lives`}>
               {game.lives[i]! > 0
@@ -241,21 +237,23 @@ export function Table({
       {myTurn && game.step !== Step.Decide && (
         <section className="actions">
           <div className="roll-buttons">
+            {/* The same order as the trays above: visible first, then under the cup. Only advanced play has both rolls, so
+                basic play just says Roll dice. */}
+            {available.includes("roll") && rollable.includes("visible") && (
+              <button type="button" disabled={s.visibleSet.size === 0} onClick={() => s.roll("visible")}>
+                Roll visible dice
+              </button>
+            )}
             {available.includes("roll") && rollable.includes("hidden") && (
               <button
                 type="button"
                 disabled={NUM_DICE - s.visibleSet.size === 0}
                 onClick={() => s.roll("hidden")}
               >
-                Roll hidden dice
+                {rollable.includes("visible") ? "Roll hidden dice" : "Roll dice"}
               </button>
             )}
-            {available.includes("roll") && rollable.includes("visible") && (
-              <button type="button" disabled={s.visibleSet.size === 0} onClick={() => s.roll("visible")}>
-                Roll visible dice
-              </button>
-            )}
-            {available.includes("peek") && (
+            {available.includes("peek") && game.rules.peekOptional && (
               <button type="button" onClick={s.peek}>
                 Peek at hidden dice
               </button>

@@ -1,29 +1,14 @@
 import { CATEGORY_LABELS } from "@liars-dice/engine";
-import { useEffect, useRef } from "react";
 import { Die } from "./Die.tsx";
 import { RANK_EXAMPLES, exampleName } from "./rules/content.ts";
+import { useDialog } from "./useDialog.ts";
 
 /**
  * A quick reference for the rules, in the order a player needs them. `advanced`, when given, marks
  * which version of the rules the current game uses.
  */
 export function RulesDialog({ onClose, advanced }: { onClose: () => void; advanced?: boolean }) {
-  const closeButton = useRef<HTMLButtonElement>(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    closeButton.current?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCloseRef.current();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      opener?.focus?.(); // put focus back where it was
-    };
-  }, []);
+  const closeButton = useDialog(onClose);
 
   const yours = (isAdvanced: boolean) => (advanced === isAdvanced ? " (your game)" : "");
 

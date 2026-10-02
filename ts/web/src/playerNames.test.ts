@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PERSONAS } from "./personas/index.ts";
 import { PLAYER_NAMES, pickOne, pickPlayerName } from "./playerNames.ts";
 import { BOT_NAMES } from "./session.ts";
 import { THEMES } from "./theme.ts";
@@ -19,6 +20,13 @@ describe("the player name pools", () => {
         expect(name.length, `${id}: ${name}`).toBeLessThanOrEqual(16); // the input's maxLength
         expect(BOT_NAMES as readonly string[], `${id}: ${name} would clash with a plain bot`).not.toContain(name);
       }
+    }
+  });
+
+  it("never offers a name that a character of any table style already has", () => {
+    const characters = new Set(THEMES.flatMap((t) => Object.values(PERSONAS[t.id]).map((p) => p.name)));
+    for (const { id } of THEMES) {
+      for (const name of PLAYER_NAMES[id]) expect(characters.has(name), `${id}: ${name} is also a character`).toBe(false);
     }
   });
 

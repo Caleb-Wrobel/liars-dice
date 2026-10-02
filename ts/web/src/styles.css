@@ -57,6 +57,10 @@ label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
 .field-row label { min-width: 0; } /* let a select shrink to its column */
 .field-row select { width: 100%; }
 .field-row .hint { grid-column: 1 / -1; }
+/* Lives, Opponents and the Characters box sit in one row, the selects only as wide as a digit, and wrap when it is tight. */
+.field-row.compact { display: flex; flex-wrap: wrap; align-items: end; }
+.field-row.compact select.digit { width: auto; }
+.field-row.compact .characters { min-height: 44px; align-items: center; }
 @media (max-width: 290px) { .field-row { grid-template-columns: 1fr; } } /* too narrow even for two short columns */
 fieldset { border: 2px solid var(--surface-edge); border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
 legend { color: var(--muted); padding: 0 6px; }
@@ -102,7 +106,8 @@ legend { color: var(--muted); padding: 0 6px; }
 .trays { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
 .tray {
   border: 3px solid var(--tray-edge); border-radius: var(--radius); padding: 10px;
-  min-height: 130px; display: grid; align-content: start; gap: 8px;
+  min-height: 104px; /* the title and one die, so an empty tray is still big enough to drop a die on */
+  display: grid; align-content: start; gap: 8px;
 }
 .tray-visible { background: var(--tray-a); }
 .tray-hidden { background: var(--tray-b); }
@@ -111,7 +116,7 @@ legend { color: var(--muted); padding: 0 6px; }
 .tray-dice { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .die-button {
-  padding: 0; min-height: 0; width: 52px; border: none; background: none; display: grid; gap: 2px; justify-items: center;
+  padding: 0; min-height: 0; width: 52px; border: none; background: none; display: grid; justify-items: center;
   touch-action: none; /* lets a finger drag the die instead of scrolling the page */
 }
 .die-button:disabled { opacity: 1; cursor: default; }
@@ -122,7 +127,6 @@ legend { color: var(--muted); padding: 0 6px; }
 .die-pip { fill: var(--die-pip); }
 .die-unseen .die-body { fill: var(--unseen-body); stroke: var(--unseen-edge); }
 .die-mark { fill: var(--unseen-mark); font-size: 52px; font-weight: 700; }
-.die-letter { font-size: 0.8rem; color: var(--tray-title); line-height: 1; }
 
 /* Step rail */
 .step-rail { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; font-size: 0.8rem; }
@@ -167,6 +171,19 @@ legend { color: var(--muted); padding: 0 6px; }
 .rank-dice .die { width: 32px; height: 32px; }
 .rank-example { color: var(--muted); font-size: 0.9rem; }
 
+/* Meet dialog: a card per character, with initials in a circle */
+.meet-dialog { max-width: 560px; max-height: 88dvh; overflow-y: auto; align-content: start; scrollbar-color: var(--surface-edge) var(--surface); }
+.meet-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--gap); }
+.persona { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+.persona h3 { font-size: 1.05rem; color: var(--accent); margin: 0; }
+.persona p { margin: 2px 0 0; }
+.persona .persona-title { color: var(--muted); font-size: 0.9rem; }
+.initials {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  border: 2px solid var(--control-edge); background: var(--control-bg); color: var(--control-ink); font-weight: 700;
+}
+.meet-link { justify-self: start; align-self: end; min-height: 44px; padding-inline: 0; text-align: left; } /* sits level with the Table style select */
+
 /* Pull dialog */
 .backdrop { position: fixed; inset: 0; background: #000b; display: grid; place-items: center; padding: 16px; }
 .dialog {
@@ -182,7 +199,6 @@ legend { color: var(--muted); padding: 0 6px; }
 @media (max-width: 480px) {
   /* Stack the trays so all five dice fit on one row. */
   .trays { grid-template-columns: 1fr; gap: 8px; }
-  .tray { min-height: 96px; } /* keep an empty tray big enough to drop a die on */
   .die-button { width: 48px; }
   .die { width: 48px; height: 48px; }
 }
