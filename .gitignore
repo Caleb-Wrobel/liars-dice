@@ -19,3 +19,7 @@ dist/
 # import from src, so they are ignored by name instead.
 /ts/web/preview*.html
 /ts/web/src/_preview*.tsx
+
+# Raw results from simulation sweeps
+ts/engine/results*.json
+ts/engine/sim/results/
