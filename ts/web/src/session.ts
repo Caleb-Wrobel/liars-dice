@@ -153,6 +153,9 @@ export function useSession(config: Config) {
         commitDraft();
         game.roll(which);
         say(`${config.name} rolls the ${which} set`);
+        // Under basic rules the peek is compulsory straight after the roll, so there is nothing to choose and the roll
+        // takes it. Advanced rules make it optional, so it stays a separate action.
+        if (!game.rules.peekOptional) game.peek();
       }),
     peek: () =>
       act(() => {

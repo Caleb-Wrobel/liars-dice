@@ -127,7 +127,7 @@ export function Table({
   const rollable = game.rules.rollable;
   const lockHint =
     !game.rolled && !game.rules.rollOptional
-      ? "Roll the hidden dice, then peek, before you claim."
+      ? "Roll the dice to see them before you claim."
       : "Peek at the hidden dice before you claim.";
 
   return (
@@ -253,7 +253,7 @@ export function Table({
                 {rollable.includes("visible") ? "Roll hidden dice" : "Roll dice"}
               </button>
             )}
-            {available.includes("peek") && (
+            {available.includes("peek") && game.rules.peekOptional && (
               <button type="button" onClick={s.peek}>
                 Peek at hidden dice
               </button>

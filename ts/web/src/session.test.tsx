@@ -24,26 +24,39 @@ function afterBotsAnswer(config: Config) {
   vi.useFakeTimers();
   const hook = renderHook(() => useSession(config));
   const { result } = hook;
-  if (!config.advanced) {
-    act(() => result.current.roll("hidden"));
-    act(() => result.current.peek());
-  }
+  if (!config.advanced) act(() => result.current.roll("hidden")); // basic rules: the roll takes the peek
   act(() => result.current.claim(parseRank("none 1")));
   letBotsPlay(hook);
   return hook;
 }
 
 describe("useSession", () => {
-  it("opens at the roll step, and basic rules lock claiming until roll and peek", () => {
+  it("opens at the roll step, and basic rules lock claiming until you roll", () => {
     const { result } = renderHook(() => useSession(basic));
     const { game } = result.current;
     expect(game.current).toBe(HUMAN);
     expect(game.step).toBe(Step.Roll);
     expect(game.available()).not.toContain("claim");
     act(() => result.current.roll("hidden"));
-    expect(game.available()).not.toContain("claim");
-    act(() => result.current.peek());
     expect(game.available()).toContain("claim");
+  });
+
+  it("takes the compulsory peek for you when you roll under basic rules", () => {
+    const { result } = renderHook(() => useSession(basic));
+    const { game } = result.current;
+    act(() => result.current.roll("hidden"));
+    expect(game.peeked).toBe(true);
+    expect(game.known.size).toBe(5); // you have seen every die
+  });
+
+  it("leaves the peek to you under advanced rules, where it is optional", () => {
+    const { result } = renderHook(() => useSession(advanced));
+    const { game } = result.current;
+    act(() => result.current.roll("hidden"));
+    expect(game.peeked).toBe(false);
+    expect(game.available()).toContain("peek");
+    act(() => result.current.peek());
+    expect(game.peeked).toBe(true);
   });
 
   it("lets advanced rules claim blind, without rolling or peeking", () => {
