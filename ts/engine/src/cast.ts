@@ -12,14 +12,14 @@ export const CAST: readonly Personality[] = [
     name: "Calico Kate",
     archetype: "The Bluffer",
     bio: "Makes big jumps and rarely lets you see her sweat. Always has a story, and loves telling it.",
-    habits: { bluff: [2, 3, 5, 6], sandbag: [1, 2, 3], rearrange: 0.7 },
+    habits: { bluff: [2, 3, 5, 6], sandbag: [0, 1, 2, 3], rearrange: 0.7 },
   },
   {
     id: "straight-up-sam",
     name: "Straight-Up Sam",
     archetype: "The Honest Man",
     bio: "Claims what he holds. When he can't beat you he edges up one rung, and it shows.",
-    habits: { bluff: [1, 1, 2, 3], sandbag: [0, 1, 2], rearrange: 0.5 },
+    habits: { bluff: [1, 1, 2, 3], sandbag: [0, 1, 1, 2, 3], rearrange: 0.3 },
   },
   {
     id: "quiet-mabel",
