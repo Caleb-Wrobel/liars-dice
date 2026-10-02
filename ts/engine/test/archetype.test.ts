@@ -8,15 +8,14 @@ import {
   basicRules,
   sameRank,
   seededRng,
-  type Personality,
-  type PersonalityHabits,
+  type Archetype,
+  type Habits,
 } from "../src/index.ts";
 
-const persona = (habits: PersonalityHabits): Personality => ({
+const archetypeWith = (habits: Habits): Archetype => ({
   id: "test",
   name: "Test",
-  archetype: "The Test",
-  bio: "",
+  brief: "",
   habits,
 });
 
@@ -49,24 +48,24 @@ function play(advanced: boolean, makeBots: (seed: number) => [Bot, Bot], games =
   return turns;
 }
 
-const botsWith = (personality?: Personality) => (seed: number): [Bot, Bot] => [
-  new Bot({ rng: seededRng(seed * 2 + 1), personality }),
-  new Bot({ rng: seededRng(seed * 2 + 2), personality }),
+const botsWith = (archetype?: Archetype) => (seed: number): [Bot, Bot] => [
+  new Bot({ rng: seededRng(seed * 2 + 1), archetype }),
+  new Bot({ rng: seededRng(seed * 2 + 2), archetype }),
 ];
 
 const said = (turn: Turn, start: string) => turn.lines.some((line) => line.startsWith(start));
 
-describe("personality habits", () => {
+describe("archetype habits", () => {
   it("do nothing when empty, so a bot plays exactly as it did without one", () => {
     for (const advanced of [false, true]) {
       const plain = play(advanced, botsWith());
-      const empty = play(advanced, botsWith(persona({})));
+      const empty = play(advanced, botsWith(archetypeWith({})));
       expect(empty).toEqual(plain);
     }
   });
 
   it("leave the level's strength settings alone", () => {
-    const bot = new Bot({ level: "stabby", personality: persona({ bluff: [1], sandbag: [0], rearrange: 0 }) });
+    const bot = new Bot({ level: "stabby", archetype: archetypeWith({ bluff: [1], sandbag: [0], rearrange: 0 }) });
     expect(bot.style.pullBelow).toBe(BOT_LEVELS.stabby.pullBelow);
     expect(bot.style.noise).toBe(BOT_LEVELS.stabby.noise);
     expect(bot.style.samples).toBe(BOT_LEVELS.stabby.samples);
@@ -77,14 +76,14 @@ describe("personality habits", () => {
   describe("rearrange", () => {
     it("never rearranges at 0", () => {
       for (const advanced of [false, true]) {
-        const turns = play(advanced, botsWith(persona({ rearrange: 0 })));
+        const turns = play(advanced, botsWith(archetypeWith({ rearrange: 0 })));
         expect(turns.some((t) => said(t, "rearranges"))).toBe(false);
       }
     });
 
     it("always rearranges after peering at 1", () => {
       for (const advanced of [false, true]) {
-        const turns = play(advanced, botsWith(persona({ rearrange: 1 })));
+        const turns = play(advanced, botsWith(archetypeWith({ rearrange: 1 })));
         const peered = turns.filter((t) => said(t, "peers"));
         expect(peered.length).toBeGreaterThan(10);
         expect(peered.every((t) => said(t, "rearranges"))).toBe(true);
@@ -97,14 +96,14 @@ describe("personality habits", () => {
     const claimTurns = (turns: Turn[]) => turns.filter((t) => t.claim !== null);
 
     it("skips the roll in advanced play, which the log shows as keeping the dice", () => {
-      const turns = claimTurns(play(true, botsWith(persona({ gambleRoll: 1 }))));
+      const turns = claimTurns(play(true, botsWith(archetypeWith({ gambleRoll: 1 }))));
       expect(turns.length).toBeGreaterThan(20);
       expect(turns.some((t) => said(t, "rolls"))).toBe(false);
       expect(turns.every((t) => said(t, "keeps the dice as they are"))).toBe(true);
     });
 
     it("cannot skip a roll that basic rules require", () => {
-      const turns = claimTurns(play(false, botsWith(persona({ gambleRoll: 1 }))));
+      const turns = claimTurns(play(false, botsWith(archetypeWith({ gambleRoll: 1 }))));
       expect(turns.length).toBeGreaterThan(20);
       expect(turns.every((t) => said(t, "rolls the hidden set"))).toBe(true);
     });
@@ -112,7 +111,7 @@ describe("personality habits", () => {
 
   describe("blindClaim", () => {
     // A distinctive bluff size makes a blind claim recognisable: it is always the standing claim plus 2.
-    const blind = persona({ blindClaim: 1, bluff: [2] });
+    const blind = archetypeWith({ blindClaim: 1, bluff: [2] });
 
     it("sizes a claim without using the dice it has not looked at", () => {
       // A bot that peers at the start of its turn knows its dice, so if it keeps them it may claim from
@@ -139,7 +138,7 @@ describe("personality habits", () => {
   });
 
   it("let a bot with every habit turned up finish legal games under both rules", () => {
-    const wild = persona({ bluff: [12], sandbag: [6], rearrange: 1, gambleRoll: 1, blindClaim: 1 });
+    const wild = archetypeWith({ bluff: [12], sandbag: [6], rearrange: 1, gambleRoll: 1, blindClaim: 1 });
     play(false, botsWith(wild));
     play(true, botsWith(wild));
   });

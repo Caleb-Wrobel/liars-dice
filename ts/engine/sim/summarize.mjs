@@ -70,7 +70,7 @@ export function summaryLines(results) {
 
   const tells = ids.filter((id) => id.startsWith("tells|"));
   if (tells.length) {
-    lines.push("", "TELLS: how often a claim was true, by how far it raised the standing claim, as a share of that character's claims.");
+    lines.push("", "TELLS: how often a claim was true, by how far it raised the standing claim, as a share of that archetype's claims.");
     for (const id of tells) {
       const [, who, level] = id.split("|");
       const c = results[id];

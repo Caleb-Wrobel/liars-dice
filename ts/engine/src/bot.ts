@@ -6,7 +6,7 @@
  * hasn't seen.
  */
 import { Game, Step, type PullResult } from "./game.ts";
-import type { Personality, PersonalityHabits } from "./personality.ts";
+import type { Archetype, Habits } from "./archetype.ts";
 import {
   FACES,
   LADDER,
@@ -65,7 +65,7 @@ export interface BotOptions {
   /** Overrides the level's pull threshold. */
   readonly pullBelow?: number;
   /** Habits that give the bot character, without changing how strong it is. */
-  readonly personality?: Personality;
+  readonly archetype?: Archetype;
 }
 
 /** What one step of a bot's turn did. */
@@ -78,16 +78,16 @@ export class Bot {
   readonly rng: Rng;
   readonly level: BotLevel;
   readonly style: BotStyle;
-  readonly personality: Personality | null;
-  private readonly habits: PersonalityHabits;
+  readonly archetype: Archetype | null;
+  private readonly habits: Habits;
   /** Where the bot is in its current turn. */
   private phase: "start" | "arrange" | "roll" | "peek" | "claim" = "start";
 
-  constructor({ rng = Math.random, level = "normal", pullBelow, personality }: BotOptions = {}) {
+  constructor({ rng = Math.random, level = "normal", pullBelow, archetype }: BotOptions = {}) {
     this.rng = rng;
     this.level = level;
-    this.personality = personality ?? null;
-    this.habits = personality?.habits ?? {};
+    this.archetype = archetype ?? null;
+    this.habits = archetype?.habits ?? {};
     const base: BotStyle = pullBelow === undefined ? BOT_LEVELS[level] : { ...BOT_LEVELS[level], pullBelow };
     this.style = {
       ...base,
