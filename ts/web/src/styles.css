@@ -57,6 +57,10 @@ label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
 .field-row label { min-width: 0; } /* let a select shrink to its column */
 .field-row select { width: 100%; }
 .field-row .hint { grid-column: 1 / -1; }
+/* Lives, Opponents and the Characters box sit in one row, the selects only as wide as a digit, and wrap when it is tight. */
+.field-row.compact { display: flex; flex-wrap: wrap; align-items: end; }
+.field-row.compact select.digit { width: auto; }
+.field-row.compact .characters { min-height: 44px; align-items: center; }
 @media (max-width: 290px) { .field-row { grid-template-columns: 1fr; } } /* too narrow even for two short columns */
 fieldset { border: 2px solid var(--surface-edge); border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
 legend { color: var(--muted); padding: 0 6px; }
@@ -166,6 +170,19 @@ legend { color: var(--muted); padding: 0 6px; }
 .rank-dice { display: flex; gap: 4px; }
 .rank-dice .die { width: 32px; height: 32px; }
 .rank-example { color: var(--muted); font-size: 0.9rem; }
+
+/* Meet dialog: a card per character, with initials in a circle */
+.meet-dialog { max-width: 560px; max-height: 88dvh; overflow-y: auto; align-content: start; scrollbar-color: var(--surface-edge) var(--surface); }
+.meet-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--gap); }
+.persona { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+.persona h3 { font-size: 1.05rem; color: var(--accent); margin: 0; }
+.persona p { margin: 2px 0 0; }
+.persona .persona-title { color: var(--muted); font-size: 0.9rem; }
+.initials {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  border: 2px solid var(--control-edge); background: var(--control-bg); color: var(--control-ink); font-weight: 700;
+}
+.meet-link { justify-self: start; align-self: end; min-height: 44px; padding-inline: 0; text-align: left; } /* sits level with the Table style select */
 
 /* Pull dialog */
 .backdrop { position: fixed; inset: 0; background: #000b; display: grid; place-items: center; padding: 16px; }
