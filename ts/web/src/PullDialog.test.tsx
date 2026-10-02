@@ -21,6 +21,8 @@ describe("PullDialog", () => {
     render(<PullDialog result={result} names={names} final={false} onContinue={() => {}} onRematch={() => {}} onQuit={() => {}} />);
     expect(screen.getByRole("dialog", { name: "Alice lifts the cup" })).toBeInTheDocument();
     expect(screen.getAllByLabelText(/showing/)).toHaveLength(5);
+    // Named by number, so screen readers can tell the dice apart.
+    expect(screen.getAllByRole("img", { name: /^die [1-5], showing/ })).toHaveLength(5);
     expect(screen.getByText("a pair of 3s and a 5")).toBeInTheDocument();
     expect(screen.getByText("true")).toBeInTheDocument();
     expect(screen.getByText("Alice loses a life.")).toBeInTheDocument();

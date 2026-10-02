@@ -105,7 +105,7 @@ describe("archetype habits", () => {
     it("cannot skip a roll that basic rules require", () => {
       const turns = claimTurns(play(false, botsWith(archetypeWith({ gambleRoll: 1 }))));
       expect(turns.length).toBeGreaterThan(20);
-      expect(turns.every((t) => said(t, "rolls the hidden set"))).toBe(true);
+      expect(turns.every((t) => said(t, "rolls the cup"))).toBe(true);
     });
   });
 

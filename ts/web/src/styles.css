@@ -106,7 +106,8 @@ legend { color: var(--muted); padding: 0 6px; }
 .trays { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
 .tray {
   border: 3px solid var(--tray-edge); border-radius: var(--radius); padding: 10px;
-  min-height: 130px; display: grid; align-content: start; gap: 8px;
+  min-height: 104px; /* the title and one die, so an empty tray is still big enough to drop a die on */
+  display: grid; align-content: start; gap: 8px;
 }
 .tray-visible { background: var(--tray-a); }
 .tray-hidden { background: var(--tray-b); }
@@ -115,7 +116,7 @@ legend { color: var(--muted); padding: 0 6px; }
 .tray-dice { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .die-button {
-  padding: 0; min-height: 0; width: 52px; border: none; background: none; display: grid; gap: 2px; justify-items: center;
+  padding: 0; min-height: 0; width: 52px; border: none; background: none; display: grid; justify-items: center;
   touch-action: none; /* lets a finger drag the die instead of scrolling the page */
 }
 .die-button:disabled { opacity: 1; cursor: default; }
@@ -126,7 +127,6 @@ legend { color: var(--muted); padding: 0 6px; }
 .die-pip { fill: var(--die-pip); }
 .die-unseen .die-body { fill: var(--unseen-body); stroke: var(--unseen-edge); }
 .die-mark { fill: var(--unseen-mark); font-size: 52px; font-weight: 700; }
-.die-letter { font-size: 0.8rem; color: var(--tray-title); line-height: 1; }
 
 /* Step rail */
 .step-rail { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; font-size: 0.8rem; }
@@ -199,7 +199,6 @@ legend { color: var(--muted); padding: 0 6px; }
 @media (max-width: 480px) {
   /* Stack the trays so all five dice fit on one row. */
   .trays { grid-template-columns: 1fr; gap: 8px; }
-  .tray { min-height: 96px; } /* keep an empty tray big enough to drop a die on */
   .die-button { width: 48px; }
   .die { width: 48px; height: 48px; }
 }

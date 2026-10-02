@@ -5,7 +5,7 @@
  * and its own dice once it has peered or peeked. It never reads hidden dice it
  * hasn't seen.
  */
-import { Game, Step, type PullResult } from "./game.ts";
+import { Game, Step, rollPhrase, type PullResult } from "./game.ts";
 import type { Archetype, Habits } from "./archetype.ts";
 import {
   FACES,
@@ -168,7 +168,7 @@ export class Bot {
             this.rng() < this.habits.gambleRoll;
           if (game.available().includes("roll") && !keepHand && !gamble) {
             game.roll("hidden");
-            say("rolls the hidden set");
+            say(`rolls ${rollPhrase(game.rules, "hidden")}`);
           } else {
             say("keeps the dice as they are");
           }
