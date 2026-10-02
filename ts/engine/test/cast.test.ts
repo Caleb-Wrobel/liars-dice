@@ -34,7 +34,7 @@ describe("the cast", () => {
     for (const { id, habits } of CAST) {
       const allowed = ["bluff", "sandbag", "rearrange", "gambleRoll", "blindClaim"];
       expect(Object.keys(habits).every((k) => allowed.includes(k)), `${id} uses only known habits`).toBe(true);
-      for (const step of habits.bluff ?? []) expect(Number.isInteger(step) && step >= 1 && step <= 12, id).toBe(true);
+      for (const step of habits.bluff ?? []) expect(Number.isInteger(step) && step >= 1 && step <= 8, id).toBe(true);
       for (const step of habits.sandbag ?? []) expect(Number.isInteger(step) && step >= 0 && step <= 6, id).toBe(true);
       for (const chance of [habits.rearrange, habits.gambleRoll, habits.blindClaim]) {
         if (chance !== undefined) expect(chance >= 0 && chance <= 1, id).toBe(true);
@@ -91,6 +91,8 @@ describe("drawCast", () => {
 });
 
 describe("weightsOf", () => {
+  const KEYS = ["bluffing", "candor", "recklessness"] as const;
+
   it("scores every character from 1 to 5", () => {
     for (const p of CAST) {
       for (const value of Object.values(weightsOf(p))) {
@@ -99,22 +101,34 @@ describe("weightsOf", () => {
     }
   });
 
+  it("uses the whole range on each meter, so the cast reads as different people", () => {
+    for (const key of KEYS) {
+      const scores = CAST.map((p) => weightsOf(p)[key]);
+      expect(Math.min(...scores), key).toBe(1);
+      expect(Math.max(...scores), key).toBe(5);
+    }
+  });
+
   it("reads the way the bios do", () => {
     const w = (id: string) => weightsOf(byId(id));
-    const best = (key: "bluffing" | "candor" | "recklessness") => Math.max(...CAST.map((p) => weightsOf(p)[key]));
-    const worst = (key: "bluffing" | "candor" | "recklessness") => Math.min(...CAST.map((p) => weightsOf(p)[key]));
-    expect(w("calico-kate").bluffing).toBe(best("bluffing"));
-    expect(w("straight-up-sam").bluffing).toBe(worst("bluffing"));
-    expect(w("straight-up-sam").candor).toBe(best("candor"));
-    expect(w("quiet-mabel").candor).toBe(worst("candor"));
-    expect(w("lucky-lou").recklessness).toBe(best("recklessness"));
-    expect(w("calico-kate").bluffing).toBeGreaterThan(w("lucky-lou").bluffing);
+    expect(w("calico-kate").bluffing).toBe(5);
+    expect(w("straight-up-sam").bluffing).toBeLessThanOrEqual(2);
+    expect(w("deadeye-dan").bluffing).toBe(1);
+    expect(w("straight-up-sam").candor).toBe(5);
+    expect(w("quiet-mabel").candor).toBe(1);
+    expect(w("lucky-lou").recklessness).toBe(5);
+    expect(w("quiet-mabel").recklessness).toBeLessThanOrEqual(2);
   });
 
   it("rises with the habit that drives it", () => {
     const make = (habits: Personality["habits"]): Personality => ({ id: "x", name: "X", archetype: "The X", bio: "", habits });
-    expect(weightsOf(make({ bluff: [12] })).bluffing).toBeGreaterThan(weightsOf(make({ bluff: [1] })).bluffing);
+    expect(weightsOf(make({ bluff: [8] })).bluffing).toBeGreaterThan(weightsOf(make({ bluff: [1] })).bluffing);
     expect(weightsOf(make({ sandbag: [0] })).candor).toBeGreaterThan(weightsOf(make({ sandbag: [6] })).candor);
-    expect(weightsOf(make({ gambleRoll: 1, blindClaim: 1 })).recklessness).toBeGreaterThan(weightsOf(make({})).recklessness);
+    expect(weightsOf(make({ blindClaim: 1 })).recklessness).toBeGreaterThan(weightsOf(make({})).recklessness);
+  });
+
+  it("scores a personality that is alone against itself as middling", () => {
+    const only = byId("calico-kate");
+    expect(weightsOf(only, [only])).toEqual({ bluffing: 3, candor: 3, recklessness: 3 });
   });
 });
