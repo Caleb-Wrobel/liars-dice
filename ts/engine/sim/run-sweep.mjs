@@ -55,7 +55,10 @@ function parseArgs(argv) {
   return opts;
 }
 
-const canonical = (counts) => Object.fromEntries(Object.entries(counts).sort(([a], [b]) => (a < b ? -1 : 1)));
+// A function declaration, not a const: main() runs at the top of the module, before any const below it exists.
+function canonical(counts) {
+  return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => (a < b ? -1 : 1)));
+}
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
