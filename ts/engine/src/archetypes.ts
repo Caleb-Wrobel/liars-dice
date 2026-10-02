@@ -47,10 +47,10 @@ export const ARCHETYPES: readonly Archetype<ArchetypeId>[] = [
 ];
 
 /** Archetypes drawn at random, without repeats, to fill a table. Asks for more than five and gets five. */
-export function drawArchetypes(count: number, rng: Rng = Math.random): Archetype[] {
+export function drawArchetypes(count: number, rng: Rng = Math.random): Archetype<ArchetypeId>[] {
   const pool = [...ARCHETYPES];
   const take = Math.min(Math.max(count, 0), pool.length); // fixed now: the pool shrinks as we draw
-  const drawn: Archetype[] = [];
+  const drawn: Archetype<ArchetypeId>[] = [];
   for (let i = 0; i < take; i++) {
     drawn.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]!);
   }

@@ -5,6 +5,7 @@ import {
   RuleError,
   advancedRules,
   basicRules,
+  drawArchetypes,
   formatRank,
   randomBotLevel,
   seededRng,
@@ -14,6 +15,8 @@ import {
   type Rank,
 } from "@liars-dice/engine";
 import { useEffect, useState } from "react";
+import { personaFor } from "./personas/index.ts";
+import { DEFAULT_THEME, type ThemeId } from "./theme.ts";
 
 export const HUMAN = 0;
 
@@ -36,6 +39,13 @@ export interface Config {
   readonly opponents?: number;
   /** How the bots play. Defaults to "normal". */
   readonly level?: LevelChoice;
+  /**
+   * Whether the bots play as characters from the table's cast, each with habits of its own and the name its theme
+   * gives it. Off or missing means plain bots at the chosen level, named Bob, Carol and so on.
+   */
+  readonly personas?: boolean;
+  /** Which table style supplies the characters' names. Defaults to the default theme. */
+  readonly theme?: ThemeId;
   /** How fast the bots move. Defaults to "normal". Can be changed during the game. */
   readonly pace?: Pace;
   /** Makes dice and the bots deterministic. Used by tests. */
@@ -54,7 +64,13 @@ export function useSession(config: Config) {
     const rules = config.advanced ? advancedRules(config.lives) : basicRules(config.lives);
     const seeded = config.seed !== undefined;
     const count = Math.min(Math.max(config.opponents ?? 1, 1), BOT_NAMES.length);
-    const seats = BOT_NAMES.slice(0, count);
+    // With characters, a table gets distinct archetypes drawn at random, each dressed by the theme.
+    const archetypes = config.personas
+      ? drawArchetypes(count, seeded ? seededRng(config.seed! + 700) : Math.random)
+      : null;
+    const seats: readonly string[] = archetypes
+      ? archetypes.map((a) => personaFor(config.theme ?? DEFAULT_THEME, a.id).name)
+      : BOT_NAMES.slice(0, count);
     // With "random", every bot draws its own level, so a table can mix easy and stabby bots.
     const draw = seeded ? seededRng(config.seed! + 500) : Math.random;
     const levels: BotLevel[] = seats.map(() =>
@@ -63,7 +79,14 @@ export function useSession(config: Config) {
     return {
       game: new Game([config.name, ...seats], rules, seeded ? seededRng(config.seed!) : undefined),
       // bots[i] sits in seat i + 1
-      bots: levels.map((level, i) => new Bot({ level, ...(seeded ? { rng: seededRng(config.seed! + 1 + i) } : {}) })),
+      bots: levels.map(
+        (level, i) =>
+          new Bot({
+            level,
+            ...(archetypes ? { archetype: archetypes[i] } : {}),
+            ...(seeded ? { rng: seededRng(config.seed! + 1 + i) } : {}),
+          }),
+      ),
       levels,
     };
   });
