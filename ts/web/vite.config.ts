@@ -3,6 +3,8 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
+  // RULES.md sits at the repository root, two levels up, and a test imports it, so vite may read from there.
+  server: { fs: { allow: ["../.."] } },
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test-setup.ts"],
