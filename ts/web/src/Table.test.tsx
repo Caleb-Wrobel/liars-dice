@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { PLAYER_NAMES } from "./playerNames.ts";
 import { Setup } from "./Setup.tsx";
 import { Table } from "./Table.tsx";
 import type { Config } from "./session.ts";
@@ -139,6 +140,43 @@ describe("Setup random level", () => {
     expect(level).toHaveAccessibleDescription(/Each bot gets its own level/);
     await userEvent.click(screen.getByRole("button", { name: "Play" }));
     expect(started).toMatchObject({ level: "random" });
+  });
+});
+
+describe("Setup player name", () => {
+  // The chosen table style is remembered in storage, so each test starts from a clean slate.
+  beforeEach(() => window.localStorage.clear());
+  afterEach(() => {
+    window.localStorage.clear();
+    document.documentElement.removeAttribute("data-theme");
+  });
+  const field = () => screen.getByLabelText("Your name") as HTMLInputElement;
+
+  it("starts with a name from the table style's pool, not Alice", () => {
+    render(<Setup onStart={() => {}} />);
+    expect(PLAYER_NAMES.saloon).toContain(field().value);
+    expect(field().value).not.toBe("Alice");
+  });
+
+  it("picks again from the new pool when the style changes, until the player types their own", async () => {
+    render(<Setup onStart={() => {}} />);
+    await userEvent.selectOptions(screen.getByLabelText(/Table style/), "casino");
+    expect(PLAYER_NAMES.casino).toContain(field().value);
+    await userEvent.selectOptions(screen.getByLabelText(/Table style/), "saloon");
+    expect(PLAYER_NAMES.saloon).toContain(field().value);
+
+    await userEvent.clear(field());
+    await userEvent.type(field(), "Caleb");
+    await userEvent.selectOptions(screen.getByLabelText(/Table style/), "casino");
+    expect(field().value).toBe("Caleb");
+  });
+
+  it("gives a pool name, not a blank or Alice, when the field is left empty", async () => {
+    let started: Config | null = null;
+    render(<Setup onStart={(config) => (started = config)} />);
+    await userEvent.clear(field());
+    await userEvent.click(screen.getByRole("button", { name: "Play" }));
+    expect(PLAYER_NAMES.saloon).toContain((started as Config | null)!.name);
   });
 });
 

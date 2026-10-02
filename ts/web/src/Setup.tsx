@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BOT_LEVEL_NAMES } from "@liars-dice/engine";
+import { pickPlayerName } from "./playerNames.ts";
 import { RulesDialog } from "./RulesDialog.tsx";
 import { BOT_NAMES, type Config, type LevelChoice, type Pace } from "./session.ts";
 import { THEMES, applyTheme, loadTheme, saveTheme, type ThemeId } from "./theme.ts";
@@ -14,13 +15,15 @@ const LEVEL_BLURBS: Record<LevelChoice, string> = {
 const LEVEL_CHOICES: readonly LevelChoice[] = [...BOT_LEVEL_NAMES, "random"];
 
 export function Setup({ onStart }: { onStart: (config: Config) => void }) {
-  const [name, setName] = useState("Alice");
+  const [theme, setTheme] = useState<ThemeId>(() => loadTheme());
+  // A random name from the table style's pool, until the player types their own.
+  const [name, setName] = useState(() => pickPlayerName(theme));
+  const [nameTyped, setNameTyped] = useState(false);
   const [lives, setLives] = useState(3);
   const [advanced, setAdvanced] = useState(false);
   const [opponents, setOpponents] = useState(1);
   const [level, setLevel] = useState<LevelChoice>("normal");
   const [pace, setPace] = useState<Pace>("normal");
-  const [theme, setTheme] = useState<ThemeId>(() => loadTheme());
   const [showRules, setShowRules] = useState(false);
 
   return (
@@ -36,12 +39,19 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onStart({ name: name.trim() || "Alice", lives, advanced, opponents, level, pace });
+          onStart({ name: name.trim() || pickPlayerName(theme), lives, advanced, opponents, level, pace });
         }}
       >
         <label>
           Your name
-          <input value={name} onChange={(e) => setName(e.target.value)} maxLength={16} />
+          <input
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setNameTyped(true);
+            }}
+            maxLength={16}
+          />
         </label>
         <div className="field-row">
           <label>
@@ -116,6 +126,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
             onChange={(e) => {
               const id = e.target.value as ThemeId;
               setTheme(id);
+              if (!nameTyped) setName(pickPlayerName(id));
               applyTheme(id);
               saveTheme(id);
             }}
