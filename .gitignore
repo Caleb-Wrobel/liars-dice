@@ -1,10 +1,4 @@
-# Python
-__pycache__/
-*.pyc
-.pytest_cache/
-.venv/
-
-# Node (for the upcoming TypeScript port)
+# Node
 node_modules/
 dist/
 
