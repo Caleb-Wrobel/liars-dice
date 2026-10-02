@@ -241,6 +241,12 @@ export function Table({
       {myTurn && game.step !== Step.Decide && (
         <section className="actions">
           <div className="roll-buttons">
+            {/* The same order as the trays above: visible first, then under the cup. */}
+            {available.includes("roll") && rollable.includes("visible") && (
+              <button type="button" disabled={s.visibleSet.size === 0} onClick={() => s.roll("visible")}>
+                Roll visible dice
+              </button>
+            )}
             {available.includes("roll") && rollable.includes("hidden") && (
               <button
                 type="button"
@@ -248,11 +254,6 @@ export function Table({
                 onClick={() => s.roll("hidden")}
               >
                 Roll hidden dice
-              </button>
-            )}
-            {available.includes("roll") && rollable.includes("visible") && (
-              <button type="button" disabled={s.visibleSet.size === 0} onClick={() => s.roll("visible")}>
-                Roll visible dice
               </button>
             )}
             {available.includes("peek") && (

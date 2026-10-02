@@ -24,6 +24,21 @@ describe("Table", () => {
     expect(screen.getByRole("button", { name: "Peek at hidden dice" })).toBeInTheDocument();
   });
 
+  it("lists the roll buttons in the same order as the trays they roll", () => {
+    // If the buttons run the other way from the trays, each one sits across from the tray it rolls and the
+    // two look crisscrossed. The test compares the two orders, whichever way round the trays are.
+    render(<Table config={{ ...basic, advanced: true }} onQuit={() => {}} onRematch={() => {}} />);
+    const follows = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const orderOf = (visible: Element, hidden: Element) => (follows(visible, hidden) ? "visible, hidden" : "hidden, visible");
+
+    const trays = orderOf(screen.getByRole("region", { name: "Visible" }), screen.getByRole("region", { name: "Under the cup" }));
+    const rollVisible = screen.getByRole("button", { name: "Roll visible dice" });
+    const rollHidden = screen.getByRole("button", { name: "Roll hidden dice" });
+    expect(orderOf(rollVisible, rollHidden)).toBe(trays);
+    expect(follows(rollVisible, screen.getByRole("button", { name: "Peek at hidden dice" }))).toBe(true);
+    expect(follows(rollHidden, screen.getByRole("button", { name: "Peek at hidden dice" }))).toBe(true);
+  });
+
   it("offers Peek straight away in advanced play", () => {
     render(<Table config={{ ...basic, advanced: true }} onQuit={() => {}} onRematch={() => {}} />);
     expect(screen.getByRole("button", { name: "Peek at hidden dice" })).toBeInTheDocument();
