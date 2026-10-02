@@ -7,12 +7,12 @@ character, and players learn the rest by watching them play. This page is for th
 
 ## The characters
 
-| Character | Title | Archetype | Bluffing | Candor | Recklessness |
+| Character | Title | Archetype | Bluffing | Withholding | Recklessness |
 |---|---|---|---|---|---|
-| Vegas Vi | The Showrunner | Bluffer | 5 / 5 | 5 / 5 | 2 / 5 |
-| Square-Deal Sol | The Straight Shooter | Honest | 2 / 5 | 5 / 5 | 1 / 5 |
-| Slow-Roll Ruth | The Slow Roller | Sandbagger | 2 / 5 | 1 / 5 | 1 / 5 |
-| Jackpot Jo | The High Roller | Gambler | 4 / 5 | 5 / 5 | 5 / 5 |
+| Vegas Vi | The Showrunner | Bluffer | 5 / 5 | 1 / 5 | 2 / 5 |
+| Square-Deal Sol | The Straight Shooter | Honest | 2 / 5 | 1 / 5 | 1 / 5 |
+| Slow-Roll Ruth | The Slow Roller | Sandbagger | 2 / 5 | 5 / 5 | 1 / 5 |
+| Jackpot Jo | The High Roller | Gambler | 4 / 5 | 1 / 5 | 5 / 5 |
 | Ice-Cold Ivy | The Cool Hand | Creeper | 1 / 5 | 3 / 5 | 2 / 5 |
 
 ## Reading the weights
@@ -21,7 +21,7 @@ Each score runs from 1 to 5, **relative to the other archetypes**, so a 5 means 
 amount. Adding an archetype can change every score.
 
 - **Bluffing:** how big its bluffs are.
-- **Candor:** how closely it claims what it really holds. Low means it understates its hand.
+- **Withholding:** how much it understates its hand, claiming less than it holds so you keep climbing.
 - **Recklessness:** how much it gambles with the dice, such as claiming without looking, skipping a roll or fidgeting.
 
 The scores are computed from the habits the bot really plays with, so they cannot disagree with it. A character's
@@ -29,7 +29,7 @@ habits never change how strong it is. Strength belongs to the bot level you pick
 
 ## In plain words
 
-- **Vegas Vi** (Bluffer): Makes big jumps on the standing claim, and says what it holds only some of the time.
+- **Vegas Vi** (Bluffer): Makes big jumps on the standing claim, whether or not the dice back it up.
   - Bio: Big smile, bigger raises. Loves a dramatic reveal and never says what is in the cup.
 - **Square-Deal Sol** (Honest): Claims what it holds. When it cannot beat you it edges up a rung or two, and it shows.
   - Bio: Says what he holds and plays it straight. When he runs out of road he nudges up a rung, and it shows.

@@ -17,7 +17,7 @@ describe.each(THEMES.map((t) => [t.id] as const))("the %s table README", (themeI
       const w = weightsOf(archetype);
       const row = text.split("\n").find((line) => line.startsWith(`| ${persona.name} |`));
       expect(row, persona.name).toBeDefined();
-      expect(row).toContain(`| ${archetype.name} | ${w.bluffing} / 5 | ${w.candor} / 5 | ${w.recklessness} / 5 |`);
+      expect(row).toContain(`| ${archetype.name} | ${w.bluffing} / 5 | ${w.withholding} / 5 | ${w.recklessness} / 5 |`);
       expect(text).toContain(archetype.brief);
       expect(text).toContain(persona.bio);
     }

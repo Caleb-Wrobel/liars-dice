@@ -17,7 +17,7 @@ export const ARCHETYPES: readonly Archetype<ArchetypeId>[] = [
   {
     id: "bluffer",
     name: "Bluffer",
-    brief: "Makes big jumps on the standing claim, and says what it holds only some of the time.",
+    brief: "Makes big jumps on the standing claim, whether or not the dice back it up.",
     habits: { bluff: [2, 3, 5, 6], sandbag: [0, 1, 2, 3], rearrange: 0.7 },
   },
   {
@@ -61,8 +61,8 @@ export function drawArchetypes(count: number, rng: Rng = Math.random): Archetype
 export interface Weights {
   /** How big its bluffs are. */
   readonly bluffing: number;
-  /** How closely it claims what it really holds. */
-  readonly candor: number;
+  /** How much it understates its hand, claiming less than it holds. */
+  readonly withholding: number;
   /** How much it gambles with the dice: claiming blind, skipping rolls, fidgeting. */
   readonly recklessness: number;
 }
@@ -72,7 +72,7 @@ const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.lengt
 /** The raw habit behind each weight. A higher number means more of that trait. */
 const RAW: Record<keyof Weights, (p: Archetype) => number> = {
   bluffing: (p) => mean(p.habits.bluff ?? [2.4]),
-  candor: (p) => -mean(p.habits.sandbag ?? [1.2]),
+  withholding: (p) => mean(p.habits.sandbag ?? [1.2]),
   recklessness: ({ habits: h }) => (h.gambleRoll ?? 0) + 2 * (h.blindClaim ?? 0) + 0.3 * (h.rearrange ?? 0.5),
 };
 
@@ -89,5 +89,5 @@ export function weightsOf(archetype: Archetype, among: readonly Archetype[] = AR
     const high = Math.max(...values);
     return high === low ? 3 : Math.round(1 + (4 * (raw(archetype) - low)) / (high - low));
   };
-  return { bluffing: weigh(RAW.bluffing), candor: weigh(RAW.candor), recklessness: weigh(RAW.recklessness) };
+  return { bluffing: weigh(RAW.bluffing), withholding: weigh(RAW.withholding), recklessness: weigh(RAW.recklessness) };
 }

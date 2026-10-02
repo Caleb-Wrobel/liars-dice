@@ -24,12 +24,12 @@ character, and players learn the rest by watching them play. This page is for th
 
 ## The characters
 
-| Character | Title | Archetype | Bluffing | Candor | Recklessness |
+| Character | Title | Archetype | Bluffing | Withholding | Recklessness |
 |---|---|---|---|---|---|
 ${rows
   .map(
     ({ archetype, persona, w }) =>
-      `| ${persona.name} | ${persona.title} | ${archetype.name} | ${w.bluffing} / 5 | ${w.candor} / 5 | ${w.recklessness} / 5 |`,
+      `| ${persona.name} | ${persona.title} | ${archetype.name} | ${w.bluffing} / 5 | ${w.withholding} / 5 | ${w.recklessness} / 5 |`,
   )
   .join("\n")}
 
@@ -39,7 +39,7 @@ Each score runs from 1 to 5, **relative to the other archetypes**, so a 5 means 
 amount. Adding an archetype can change every score.
 
 - **Bluffing:** how big its bluffs are.
-- **Candor:** how closely it claims what it really holds. Low means it understates its hand.
+- **Withholding:** how much it understates its hand, claiming less than it holds so you keep climbing.
 - **Recklessness:** how much it gambles with the dice, such as claiming without looking, skipping a roll or fidgeting.
 
 The scores are computed from the habits the bot really plays with, so they cannot disagree with it. A character's

@@ -34,7 +34,7 @@ describe.each(THEMES.map((t) => [t.id, t.meet] as const))("the %s Meet page", (t
 
   it("does not show how the characters play beyond their bios", () => {
     render(<MeetDialog theme={themeId} onClose={() => {}} />);
-    expect(screen.queryByText(/bluffing|candor|recklessness/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/bluffing|withholding|recklessness/i)).not.toBeInTheDocument();
   });
 });
 
