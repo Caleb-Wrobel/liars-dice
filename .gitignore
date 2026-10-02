@@ -23,3 +23,4 @@ dist/
 # Raw results from simulation sweeps
 ts/engine/results*.json
 ts/engine/sim/results/
+coverage/
