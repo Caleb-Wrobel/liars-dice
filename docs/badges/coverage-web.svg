@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="143" height="20" role="img" aria-label="web coverage: 96.48%">
+  <title>web coverage: 96.48%</title>
+  <rect width="91" height="20" rx="3" fill="#555"/>
+  <rect x="91" width="52" height="20" rx="3" fill="#2e7d32"/>
+  <rect x="91" width="6" height="20" fill="#2e7d32"/>
+  <g fill="#fff" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11" text-anchor="middle">
+    <text x="45.5" y="14">web coverage</text>
+    <text x="117" y="14">96.48%</text>
+  </g>
+</svg>
