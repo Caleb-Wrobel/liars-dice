@@ -19,9 +19,9 @@ export interface Habits {
   readonly blindClaim?: number;
 }
 
-export interface Archetype {
+export interface Archetype<Id extends string = string> {
   /** Stable and theme-free: "bluffer". Themes key their personas by it, and sweep results use it. */
-  readonly id: string;
+  readonly id: Id;
   /** A generic name for reports: "Bluffer". A theme may title its own persona differently. */
   readonly name: string;
   /** One plain line on how it plays. Every persona's bio in every theme has to honour it. */

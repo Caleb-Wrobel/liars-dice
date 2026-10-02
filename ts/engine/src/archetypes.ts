@@ -9,7 +9,11 @@
 import type { Archetype } from "./archetype.ts";
 import type { Rng } from "./rng.ts";
 
-export const ARCHETYPES: readonly Archetype[] = [
+/** The ids, in one place so a theme can be required to dress every one of them. A test keeps this in step with ARCHETYPES. */
+export const ARCHETYPE_IDS = ["bluffer", "honest", "sandbagger", "gambler", "creeper"] as const;
+export type ArchetypeId = (typeof ARCHETYPE_IDS)[number];
+
+export const ARCHETYPES: readonly Archetype<ArchetypeId>[] = [
   {
     id: "bluffer",
     name: "Bluffer",

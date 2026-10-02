@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   Bot,
   ARCHETYPES,
+  ARCHETYPE_IDS,
   Game,
   advancedRules,
   basicRules,
@@ -28,6 +29,10 @@ describe("the archetypes", () => {
       expect(p.brief.length, p.id).toBeGreaterThan(20);
       expect(p.brief.length, p.id).toBeLessThanOrEqual(110);
     }
+  });
+
+  it("lists the same ids as the type themes are checked against", () => {
+    expect(ARCHETYPES.map((p) => p.id)).toEqual([...ARCHETYPE_IDS]);
   });
 
   it("keeps every habit inside sane limits", () => {
