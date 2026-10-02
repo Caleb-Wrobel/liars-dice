@@ -23,6 +23,11 @@ export class RuleError extends Error {
 
 export type DiceSet = "hidden" | "visible";
 
+/** What a roll is called in a log. Basic rules only ever roll the one cup, so it just says "the cup". */
+export function rollPhrase(rules: Pick<Rules, "rollable">, which: DiceSet): string {
+  return rules.rollable.includes("visible") ? `the ${which} set` : "the cup";
+}
+
 /** Basic rules are the defaults. Advanced lifts restrictions, it adds none. */
 export interface Rules {
   readonly lives: number;
