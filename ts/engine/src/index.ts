@@ -3,3 +3,4 @@ export * from "./game.ts";
 export * from "./rng.ts";
 export * from "./bot.ts";
 export * from "./personality.ts";
+export * from "./cast.ts";
