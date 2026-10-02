@@ -2,6 +2,9 @@
  * The fixed cast of five opponents. Names, archetypes and bios are drafts for Caleb to approve.
  * Each character's habits are a few numbers on top of a level; none of them changes how readily the
  * bot pulls the cup, so a character is not stronger or weaker than its level.
+ *
+ * One deliberate exception: Straight-Up Sam stays about 1 to 3 points ahead at tables of 3 or more, because the
+ * honest man being the best at liar's dice is the joke. Tuned by tables sweeps; the rest of the cast is within noise.
  */
 import type { Personality } from "./personality.ts";
 import type { Rng } from "./rng.ts";
