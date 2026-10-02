@@ -40,8 +40,6 @@ Then open the address it prints. `npm run dev:lan` makes it reachable from a pho
 
 The full rules are in [`RULES.md`](RULES.md).
 
-There is also the original command-line prototype, written in Python: `python3 -m liars_dice`.
-
 ## How it is built
 
 | Folder | What it is |
@@ -49,7 +47,6 @@ There is also the original command-line prototype, written in Python: `python3 -
 | [`ts/engine`](ts/engine) | The game rules, the bots and the archetypes that give them habits. No interface and no themes. |
 | [`ts/web`](ts/web) | The React app: the table, the table styles, and the personas that dress each archetype. |
 | [`ts/engine/sim`](ts/engine/sim) | Simulation sweeps used to balance the bots. See its [README](ts/engine/sim/README.md). |
-| [`liars_dice`](liars_dice) | The original Python prototype and its command-line interface, with tests in [`tests`](tests). |
 | [`docs`](docs) | Per-style character READMEs, screenshots and the coverage badges. |
 
 The engine knows how a bot plays and nothing about how it looks. A table style supplies the names and bios, and a bio
@@ -66,7 +63,7 @@ npm run badges         # coverage, then regenerate the badges in docs/badges
 ```
 
 The coverage badges are files in this repository, drawn from the last `npm run badges`, so they are only as fresh as
-that run. Python tests: `python3 -m pytest`.
+that run.
 
 ## License
 
