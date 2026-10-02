@@ -237,7 +237,8 @@ export function Table({
       {myTurn && game.step !== Step.Decide && (
         <section className="actions">
           <div className="roll-buttons">
-            {/* The same order as the trays above: visible first, then under the cup. */}
+            {/* The same order as the trays above: visible first, then under the cup. Only advanced play has both rolls, so
+                basic play just says Roll dice. */}
             {available.includes("roll") && rollable.includes("visible") && (
               <button type="button" disabled={s.visibleSet.size === 0} onClick={() => s.roll("visible")}>
                 Roll visible dice
@@ -249,7 +250,7 @@ export function Table({
                 disabled={NUM_DICE - s.visibleSet.size === 0}
                 onClick={() => s.roll("hidden")}
               >
-                Roll hidden dice
+                {rollable.includes("visible") ? "Roll hidden dice" : "Roll dice"}
               </button>
             )}
             {available.includes("peek") && (

@@ -18,9 +18,9 @@ describe("Table", () => {
 
   it("doesn't offer Peek before the mandatory roll, so basic play can't get stuck", async () => {
     render(<Table config={basic} onQuit={() => {}} onRematch={() => {}} />);
-    expect(screen.getByRole("button", { name: "Roll hidden dice" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Roll dice" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Peek at hidden dice" })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Roll hidden dice" }));
+    await userEvent.click(screen.getByRole("button", { name: "Roll dice" }));
     expect(screen.getByRole("button", { name: "Peek at hidden dice" })).toBeInTheDocument();
   });
 
@@ -37,6 +37,19 @@ describe("Table", () => {
     expect(orderOf(rollVisible, rollHidden)).toBe(trays);
     expect(follows(rollVisible, screen.getByRole("button", { name: "Peek at hidden dice" }))).toBe(true);
     expect(follows(rollHidden, screen.getByRole("button", { name: "Peek at hidden dice" }))).toBe(true);
+  });
+
+  it("calls the roll button just Roll dice in basic play, where there is only one roll", () => {
+    render(<Table config={basic} onQuit={() => {}} onRematch={() => {}} />);
+    expect(screen.getByRole("button", { name: "Roll dice" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Roll (hidden|visible) dice/ })).toBeNull();
+  });
+
+  it("keeps Roll hidden dice and Roll visible dice apart in advanced play", () => {
+    render(<Table config={{ ...basic, advanced: true }} onQuit={() => {}} onRematch={() => {}} />);
+    expect(screen.getByRole("button", { name: "Roll hidden dice" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Roll visible dice" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Roll dice" })).toBeNull();
   });
 
   it("names the dice by number and shows no letters under them", () => {
@@ -72,7 +85,7 @@ describe("Table", () => {
 
   it("lets you step through a bot's turn one move at a time", async () => {
     render(<Table config={{ ...basic, pace: "step" }} onQuit={() => {}} onRematch={() => {}} />);
-    await userEvent.click(screen.getByRole("button", { name: "Roll hidden dice" }));
+    await userEvent.click(screen.getByRole("button", { name: "Roll dice" }));
     await userEvent.click(screen.getByRole("button", { name: "Peek at hidden dice" }));
     await userEvent.click(screen.getByRole("button", { name: /^Smallest raise/ }));
     const talk = () =>
@@ -90,7 +103,7 @@ describe("Table", () => {
   it("shows the standing claim as dice once a bot has claimed", async () => {
     render(<Table config={{ ...basic, pace: "step" }} onQuit={() => {}} onRematch={() => {}} />);
     expect(screen.queryByRole("group", { name: /Claimed dice/ })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Roll hidden dice" }));
+    await userEvent.click(screen.getByRole("button", { name: "Roll dice" }));
     await userEvent.click(screen.getByRole("button", { name: "Peek at hidden dice" }));
     await userEvent.click(screen.getByRole("button", { name: /^Smallest raise/ })); // none 1
     // Step Bob until he has claimed: at most a handful of moves.
@@ -126,7 +139,7 @@ describe("Table", () => {
 
   it("rolls, peeks, then lets you claim and hands the table to Bob", async () => {
     render(<Table config={basic} onQuit={() => {}} onRematch={() => {}} />);
-    await userEvent.click(screen.getByRole("button", { name: "Roll hidden dice" }));
+    await userEvent.click(screen.getByRole("button", { name: "Roll dice" }));
     expect(screen.getAllByLabelText(/unseen/)).toHaveLength(5); // rolled, but not yet seen
     await userEvent.click(screen.getByRole("button", { name: "Peek at hidden dice" }));
     expect(screen.queryAllByLabelText(/unseen/)).toHaveLength(0);
