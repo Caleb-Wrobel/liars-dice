@@ -38,7 +38,7 @@ Then open the address it prints. `npm run dev:lan` makes it reachable from a pho
   [`docs/tables`](docs/tables).
 - **Table styles.** Saloon and Casino, each with its own cast and a colour-vision-tested palette.
 
-The full rules are in [`RULES.md`](RULES.md).
+The in-depth rules, for the curious, are in [`RULES.md`](RULES.md). The short version is the **How to play** page in the game.
 
 ## How it is built
 

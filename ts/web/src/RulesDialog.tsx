@@ -4,8 +4,10 @@ import { RANK_EXAMPLES, exampleName } from "./rules/content.ts";
 import { useDialog } from "./useDialog.ts";
 
 /**
- * A quick reference for the rules, in the order a player needs them. `advanced`, when given, marks
- * which version of the rules the current game uses.
+ * The basics needed to play, in the order a newcomer needs them: what the game is, how you win, how you lose a
+ * life, what a turn is, how the basic and advanced rules differ, and what the ranks are. The in-depth version is
+ * RULES.md, in the same order, and a test keeps the two in step. `advanced`, when given, marks which version of
+ * the rules the current game uses.
  */
 export function RulesDialog({ onClose, advanced }: { onClose: () => void; advanced?: boolean }) {
   const closeButton = useDialog(onClose);
@@ -22,33 +24,39 @@ export function RulesDialog({ onClose, advanced }: { onClose: () => void; advanc
           </button>
         </header>
 
-        <p>
-          Five dice are passed around the table. Each turn you either <strong>pull</strong> the cup to challenge
-          the last claim, or take the dice on and <strong>claim</strong> a higher rank, whether it's true or a
-          bluff. Lose a challenge and you lose a life. The last player with lives wins.
-        </p>
+        <section aria-labelledby="rules-game">
+          <h3 id="rules-game">The game</h3>
+          <p>
+            Liar's Dice is a dice-passing game built on claims that keep going up. Five dice go round the table, split
+            into a <strong>visible</strong> set that everyone can see and a <strong>hidden</strong> set that only the
+            player holding them can see. On your turn you take the dice and the last claim, and you either challenge
+            it or pass a higher one.
+          </p>
+        </section>
 
-        <section aria-labelledby="rules-words">
-          <h3 id="rules-words">The words</h3>
-          <dl>
-            <dt>Rank</dt>
-            <dd>What a set of dice makes, such as "a pair of 3s and a 5".</dd>
-            <dt>Claim</dt>
-            <dd>You name a rank. Nobody checks it until someone pulls.</dd>
-            <dt>Pull</dt>
-            <dd>Lift the cup to challenge the claim. Every die is revealed.</dd>
-            <dt>Peer</dt>
-            <dd>Look at the hidden dice instead of pulling. You can no longer pull this turn, so you must claim higher.</dd>
-            <dt>Peek</dt>
-            <dd>Look at the hidden dice again after you roll.</dd>
-          </dl>
+        <section aria-labelledby="rules-win">
+          <h3 id="rules-win">How you win</h3>
+          <p>Everyone starts with the same number of lives. Lose them all and you're out. The last player standing wins.</p>
+        </section>
+
+        <section aria-labelledby="rules-life">
+          <h3 id="rules-life">How you lose a life</h3>
+          <p>
+            Anyone may <strong>pull</strong> the cup to challenge the last claim. All five dice are revealed. If they
+            make that rank or better, the claim was true and the <strong>puller</strong> loses a life. If they make
+            less, it was a bluff and the <strong>claimer</strong> loses a life. The next round starts with the player
+            after the puller.
+          </p>
         </section>
 
         <section aria-labelledby="rules-turn">
-          <h3 id="rules-turn">Your turn, in order</h3>
-          <p className="hint">You may skip ahead, but you can never go back.</p>
+          <h3 id="rules-turn">Your turn</h3>
+          <p>
+            Start with a choice: <strong>pull</strong> the cup, or <strong>peer</strong> at the hidden dice. Peering
+            commits you to passing a higher claim, so you can't pull this turn. Then the turn runs in this order. You
+            may skip ahead, but you can never go back.
+          </p>
           <ol>
-            <li>You are handed the dice and the last claim.</li>
             <li>
               <strong>Pull</strong> the cup, or <strong>peer</strong> at the hidden dice.
             </li>
@@ -56,7 +64,7 @@ export function RulesDialog({ onClose, advanced }: { onClose: () => void; advanc
               <strong>Rearrange</strong>: move dice between the visible set and the hidden set.
             </li>
             <li>
-              <strong>Roll</strong> one of the sets.
+              <strong>Roll</strong> a set of dice.
             </li>
             <li>
               <strong>Peek</strong> at the hidden dice.
@@ -66,7 +74,11 @@ export function RulesDialog({ onClose, advanced }: { onClose: () => void; advanc
             </li>
           </ol>
           <p>
-            A new round starts at step 4: the opener has five random hidden dice and nothing to beat, so they
+            A claim is never checked when you make it. Bluffing, claiming less than you hold, claiming without looking
+            and claiming something impossible are all allowed. The only rule is that it must be higher.
+          </p>
+          <p>
+            A new round starts at the roll step: the opener has five random hidden dice and nothing to beat, so they
             can't pull.
           </p>
         </section>
@@ -90,25 +102,19 @@ export function RulesDialog({ onClose, advanced }: { onClose: () => void; advanc
               </tr>
               <tr>
                 <th scope="row">Peek after rolling</th>
-                <td>Required</td>
+                <td>Required, and the game does it for you</td>
                 <td>Optional</td>
               </tr>
             </tbody>
           </table>
         </section>
 
-        <section aria-labelledby="rules-pull">
-          <h3 id="rules-pull">When someone pulls</h3>
-          <p>
-            All five dice are revealed. If the real rank is <strong>equal to or higher</strong> than the claim, the
-            claim was true and the <strong>puller</strong> loses a life. If it's lower, it was a bluff and the{" "}
-            <strong>claimer</strong> loses a life. The next round begins with the player after the puller.
-          </p>
-          <p>Nobody can top five 6s, so if that is claimed you have to pull.</p>
-        </section>
-
         <section aria-labelledby="rules-ranks">
           <h3 id="rules-ranks">Ranks, lowest to highest</h3>
+          <p>
+            If you've played poker dice or Yahtzee, you know these, minus the straights. A <strong>rank</strong> is
+            what a set of dice makes.
+          </p>
           <ol className="rank-ladder">
             {RANK_EXAMPLES.map((example) => (
               <li key={example.category}>
@@ -123,19 +129,13 @@ export function RulesDialog({ onClose, advanced }: { onClose: () => void; advanc
             ))}
           </ol>
           <p>
-            Higher faces beat lower ones: a pair of 5s beats a pair of 3s. A claim may add a{" "}
-            <strong>kicker</strong>, the highest die left over, as in "a pair of 3s and a 5". The same claim with
-            any kicker beats it without one. There are no straights.
+            Higher faces beat lower ones: a pair of 5s beats a pair of 3s. A claim may add a <strong>kicker</strong>, a
+            die that isn't part of the pair or set, as in "a pair of 3s and a 5". You can claim any kicker you like:
+            the one you hold, a lower one, or a higher one you don't have. When the dice are revealed, their kicker is
+            the highest die left over, and a claim is true if the revealed rank is equal to or higher than it. The same
+            claim with a higher kicker beats it, and any kicker beats none.
           </p>
-        </section>
-
-        <section aria-labelledby="rules-bluff">
-          <h3 id="rules-bluff">Bluffing</h3>
-          <p>
-            Claims are never checked when you make them, and impossible ones are allowed, like "no pair and a
-            1". The only rule is that a claim must beat the one before. Claiming lower than what you hold is fine,
-            and so is claiming without even looking.
-          </p>
+          <p>Nobody can top five 6s, so if that is claimed you have to pull.</p>
         </section>
       </div>
     </div>
