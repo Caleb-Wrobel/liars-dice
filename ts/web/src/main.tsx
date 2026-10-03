@@ -1,5 +1,6 @@
 import "@fontsource/alegreya/latin-400.css";
 import "@fontsource/alegreya/latin-700.css";
+import "@fontsource/limelight/latin-400.css";
 import "@fontsource/rye/latin-400.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

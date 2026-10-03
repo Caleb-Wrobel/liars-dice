@@ -43,11 +43,15 @@
   --log-bg: #12261c;
   --log-ink: #a7bbaf;
 
-  --font-display: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Limelight, an Art Deco face, for titles and headings. It has one weight, so none is asked for. */
+  --font-display: "Limelight", "Playfair Display", Georgia, "Times New Roman", serif;
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --display-weight: 600;
+  --display-weight: 400;
   --radius: 14px;
 }
+
+/* The standing claim has to be read at a glance, so it keeps the plain body face and not the decorative one. */
+:root[data-theme="casino"] .claim-text { font-family: var(--font-body); font-weight: 600; }
 
 /*
  * Lives are casino chips, drawn from the die colours: edge spots around a ring and a solid face.
