@@ -233,3 +233,9 @@ legend { color: var(--muted); padding: 0 6px; }
 
 .setup-footer { text-align: center; color: var(--muted); padding-bottom: 8px; }
 .setup-footer a.link { display: inline; min-height: 0; color: inherit; }
+
+
+/* The "Still scenery" checkbox: roomy enough to hit, in the muted ink of the other small controls. */
+.motion-toggle { display: flex; align-items: center; gap: 8px; min-height: 44px; color: var(--muted); font-size: 0.9rem; cursor: pointer; }
+.motion-toggle input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+.table-controls .motion-toggle { min-height: 36px; font-size: 0.85rem; }

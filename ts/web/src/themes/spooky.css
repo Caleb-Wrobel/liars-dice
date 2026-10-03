@@ -167,14 +167,14 @@
 
 /*
  * The candles, the lantern and the cauldron's fire flicker and the vapour drifts, but only for visitors who have not asked
- * for reduced motion: this block swaps in the "-lit" pictures, which carry the animation, and everyone else keeps the still
+ * for reduced motion, in their system or with the "Still scenery" control (data-motion="still"): this block swaps in the "-lit" pictures, which carry the animation, and everyone else keeps the still
  * pictures above. The animation is gentle on purpose: each picture breathes over several seconds, no two candles keep time,
  * and no change comes faster than about three a second, far below the limit for flashing.
  */
 @media (prefers-reduced-motion: no-preference) {
-  :root[data-theme="spooky"] .setup h1 { background-image: url("./spooky/sign-resting-lit.svg"); }
-  :root[data-theme="spooky"][data-sign="perch"] .setup h1 { background-image: url("./spooky/sign-perch-lit.svg"); }
-  :root[data-theme="spooky"] body::after {
+  :root[data-theme="spooky"]:not([data-motion="still"]) .setup h1 { background-image: url("./spooky/sign-resting-lit.svg"); }
+  :root[data-theme="spooky"][data-sign="perch"]:not([data-motion="still"]) .setup h1 { background-image: url("./spooky/sign-perch-lit.svg"); }
+  :root[data-theme="spooky"]:not([data-motion="still"]) body::after {
     background:
       url("./spooky/scene-right-lit.svg") right 2% top / auto 240px no-repeat,
       url("./spooky/scene-left-lit.svg") left 3% top / auto 240px no-repeat,

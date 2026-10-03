@@ -6,6 +6,7 @@ import { MeetDialog } from "./MeetDialog.tsx";
 import { pickPlayerName } from "./playerNames.ts";
 import { RulesDialog } from "./RulesDialog.tsx";
 import { BOT_NAMES, type Config, type LevelChoice, type Pace } from "./session.ts";
+import { MotionToggle } from "./MotionToggle.tsx";
 import { THEMES, applyTheme, loadTheme, saveTheme, type ThemeId } from "./theme.ts";
 
 const LEVEL_BLURBS: Record<LevelChoice, string> = {
@@ -191,6 +192,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           </button>
           <span className="hint">{THEMES.find((t) => t.id === theme)?.blurb}</span>
         </div>
+        <MotionToggle theme={theme} />
         <button type="submit" className="primary">
           Play
         </button>

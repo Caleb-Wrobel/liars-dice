@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import html from "../../index.html?raw";
-import { SEASONS } from "../theme.ts";
+import { MOTION_STORAGE_KEY, SEASONS } from "../theme.ts";
 import styles from "../styles.css?raw";
 import casino from "./casino.css?raw";
 import saloon from "./saloon.css?raw";
@@ -85,6 +85,18 @@ describe("the Spooky flicker", () => {
     expect(before).not.toContain("-lit.svg"); // the base rules use the still pictures
     for (const name of Object.keys(lit)) expect(inside, name).toContain(`${name}-lit.svg`);
     for (const name of ["sign-resting", "sign-perch", "scene-left", "scene-right", "grave"]) expect(before, name).toContain(`${name}.svg`);
+  });
+
+  it("lets the Still scenery control switch every animated picture off", () => {
+    const inside = spooky.slice(spooky.indexOf(marker));
+    const rules = [...inside.matchAll(/:root\[data-theme="spooky"\][^{]*\{/g)].map((m) => m[0]);
+    expect(rules.length).toBeGreaterThanOrEqual(3);
+    for (const rule of rules) expect(rule, rule).toContain(':not([data-motion="still"])');
+  });
+
+  it("applies a saved Still scenery choice before the first paint, with the same key and attribute as the app", () => {
+    expect(html).toContain(`localStorage.getItem("${MOTION_STORAGE_KEY}") === "1"`);
+    expect(html).toContain('document.documentElement.dataset.motion = "still"');
   });
 
   it.each(Object.entries(still))("keeps the still %s picture free of animation", (_name, picture) => {
