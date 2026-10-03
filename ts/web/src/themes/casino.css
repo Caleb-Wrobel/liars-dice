@@ -91,30 +91,33 @@
 }
 
 /*
- * The scenery sits at the foot of the page, below the copyright line, so it can never cover the form, on a strip of
- * felt with a padded rail: a roulette wheel on the right, always, and on the left either the roulette betting layout
- * or a poker spread, picked once per visit (see pickScene in src/theme.ts, which sets data-scene). It is one picture
- * with no text and no click handling, so a screen reader and the keyboard never meet it. It needs width, so it goes
- * on a narrow screen.
+ * The scenery follows the page and never covers the form, on a strip of felt with a padded rail: a roulette wheel on
+ * the right, always, and on the left either the roulette betting layout or a poker spread, picked once per visit (see
+ * pickScene in src/theme.ts, which sets data-scene). On the setup page it starts at the copyright line, straight under
+ * the Play bar, and the felt runs on down to the bottom of the window, so a tall window shows table and not a gap. The
+ * pictures are anchored to the top and are 240px tall, with the strip beginning 173px down. It is one picture with no
+ * text and no click handling, so a screen reader and the keyboard never meet it. It needs width, so it goes on a
+ * narrow screen.
  */
 :root[data-theme="casino"] body::before {
-  content: ""; display: block; flex: none; order: 2; height: 240px; pointer-events: none;
+  content: ""; display: block; flex: 1 0 240px; order: 2; pointer-events: none;
   background:
-    url("./casino/roulette-right.svg") right 2% bottom / auto 100% no-repeat,
-    url("./casino/roulette-left.svg") left 2% bottom / auto 100% no-repeat,
-    linear-gradient(transparent 72%, #8a6a2a 72% 73%, #4d2e16 73% 75%, #0f3a26 75%);
+    url("./casino/roulette-right.svg") right 2% top / auto 240px no-repeat,
+    url("./casino/roulette-left.svg") left 2% top / auto 240px no-repeat,
+    linear-gradient(transparent 173px, #8a6a2a 173px 174px, #4d2e16 174px 180px, #0f3a26 180px);
 }
 :root[data-theme="casino"][data-scene="poker"] body::before {
   background:
-    url("./casino/roulette-right.svg") right 2% bottom / auto 100% no-repeat,
-    url("./casino/poker-left.svg") left 2% bottom / auto 100% no-repeat,
-    linear-gradient(transparent 72%, #8a6a2a 72% 73%, #4d2e16 73% 75%, #0f3a26 75%);
+    url("./casino/roulette-right.svg") right 2% top / auto 240px no-repeat,
+    url("./casino/poker-left.svg") left 2% top / auto 240px no-repeat,
+    linear-gradient(transparent 173px, #8a6a2a 173px 174px, #4d2e16 174px 180px, #0f3a26 180px);
 }
+/* On the setup page, pull the scenery up so the felt begins just under the copyright line. The Casino sign is taller and its pictures all stand on the felt, so it needs more than the Saloon. */
+:root[data-theme="casino"] body:has(.setup)::before { margin-top: -190px; }
 @media (max-width: 899px) {
   :root[data-theme="casino"] body::before { display: none; }
 }
-/* The page fills the screen, so the scenery sits at the foot of a short page and after the content of a long one. */
+/* The page fills the screen, and the scenery takes whatever height the content leaves. */
 @media (min-width: 900px) {
   :root[data-theme="casino"] body { display: flex; flex-direction: column; }
-  :root[data-theme="casino"] #root { flex: 1 0 auto; }
 }
