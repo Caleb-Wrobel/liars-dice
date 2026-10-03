@@ -124,6 +124,18 @@ describe("the Saloon decorations", () => {
   });
 });
 
+describe("the Casino font", () => {
+  it("uses Limelight for headings, with a serif fallback while it loads, and the system face for text", () => {
+    expect(casino).toMatch(/--font-display:\s*"Limelight",[^;]*\bserif;/);
+    expect(casino).toMatch(/--font-body:\s*system-ui[^;]*sans-serif;/);
+    expect(casino).toMatch(/--display-weight:\s*400;/); // Limelight has one weight, so none is faked
+  });
+
+  it("keeps the standing claim in the plain body face, so it reads at a glance", () => {
+    expect(casino).toMatch(/\.claim-text \{[^}]*font-family:\s*var\(--font-body\)/);
+  });
+});
+
 describe("the Casino decorations", () => {
   const rule = (selector: string) => {
     const match = casino.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*{([^}]*)}`));
