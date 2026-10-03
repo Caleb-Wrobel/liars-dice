@@ -27,6 +27,16 @@ describe("the layout stylesheet", () => {
   });
 });
 
+describe("the setup row", () => {
+  it("leaves the phone layout alone, and only lays the name and short fields in a row on a wide screen", () => {
+    expect(styles).toMatch(/\.who-row \{ display: contents; \}/); // the wrapper vanishes on a phone
+    const wide = styles.match(/@media \(min-width: 640px\) \{\s*\.who-row \{([^}]*)\}/);
+    expect(wide, "expected a wide-screen rule for .who-row").not.toBeNull();
+    expect(wide![1]).toMatch(/display:\s*flex/);
+    expect(wide![1]).toMatch(/flex-wrap:\s*wrap/); // it wraps back to the phone layout when tight
+  });
+});
+
 describe("index.html", () => {
   it("does not run the page under system bars", () => {
     // viewport-fit=cover lets content sit under the notch and the browser's bottom bar, and nothing
@@ -80,12 +90,17 @@ describe("the Saloon decorations", () => {
     return match![1]!;
   };
 
-  it("keeps the scenery behind the page, inert and without text", () => {
+  it("keeps the scenery inert and without text, in the flow after the page so it can never cover the form", () => {
     const body = rule(':root[data-theme="saloon"] body::before');
     expect(body).toMatch(/pointer-events:\s*none/);
-    expect(body).toMatch(/z-index:\s*-1/);
-    expect(body).toMatch(/position:\s*fixed/);
     expect(body).toMatch(/content:\s*""/);
+    expect(body).toMatch(/order:\s*2/);
+    expect(body).not.toMatch(/position:\s*(fixed|absolute)/);
+    // The page grows to fill the screen, so the scenery rests at the foot of a short page and follows a long one.
+    expect(saloon).toMatch(/@media \(min-width: 900px\) \{\s*:root\[data-theme="saloon"\] body \{ display: flex; flex-direction: column; \}\s*\}/);
+    expect(body).toMatch(/flex:\s*1 0 240px/); // it takes the height the content leaves, and never less than its own
+    // Only the setup page, which has a footer line, pulls it up beside the Play bar; the table screen keeps clear of it.
+    expect(rule(':root[data-theme="saloon"] body:has(.setup)::before')).toMatch(/margin-top:\s*-\d+px/);
   });
 
   it("drops the scenery on a narrow screen, so text stays clear", () => {
@@ -103,7 +118,7 @@ describe("the Saloon decorations", () => {
     const lettering = sign.match(/color:\s*(#[0-9a-f]{6})/i)![1]!;
     const plank = [...sign.matchAll(/linear-gradient\((#[0-9a-f]{6}),\s*(#[0-9a-f]{6})\)/gi)][0]!.slice(1);
     for (const colour of plank) expect(ratio(lettering, colour)).toBeGreaterThanOrEqual(4.5);
-    const strip = saloon.match(/#7a5530 72% 73\.5%, (#[0-9a-f]{6}) 73\.5%/)![1]!;
+    const strip = saloon.match(/#7a5530 173px 176px, (#[0-9a-f]{6}) 176px/)![1]!;
     expect(ratio("#f3e6c8", strip)).toBeGreaterThanOrEqual(4.5); // --text
     expect(ratio("#c7b08a", strip)).toBeGreaterThanOrEqual(4.5); // --muted
   });
@@ -116,12 +131,17 @@ describe("the Casino decorations", () => {
     return match![1]!;
   };
 
-  it("keeps the scenery behind the page, inert and without text", () => {
+  it("keeps the scenery inert and without text, in the flow after the page so it can never cover the form", () => {
     const body = rule(':root[data-theme="casino"] body::before');
     expect(body).toMatch(/pointer-events:\s*none/);
-    expect(body).toMatch(/z-index:\s*-1/);
-    expect(body).toMatch(/position:\s*fixed/);
     expect(body).toMatch(/content:\s*""/);
+    expect(body).toMatch(/order:\s*2/);
+    expect(body).not.toMatch(/position:\s*(fixed|absolute)/);
+    // The page grows to fill the screen, so the scenery rests at the foot of a short page and follows a long one.
+    expect(casino).toMatch(/@media \(min-width: 900px\) \{\s*:root\[data-theme="casino"\] body \{ display: flex; flex-direction: column; \}\s*\}/);
+    expect(body).toMatch(/flex:\s*1 0 240px/); // it takes the height the content leaves, and never less than its own
+    // Only the setup page, which has a footer line, pulls it up beside the Play bar; the table screen keeps clear of it.
+    expect(rule(':root[data-theme="casino"] body:has(.setup)::before')).toMatch(/margin-top:\s*-\d+px/);
   });
 
   it("always shows the wheel, and varies only the left side with data-scene", () => {
@@ -145,7 +165,7 @@ describe("the Casino decorations", () => {
   it("can be read: the sign lettering on its face, and the page text on the felt and the rail", () => {
     const sign = rule(':root[data-theme="casino"] .setup h1');
     expect(ratio(sign.match(/color:\s*(#[0-9a-f]{6})/i)![1]!, "#fbf6e6")).toBeGreaterThanOrEqual(4.5); // the sign's face, in sign.svg
-    const strip = casino.match(/#8a6a2a 72% 73%, (#[0-9a-f]{6}) 73% 75%, (#[0-9a-f]{6}) 75%/)!;
+    const strip = casino.match(/#8a6a2a 173px 174px, (#[0-9a-f]{6}) 174px 180px, (#[0-9a-f]{6}) 180px/)!;
     for (const surface of [strip[1]!, strip[2]!]) {
       expect(ratio("#f1f4ec", surface)).toBeGreaterThanOrEqual(4.5); // --text
       expect(ratio("#a7bbaf", surface)).toBeGreaterThanOrEqual(4.5); // --muted
