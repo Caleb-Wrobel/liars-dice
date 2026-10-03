@@ -24,7 +24,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [nameTyped, setNameTyped] = useState(false);
   const [lives, setLives] = useState(3);
   const [advanced, setAdvanced] = useState(false);
-  const [opponents, setOpponents] = useState(1);
+  const [opponents, setOpponents] = useState(2);
   const [level, setLevel] = useState<LevelChoice>("normal");
   const [characters, setCharacters] = useState(true);
   // With characters, slow is the default so players can watch the table and get to know who they are up against.
