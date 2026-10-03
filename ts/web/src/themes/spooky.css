@@ -44,9 +44,12 @@
   --log-bg: #1a1420;      /* a gravestone slate */
   --log-ink: #dacfdc;
 
-  --font-display: "Alegreya", Georgia, "Times New Roman", serif;
+  /* IM Fell English, an old printer's face, for headings and labels; the tombstone title is Cinzel, below. IM Fell has one
+     weight, so none is asked for. Text stays Alegreya: IM Fell's old-style 1 looks like a capital I, which would blur the
+     numbers a dice game turns on. */
+  --font-display: "IM Fell English", Georgia, "Times New Roman", serif;
   --font-body: "Alegreya", Georgia, "Times New Roman", serif;
-  --display-weight: 700;
+  --display-weight: 400;
   --radius: 8px;
 }
 
@@ -112,7 +115,7 @@
     var(--claim-bg);
   box-shadow: 0 4px 0 #00000077, inset 0 0 0 4px #e8dcc0, inset 0 0 0 5px var(--claim-edge);
 }
-:root[data-theme="spooky"] .claim-text { font-size: 1.15rem; letter-spacing: 0.02em; }
+:root[data-theme="spooky"] .claim-text { font-family: var(--font-body); font-weight: 700; font-size: 1.15rem; letter-spacing: 0.02em; }
 
 /* A stone table top lit from one side, and a dark cauldron for the cup. */
 :root[data-theme="spooky"] .tray-visible {
@@ -154,7 +157,8 @@
 :root[data-theme="spooky"] .setup h1 {
   display: grid; place-items: center; text-align: center;
   width: min(100%, 380px); aspect-ratio: 380 / 170; padding: 18px 16% 40px;
-  font-size: 2rem; line-height: 1.05; color: #f2e7d1; text-shadow: 0 2px 0 #14101a;
+  font-family: "Cinzel", Georgia, "Times New Roman", serif; font-weight: 700; letter-spacing: 0.04em;
+  font-size: 1.7rem; line-height: 1.05; color: #f2e7d1; text-shadow: 0 2px 0 #14101a;
   background: url("./spooky/sign-resting.svg") center / 100% 100% no-repeat;
 }
 :root[data-theme="spooky"][data-sign="perch"] .setup h1 {
