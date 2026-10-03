@@ -2,7 +2,8 @@ import { ARCHETYPES, weightsOf, type ArchetypeId, type Weights } from "@liars-di
 import type { Cast, Persona } from "./persona.ts";
 
 /**
- * The Hacker table has no characters. Its bots wear the engine's own archetype names, and the bio is the weights,
+ * The Hacker table has no characters. Its bots wear the engine's own archetype names, in lower case like the player's
+ * root, and the bio is the weights,
  * so a player who picks this table is choosing to see the balancing data in the game. It is built from the engine's
  * data, so it can never copy it wrongly or fall behind when an archetype changes.
  *
@@ -19,6 +20,6 @@ const FIRST_UID = 1001;
 export const HACKER: Cast = Object.fromEntries(
   ARCHETYPES.map((archetype, index): [ArchetypeId, Persona] => [
     archetype.id,
-    { name: archetype.name, title: `uid ${FIRST_UID + index}`, bio: weightsBio(weightsOf(archetype)) },
+    { name: archetype.name.toLowerCase(), title: `uid ${FIRST_UID + index}`, bio: weightsBio(weightsOf(archetype)) },
   ]),
 ) as Cast;

@@ -9,11 +9,11 @@ shows their weights as the bios, so choosing this table is choosing to see the b
 
 | Character | Title | Archetype | Bluffing | Withholding | Gambling |
 |---|---|---|---|---|---|
-| Bluffer | uid 1001 | Bluffer | 5 / 5 | 1 / 5 | 2 / 5 |
-| Honest | uid 1002 | Honest | 2 / 5 | 1 / 5 | 1 / 5 |
-| Sandbagger | uid 1003 | Sandbagger | 2 / 5 | 5 / 5 | 1 / 5 |
-| Gambler | uid 1004 | Gambler | 4 / 5 | 1 / 5 | 5 / 5 |
-| Creeper | uid 1005 | Creeper | 1 / 5 | 3 / 5 | 2 / 5 |
+| bluffer | uid 1001 | Bluffer | 5 / 5 | 1 / 5 | 2 / 5 |
+| honest | uid 1002 | Honest | 2 / 5 | 1 / 5 | 1 / 5 |
+| sandbagger | uid 1003 | Sandbagger | 2 / 5 | 5 / 5 | 1 / 5 |
+| gambler | uid 1004 | Gambler | 4 / 5 | 1 / 5 | 5 / 5 |
+| creeper | uid 1005 | Creeper | 1 / 5 | 3 / 5 | 2 / 5 |
 
 ## Reading the weights
 
@@ -29,13 +29,13 @@ habits never change how strong it is. Strength belongs to the bot level you pick
 
 ## In plain words
 
-- **Bluffer** (Bluffer): Makes big jumps on the standing claim, whether or not the dice back it up.
+- **bluffer** (Bluffer): Makes big jumps on the standing claim, whether or not the dice back it up.
   - Bio: Bluffing 5 of 5, Withholding 1 of 5, Gambling 2 of 5
-- **Honest** (Honest): Claims what it holds. When it cannot beat you it edges up a rung or two, and it shows.
+- **honest** (Honest): Claims what it holds. When it cannot beat you it edges up a rung or two, and it shows.
   - Bio: Bluffing 2 of 5, Withholding 1 of 5, Gambling 1 of 5
-- **Sandbagger** (Sandbagger): Says less than it holds and lets the claim climb, so its real hand stays hidden.
+- **sandbagger** (Sandbagger): Says less than it holds and lets the claim climb, so its real hand stays hidden.
   - Bio: Bluffing 2 of 5, Withholding 5 of 5, Gambling 1 of 5
-- **Gambler** (Gambler): Barely looks at its dice, and now and then claims without looking at all.
+- **gambler** (Gambler): Barely looks at its dice, and now and then claims without looking at all.
   - Bio: Bluffing 4 of 5, Withholding 1 of 5, Gambling 5 of 5
-- **Creeper** (Creeper): Inches up the ladder one rung at a time and never shows its hand.
+- **creeper** (Creeper): Inches up the ladder one rung at a time and never shows its hand.
   - Bio: Bluffing 1 of 5, Withholding 3 of 5, Gambling 2 of 5

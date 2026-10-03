@@ -60,10 +60,10 @@ describe("personaFor", () => {
 });
 
 describe("the Hacker table", () => {
-  it("shows the engine's own archetype names, and its bio is the weights", () => {
+  it("shows the engine's own archetype names in lower case, and its bio is the weights", () => {
     for (const archetype of ARCHETYPES) {
       const persona = HACKER[archetype.id];
-      expect(persona.name).toBe(archetype.name);
+      expect(persona.name).toBe(archetype.name.toLowerCase());
       expect(persona.bio).toBe(weightsBio(weightsOf(archetype)));
     }
   });
