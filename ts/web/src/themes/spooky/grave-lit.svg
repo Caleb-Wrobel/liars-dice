@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240">
+<defs>
+<radialGradient id="lantern"><stop offset="0" stop-color="#8fe39a" stop-opacity=".6"/><stop offset="1" stop-color="#8fe39a" stop-opacity="0"/></radialGradient>
+<radialGradient id="eyeglow"><stop offset="0" stop-color="#ffd75a" stop-opacity=".8"/><stop offset="1" stop-color="#ffd75a" stop-opacity="0"/></radialGradient>
+<style>
+.gl{animation:glow 3.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.fl{animation:flame 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+.fire{animation:fire 3.1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.vap{animation:drift 7s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes glow{0%,100%{opacity:1;transform:scale(1)}18%{opacity:.78;transform:scale(.96)}34%{opacity:.95;transform:scale(1.03)}52%{opacity:.7;transform:scale(.94)}71%{opacity:1;transform:scale(1.04)}86%{opacity:.85;transform:scale(.98)}}
+@keyframes flame{0%,100%{transform:scale(1,1) skewX(0deg)}15%{transform:scale(.96,.92) skewX(-3deg)}33%{transform:scale(1.03,1.06) skewX(2deg)}49%{transform:scale(.94,.9) skewX(-2deg)}68%{transform:scale(1.02,1.04) skewX(3deg)}84%{transform:scale(.98,.95) skewX(-1deg)}}
+@keyframes fire{0%,100%{opacity:1;transform:scale(1)}22%{opacity:.82;transform:scale(.97)}45%{opacity:.95;transform:scale(1.03)}63%{opacity:.78;transform:scale(.96)}82%{opacity:1;transform:scale(1.02)}}
+@keyframes drift{0%,100%{transform:translateX(0) skewX(0deg)}50%{transform:translateX(3px) skewX(-2deg)}}
+@media (prefers-reduced-motion:reduce){.gl,.fl,.fire,.vap{animation:none}}
+</style>
+</defs>
+  <ellipse cx="96" cy="212" rx="60" ry="8" fill="#00000077"/>
+  <path d="M42 210C48 194 66 186 92 186C118 186 136 194 144 210Z" fill="#3a281c" stroke="#1c120c" stroke-width="2"/>
+  <path d="M56 204C64 196 78 192 92 192" fill="none" stroke="#5a3e2a" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="54" cy="208" r="4" fill="#4a3424" stroke="#1c120c" stroke-width="1"/>
+  <circle cx="70" cy="205" r="3" fill="#4a3424" stroke="#1c120c" stroke-width="1"/>
+  <circle cx="118" cy="204" r="3.5" fill="#4a3424" stroke="#1c120c" stroke-width="1"/>
+  <circle cx="132" cy="208" r="4" fill="#4a3424" stroke="#1c120c" stroke-width="1"/>
+  <circle cx="100" cy="196" r="2.6" fill="#4a3424" stroke="#1c120c" stroke-width="1"/>
+  <g transform="rotate(26 100 200)">
+    <rect x="98" y="164" width="3.5" height="38" fill="#6a4a2e" stroke="#2a1a10" stroke-width="1"/>
+    <path d="M92 164H108" stroke="#6a4a2e" stroke-width="4" stroke-linecap="round"/>
+    <path d="M92 202H108L106 214L100 218L94 214Z" fill="#8a8a98" stroke="#3a3a46" stroke-width="1.5" stroke-linejoin="round"/>
+  </g>
+  <circle class="gl" style="animation-duration:3.9s;animation-delay:-1.1s" cx="160" cy="196" r="30" fill="url(#lantern)"/>
+  <ellipse cx="160" cy="213" rx="12" ry="3.5" fill="#00000077"/>
+  <path d="M153 212H167V209H153Z" fill="#2a2630" stroke="#120d14" stroke-width="1"/>
+  <path d="M154 209V194H166V209Z" fill="#8fe39a" fill-opacity=".45" stroke="#2a2630" stroke-width="2"/>
+  <path class="fl" style="animation-duration:2.9s;animation-delay:-0.7s" d="M160 206C164 202 163 198 160 194C157 198 156 202 160 206Z" fill="#b8f5be"/>
+  <path d="M152 194H168L164 189H156Z" fill="#2a2630" stroke="#120d14" stroke-width="1"/>
+  <path d="M157 189C157 184 163 184 163 189" fill="none" stroke="#2a2630" stroke-width="2"/>
+</svg>

@@ -7,6 +7,11 @@ import saloon from "./saloon.css?raw";
 import spooky from "./spooky.css?raw";
 import perch from "./spooky/sign-perch.svg?raw";
 import resting from "./spooky/sign-resting.svg?raw";
+import graveLit from "./spooky/grave-lit.svg?raw";
+import sceneLeftLit from "./spooky/scene-left-lit.svg?raw";
+import sceneRightLit from "./spooky/scene-right-lit.svg?raw";
+import signPerchLit from "./spooky/sign-perch-lit.svg?raw";
+import signRestingLit from "./spooky/sign-resting-lit.svg?raw";
 import grass from "./spooky/grass.svg?raw";
 import grave from "./spooky/grave.svg?raw";
 import sceneLeft from "./spooky/scene-left.svg?raw";
@@ -64,6 +69,50 @@ describe("index.html", () => {
     // here is designed for that, so a button could end up hidden.
     expect(html).toMatch(/<meta name="viewport"/);
     expect(html).not.toMatch(/viewport-fit\s*=\s*cover/);
+  });
+});
+
+describe("the Spooky flicker", () => {
+  const lit = { "sign-resting": signRestingLit, "sign-perch": signPerchLit, "scene-left": sceneLeftLit, "scene-right": sceneRightLit, grave: graveLit };
+  const still = { "sign-resting": resting, "sign-perch": perch, "scene-left": sceneLeft, "scene-right": sceneRight, grave };
+  const marker = "@media (prefers-reduced-motion: no-preference) {";
+
+  it("swaps in the animated pictures only for visitors who have not asked for reduced motion", () => {
+    const at = spooky.indexOf(marker);
+    expect(at, "expected a no-preference block").toBeGreaterThan(-1);
+    const before = spooky.slice(0, at);
+    const inside = spooky.slice(at);
+    expect(before).not.toContain("-lit.svg"); // the base rules use the still pictures
+    for (const name of Object.keys(lit)) expect(inside, name).toContain(`${name}-lit.svg`);
+    for (const name of ["sign-resting", "sign-perch", "scene-left", "scene-right", "grave"]) expect(before, name).toContain(`${name}.svg`);
+  });
+
+  it.each(Object.entries(still))("keeps the still %s picture free of animation", (_name, picture) => {
+    expect(picture).not.toMatch(/@keyframes|animation/);
+  });
+
+  it.each(Object.entries(lit))("animates the %s picture, and stops the animation itself under reduced motion too", (_name, picture) => {
+    expect(picture).toMatch(/@keyframes/);
+    expect(picture).toMatch(/@media \(prefers-reduced-motion:reduce\)\{[^}]*animation:none/);
+    expect(picture).not.toMatch(/<text[\s>]/);
+  });
+
+  it("never changes faster than about three times a second, far below the flash limit", () => {
+    // The fastest possible change is the shortest animation length times the smallest gap between two keyframe stops.
+    const seconds: number[] = [];
+    const gaps: number[] = [];
+    for (const picture of Object.values(lit)) {
+      for (const [, value] of picture.matchAll(/animation(?:-duration)?:[^;"}]*?(\d+(?:\.\d+)?)s/g)) seconds.push(Number(value));
+      for (const [, name, body] of picture.matchAll(/@keyframes (\w+)\{((?:[^{}]|\{[^}]*\})*)\}/g)) {
+        const stops = [...new Set([0, 100, ...[...body!.matchAll(/(\d+(?:\.\d+)?)%/g)].map((m) => Number(m[1]))])].sort((a, b) => a - b);
+        for (let i = 1; i < stops.length; i++) gaps.push(stops[i]! - stops[i - 1]!);
+        expect(stops.length, String(name)).toBeGreaterThan(2);
+      }
+    }
+    const shortest = Math.min(...seconds);
+    const tightest = Math.min(...gaps);
+    expect(shortest).toBeGreaterThanOrEqual(2.4);
+    expect(shortest * (tightest / 100)).toBeGreaterThanOrEqual(0.3); // so at most about 1.7 flashes a second
   });
 });
 
