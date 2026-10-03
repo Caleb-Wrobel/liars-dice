@@ -1,4 +1,4 @@
-import { ARCHETYPES, seededRng, type ArchetypeId } from "@liars-dice/engine";
+import { ARCHETYPES, seededRng, weightsOf, type ArchetypeId } from "@liars-dice/engine";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
@@ -32,15 +32,28 @@ describe.each(THEMES.map((t) => [t.id, t.meet] as const))("the %s Meet page", (t
     }
   });
 
-  it("does not show how the characters play beyond their bios", () => {
+  // The Hacker table is the one exception: its bios are the weights, an opt-in spoiler, covered below.
+  it.skipIf(themeId === "hacker")("does not show how the characters play beyond their bios", () => {
     render(<MeetDialog theme={themeId} onClose={() => {}} />);
     expect(screen.queryByText(/bluffing|withholding|gambling/i)).not.toBeInTheDocument();
   });
 });
 
+describe("the hacker Meet page", () => {
+  it("shows each archetype's weights as its bio, in words and numbers", () => {
+    render(<MeetDialog theme="hacker" onClose={() => {}} />);
+    for (const archetype of ARCHETYPES) {
+      const w = weightsOf(archetype);
+      expect(
+        screen.getByText(`Bluffing ${w.bluffing} of 5, withholding ${w.withholding} of 5, gambling ${w.gambling} of 5.`),
+      ).toBeInTheDocument();
+    }
+  });
+});
+
 describe("the order of the Meet page", () => {
   /** The archetypes in the order a theme's cards appear, found by matching each card's name to its persona. */
-  const shownOrder = (theme: "saloon" | "casino" | "spooky", rng: () => number): ArchetypeId[] => {
+  const shownOrder = (theme: "saloon" | "casino" | "spooky" | "hacker", rng: () => number): ArchetypeId[] => {
     const { unmount } = render(<MeetDialog theme={theme} onClose={() => {}} rng={rng} />);
     const names = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
     unmount();
@@ -64,7 +77,7 @@ describe("the order of the Meet page", () => {
   it("does not always lead with the same archetype, in any table style", () => {
     // 12 opens per style is plenty to tell a shuffle from a fixed order, and keeps the test quick: each open renders the
     // whole dialog, which is slow enough under coverage instrumentation to hit the default timeout with more.
-    for (const theme of ["saloon", "casino", "spooky"] as const) {
+    for (const theme of ["saloon", "casino", "spooky", "hacker"] as const) {
       const firsts = new Set(Array.from({ length: 12 }, (_, seed) => shownOrder(theme, seededRng(seed))[0]));
       expect(firsts.size, theme).toBeGreaterThan(2);
     }

@@ -9,6 +9,7 @@ import "./styles.css";
 import "./themes/saloon.css";
 import "./themes/casino.css";
 import "./themes/spooky.css";
+import "./themes/hacker.css";
 
 applyTheme(loadTheme());
 applyScene(pickScene());

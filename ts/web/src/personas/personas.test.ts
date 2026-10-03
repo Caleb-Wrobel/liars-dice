@@ -1,6 +1,8 @@
-import { ARCHETYPES, ARCHETYPE_IDS } from "@liars-dice/engine";
+import { ARCHETYPES, ARCHETYPE_IDS, weightsOf } from "@liars-dice/engine";
 import { describe, expect, it } from "vitest";
 import { THEMES } from "../theme.ts";
+import { pickPlayerName } from "../playerNames.ts";
+import { HACKER, weightsBio } from "./hacker.ts";
 import { PERSONAS, initialsOf, personaFor } from "./index.ts";
 
 describe("initialsOf", () => {
@@ -28,7 +30,8 @@ describe.each(THEMES.map((theme) => [theme.id] as const))("the %s personas", (th
   it("gives each one a name, a title and a bio short enough for a phone card", () => {
     for (const [id, persona] of personas) {
       expect(persona.name.length, id).toBeGreaterThan(0);
-      expect(persona.title.startsWith("The "), id).toBe(true);
+      // The Hacker table has no characters, so its titles are user ids, not "The ...".
+      expect(persona.title.startsWith("The ") || themeId === "hacker", id).toBe(true);
       expect(persona.bio.length, id).toBeGreaterThan(20);
       expect(persona.bio.length, id).toBeLessThanOrEqual(110);
     }
@@ -53,5 +56,29 @@ describe("personaFor", () => {
 
   it("knows every archetype the engine has", () => {
     for (const { id } of ARCHETYPES) expect(personaFor("saloon", id)).toBeDefined();
+  });
+});
+
+describe("the Hacker table", () => {
+  it("shows the engine's own archetype names, and its bio is the weights", () => {
+    for (const archetype of ARCHETYPES) {
+      const persona = HACKER[archetype.id];
+      expect(persona.name).toBe(archetype.name);
+      expect(persona.bio).toBe(weightsBio(weightsOf(archetype)));
+    }
+  });
+
+  it("writes the weights as numbers, so the meaning never rests on a bar", () => {
+    expect(weightsBio({ bluffing: 5, withholding: 1, gambling: 2 })).toBe(
+      "Bluffing 5 of 5, withholding 1 of 5, gambling 2 of 5.",
+    );
+  });
+
+  it("gives each archetype its own user id, starting at 1001", () => {
+    expect(ARCHETYPES.map(({ id }) => HACKER[id].title)).toEqual(["uid 1001", "uid 1002", "uid 1003", "uid 1004", "uid 1005"]);
+  });
+
+  it("names the player root, whatever the dice say", () => {
+    for (const roll of [0, 0.5, 0.999]) expect(pickPlayerName("hacker", () => roll)).toBe("root");
   });
 });
