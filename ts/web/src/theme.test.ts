@@ -3,13 +3,17 @@ import {
   DEFAULT_THEME,
   SCENE_STORAGE_KEY,
   SCENES,
+  SIGN_STORAGE_KEY,
+  SIGNS,
   THEME_STORAGE_KEY,
   THEMES,
   applyScene,
+  applySign,
   applyTheme,
   isThemeId,
   loadTheme,
   pickScene,
+  pickSign,
   saveTheme,
 } from "./theme.ts";
 
@@ -98,5 +102,28 @@ describe("the Casino scenery pick", () => {
     const root = document.createElement("div");
     applyScene("poker", root);
     expect(root.dataset.scene).toBe("poker");
+  });
+});
+
+describe("the Spooky title pick", () => {
+  it("picks either tombstone from the dice, and keeps the pick for the visit", () => {
+    const kept = store();
+    expect(pickSign(kept, () => 0)).toBe("resting");
+    expect(kept.data[SIGN_STORAGE_KEY]).toBe("resting");
+    expect(pickSign(kept, () => 0.99)).toBe("resting");
+    expect(pickSign(store(), () => 0.99)).toBe("perch");
+    expect(SIGNS).toEqual(["resting", "perch"]);
+  });
+
+  it("is picked separately from the Casino scenery", () => {
+    const shared = store();
+    expect(pickScene(shared, () => 0.99)).toBe("poker");
+    expect(pickSign(shared, () => 0)).toBe("resting");
+  });
+
+  it("applies the pick to the page for the stylesheet", () => {
+    const root = document.createElement("div");
+    applySign("perch", root);
+    expect(root.dataset.sign).toBe("perch");
   });
 });

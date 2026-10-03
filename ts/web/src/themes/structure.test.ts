@@ -4,6 +4,8 @@ import styles from "../styles.css?raw";
 import casino from "./casino.css?raw";
 import saloon from "./saloon.css?raw";
 import spooky from "./spooky.css?raw";
+import perch from "./spooky/sign-perch.svg?raw";
+import resting from "./spooky/sign-resting.svg?raw";
 
 describe("the layout stylesheet", () => {
   it("gives controls their own text colour instead of inheriting one", () => {
@@ -148,5 +150,38 @@ describe("the Casino decorations", () => {
       expect(ratio("#f1f4ec", surface)).toBeGreaterThanOrEqual(4.5); // --text
       expect(ratio("#a7bbaf", surface)).toBeGreaterThanOrEqual(4.5); // --muted
     }
+  });
+});
+
+describe("the Spooky title tombstones", () => {
+  const rule = (selector: string) => {
+    const match = spooky.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*{([^}]*)}`));
+    expect(match, `expected a rule for ${selector}`).not.toBeNull();
+    return match![1]!;
+  };
+
+  it("wears one of two pictures, the second chosen by data-sign", () => {
+    expect(rule(':root[data-theme="spooky"] .setup h1')).toContain("sign-resting.svg");
+    expect(rule(':root[data-theme="spooky"][data-sign="perch"] .setup h1')).toContain("sign-perch.svg");
+  });
+
+  it.each([
+    ["resting", resting],
+    ["perch", perch],
+  ])("keeps the %s picture free of letters, so the heading is the only text", (_name, picture) => {
+    expect(picture).not.toMatch(/<text[\s>]/);
+  });
+
+  it.each([
+    ["resting", resting],
+    ["perch", perch],
+  ])("reads on the %s stone: the lettering is large, so 3 on its lightest stop and 4.5 at the middle", (_name, picture) => {
+    const lettering = rule(':root[data-theme="spooky"] .setup h1').match(/color:\s*(#[0-9a-f]{6})/i)![1]!;
+    const stops = [...picture.match(/<linearGradient id="stone"[\s\S]*?<\/linearGradient>/)![0]!.matchAll(/stop-color="(#[0-9a-f]{6})"/g)].map((m) => m[1]!);
+    expect(stops).toHaveLength(2);
+    const channel = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+    const middle = "#" + [0, 1, 2].map((i) => Math.round((channel(stops[0]!, i) + channel(stops[1]!, i)) / 2).toString(16).padStart(2, "0")).join("");
+    expect(ratio(lettering, stops[0]!)).toBeGreaterThanOrEqual(3);
+    expect(ratio(lettering, middle)).toBeGreaterThanOrEqual(4.5);
   });
 });
