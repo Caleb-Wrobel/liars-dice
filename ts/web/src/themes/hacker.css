@@ -1,6 +1,6 @@
 /*
- * Hacker: green phosphor on black and a monospaced face, like a terminal. Austere on purpose: no glow, no boxes and
- * no scanlines. The only ornament is the > before the title.
+ * Hacker: green phosphor on black and a monospaced face, like a terminal. Austere on purpose: no glow and no boxes.
+ * The only ornaments are the > before the title and very faint scanlines, an eighties nod.
  * Keep every colour a solid hex: src/themes/contrast.test.ts reads these values. Brightness, not hue, tells the
  * pairs apart, so the palette holds under the colour-vision simulations.
  */
@@ -51,8 +51,16 @@
   --radius: 3px;
 }
 
-/* Plain black, in a slightly smaller monospaced size. */
-:root[data-theme="hacker"] body { font-size: 0.98rem; }
+/*
+ * Plain black with very faint scanlines, drawn as the page's own background so they sit behind everything and can
+ * never touch the text. They are a whisper of green, so they show on black without needing any contrast.
+ */
+:root[data-theme="hacker"] body {
+  font-size: 0.98rem;
+  background:
+    repeating-linear-gradient(0deg, #3dff7a0b 0 1px, transparent 1px 3px),
+    var(--page);
+}
 
 /* Lives are lit memory cells: a bright square with a dark core, so a life reads by shape and brightness. */
 :root[data-theme="hacker"] .life {
