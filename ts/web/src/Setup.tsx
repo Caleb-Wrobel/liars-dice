@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { BOT_LEVEL_NAMES } from "@liars-dice/engine";
+import { ExternalLink } from "./ExternalLink.tsx";
+import { COPYRIGHT, FEEDBACK_URL, LICENSE_URL, REPO_URL } from "./links.ts";
 import { MeetDialog } from "./MeetDialog.tsx";
 import { pickPlayerName } from "./playerNames.ts";
 import { RulesDialog } from "./RulesDialog.tsx";
@@ -36,9 +38,13 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
     <main className="setup">
       <header className="setup-header">
         <h1>Liar's Dice</h1>
-        <button type="button" className="link" onClick={() => setShowRules(true)}>
-          How to play
-        </button>
+        <nav className="setup-links" aria-label="Help and links">
+          <button type="button" className="link" onClick={() => setShowRules(true)}>
+            How to play
+          </button>
+          <ExternalLink href={FEEDBACK_URL}>Feedback</ExternalLink>
+          <ExternalLink href={REPO_URL}>Source on GitHub</ExternalLink>
+        </nav>
       </header>
       <p className="tagline">Pass the dice. Peer, roll, peek, claim. Bluff well.</p>
       {showRules && <RulesDialog onClose={() => setShowRules(false)} />}
@@ -187,6 +193,11 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           Play
         </button>
       </form>
+      <footer className="setup-footer">
+        <small>
+          {COPYRIGHT} · <ExternalLink href={LICENSE_URL}>MIT licence</ExternalLink>
+        </small>
+      </footer>
     </main>
   );
 }
