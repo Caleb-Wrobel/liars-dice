@@ -36,7 +36,7 @@ describe("the links under the title", () => {
 
   it("only links to the public GitHub copy, and names nothing internal", () => {
     for (const url of [REPO_URL, FEEDBACK_URL, LICENSE_URL, NOTICES_URL]) {
-      expect(url, url).toMatch(/^https:\/\/github\.com\/Caleb-Wrobel\/liars-dice/);
+      expect(url, url).toMatch(/^https:\/\/github\.com\/NotTheMentalist\/liars-dice/);
       expect(url, url).not.toMatch(/internal|localhost|192\.168/);
     }
   });
