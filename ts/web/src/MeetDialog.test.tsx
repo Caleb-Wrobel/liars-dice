@@ -62,11 +62,13 @@ describe("the order of the Meet page", () => {
   });
 
   it("does not always lead with the same archetype, in any table style", () => {
+    // 12 opens per style is plenty to tell a shuffle from a fixed order, and keeps the test quick: each open renders the
+    // whole dialog, which is slow enough under coverage instrumentation to hit the default timeout with more.
     for (const theme of ["saloon", "casino", "spooky"] as const) {
-      const firsts = new Set(Array.from({ length: 30 }, (_, seed) => shownOrder(theme, seededRng(seed))[0]));
+      const firsts = new Set(Array.from({ length: 12 }, (_, seed) => shownOrder(theme, seededRng(seed))[0]));
       expect(firsts.size, theme).toBeGreaterThan(2);
     }
-  });
+  }, 20_000);
 
   it("keeps the order steady while the page stays open, and may change the next time it opens", () => {
     const rng = seededRng(3);
