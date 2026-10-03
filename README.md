@@ -44,9 +44,13 @@ Then open the address it prints. `npm run dev:lan` makes it reachable from a pho
   either set, or skip the roll or the peek.
 - **Bots.** Choose up to five opponents at Easy, Normal or Stabby, or let each bot get a random level.
 - **Characters.** With **Use Characters** ticked, the bots are characters from the table style's cast, each with habits
-  of their own. The **Meet** link beside the table style tells you who they are. The details for the curious are in
-  [`docs/tables`](docs/tables).
-- **Table styles.** Saloon, Casino and Spooky, each with its own cast and a colour-vision-tested palette.
+  of their own. The **Meet** link beside the table style tells you who they are.
+- **Table styles.** A selection of table styles, each with its own colour-vision-tested palette and its own cast of
+  characters. The details for the curious, with how each character plays, are in [`docs/tables`](docs/tables).
+  - **Saloon:** warm walnut, brass and leather, with brass coins for lives. The cast is the Rogues' Gallery.
+  - **Casino:** green felt and gold, with casino chips for lives. The cast is the High Rollers.
+  - **Spooky:** candlelight, bone and parchment, with a jack-o'-lantern for every life. The cast is the Graveyard
+    Shift: a witch, a skeleton, a mummy, a werewolf and a ghost.
 
 The in-depth rules, for the curious, are in [`RULES.md`](RULES.md). The short version is the **How to play** page in the game.
 
