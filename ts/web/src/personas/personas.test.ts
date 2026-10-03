@@ -68,9 +68,9 @@ describe("the Hacker table", () => {
     }
   });
 
-  it("writes the weights as numbers, so the meaning never rests on a bar", () => {
+  it("writes the weights as numbers, one to a line, so the meaning never rests on a bar", () => {
     expect(weightsBio({ bluffing: 5, withholding: 1, gambling: 2 })).toBe(
-      "Bluffing 5 of 5, withholding 1 of 5, gambling 2 of 5.",
+      "Bluffing 5 of 5\nWithholding 1 of 5\nGambling 2 of 5",
     );
   });
 

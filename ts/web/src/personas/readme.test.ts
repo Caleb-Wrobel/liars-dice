@@ -19,7 +19,7 @@ describe.each(THEMES.map((t) => [t.id] as const))("the %s table README", (themeI
       expect(row, persona.name).toBeDefined();
       expect(row).toContain(`| ${archetype.name} | ${w.bluffing} / 5 | ${w.withholding} / 5 | ${w.gambling} / 5 |`);
       expect(text).toContain(archetype.brief);
-      expect(text).toContain(persona.bio);
+      expect(text).toContain(persona.bio.split("\n").join(", ")); // a bio on several lines reads as one list item
     }
   });
 

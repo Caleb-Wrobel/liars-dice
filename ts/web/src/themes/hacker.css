@@ -113,3 +113,6 @@
   box-shadow: inset 0 0 0 3px var(--surface), inset 0 0 0 4px #1f6b36, 0 0 14px #3dff7a2e;
 }
 :root[data-theme="hacker"] .setup h1::before { content: "> " / ""; color: var(--muted); }
+
+/* A bio on the Meet page is the weights, one to a line, so its line breaks are kept. */
+:root[data-theme="hacker"] .persona p:last-child { white-space: pre-line; }

@@ -53,7 +53,7 @@ habits never change how strong it is. Strength belongs to the bot level you pick
 ## In plain words
 
 ${rows
-  .map(({ archetype, persona }) => `- **${persona.name}** (${archetype.name}): ${archetype.brief}\n  - Bio: ${persona.bio}`)
+  .map(({ archetype, persona }) => `- **${persona.name}** (${archetype.name}): ${archetype.brief}\n  - Bio: ${persona.bio.split("\n").join(", ")}`)
   .join("\n")}
 `;
 }
