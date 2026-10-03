@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 240" width="330" height="240">
+  <rect x="32" y="185" width="268" height="40" fill="#0b2a1c" stroke="#e8c15a" stroke-width="1.4"/>
+  <rect x="34" y="187" width="12" height="36" fill="#1f7a3c" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="46" y="187" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="67" y="187" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="88" y="187" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="109" y="187" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="130" y="187" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="151" y="187" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="172" y="187" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="193" y="187" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="214" y="187" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="235" y="187" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="256" y="187" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="277" y="187" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="46" y="199" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="67" y="199" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="88" y="199" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="109" y="199" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="130" y="199" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="151" y="199" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="172" y="199" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="193" y="199" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="214" y="199" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="235" y="199" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="256" y="199" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="277" y="199" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="46" y="211" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="67" y="211" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="88" y="211" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="109" y="211" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="130" y="211" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="151" y="211" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="172" y="211" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="193" y="211" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="214" y="211" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="235" y="211" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="256" y="211" width="21" height="12" fill="#16181b" stroke="#e8c15a" stroke-width="1"/>
+  <rect x="277" y="211" width="21" height="12" fill="#c8202a" stroke="#e8c15a" stroke-width="1"/>
+  <ellipse cx="300" cy="215" rx="13" ry="4.5" fill="#00000066"/>
+  <ellipse cx="300" cy="215" rx="11" ry="4" fill="#e8c15a"/>
+  <rect x="289" y="211" width="22" height="4" fill="#22262a"/>
+  <ellipse cx="300" cy="211" rx="11" ry="4" fill="#22262a" stroke="#e8c15a" stroke-width="1"/>
+  <ellipse cx="300" cy="211" rx="11" ry="4" fill="#e8c15a"/>
+  <rect x="289" y="207" width="22" height="4" fill="#22262a"/>
+  <ellipse cx="300" cy="207" rx="11" ry="4" fill="#22262a" stroke="#e8c15a" stroke-width="1"/>
+  <ellipse cx="300" cy="207" rx="11" ry="4" fill="#e8c15a"/>
+  <rect x="289" y="203" width="22" height="4" fill="#22262a"/>
+  <ellipse cx="300" cy="203" rx="11" ry="4" fill="#22262a" stroke="#e8c15a" stroke-width="1"/>
+  <ellipse cx="300" cy="203" rx="11" ry="4" fill="#e8c15a"/>
+  <rect x="289" y="199" width="22" height="4" fill="#22262a"/>
+  <ellipse cx="300" cy="199" rx="11" ry="4" fill="#22262a" stroke="#e8c15a" stroke-width="1"/>
+  <ellipse cx="300" cy="199" rx="11" ry="4" fill="#e8c15a"/>
+  <rect x="289" y="195" width="22" height="4" fill="#22262a"/>
+  <ellipse cx="300" cy="195" rx="11" ry="4" fill="#22262a" stroke="#e8c15a" stroke-width="1"/>
+  <ellipse cx="300" cy="195" rx="6.5" ry="2.2" fill="none" stroke="#e8c15a" stroke-width="1"/>
+  <ellipse cx="278" cy="225" rx="13" ry="4.5" fill="#00000066"/>
+  <ellipse cx="278" cy="225" rx="11" ry="4" fill="#c8202a"/>
+  <rect x="267" y="221" width="22" height="4" fill="#efe9d6"/>
+  <ellipse cx="278" cy="221" rx="11" ry="4" fill="#efe9d6" stroke="#c8202a" stroke-width="1"/>
+  <ellipse cx="278" cy="221" rx="11" ry="4" fill="#c8202a"/>
+  <rect x="267" y="217" width="22" height="4" fill="#efe9d6"/>
+  <ellipse cx="278" cy="217" rx="11" ry="4" fill="#efe9d6" stroke="#c8202a" stroke-width="1"/>
+  <ellipse cx="278" cy="217" rx="11" ry="4" fill="#c8202a"/>
+  <rect x="267" y="213" width="22" height="4" fill="#efe9d6"/>
+  <ellipse cx="278" cy="213" rx="11" ry="4" fill="#efe9d6" stroke="#c8202a" stroke-width="1"/>
+  <ellipse cx="278" cy="213" rx="6.5" ry="2.2" fill="none" stroke="#c8202a" stroke-width="1"/>
+  <ellipse cx="318" cy="227" rx="13" ry="4.5" fill="#00000066"/>
+  <ellipse cx="318" cy="227" rx="11" ry="4" fill="#f3ecd9"/>
+  <rect x="307" y="223" width="22" height="4" fill="#1f7a3c"/>
+  <ellipse cx="318" cy="223" rx="11" ry="4" fill="#1f7a3c" stroke="#f3ecd9" stroke-width="1"/>
+  <ellipse cx="318" cy="223" rx="11" ry="4" fill="#f3ecd9"/>
+  <rect x="307" y="219" width="22" height="4" fill="#1f7a3c"/>
+  <ellipse cx="318" cy="219" rx="11" ry="4" fill="#1f7a3c" stroke="#f3ecd9" stroke-width="1"/>
+  <ellipse cx="318" cy="219" rx="6.5" ry="2.2" fill="none" stroke="#f3ecd9" stroke-width="1"/>
+</svg>

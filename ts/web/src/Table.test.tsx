@@ -256,7 +256,7 @@ describe("Setup characters", () => {
 
   it("lists only the number of opponents, since the characters are drawn at the start", () => {
     render(<Setup onStart={() => {}} />);
-    const options = within(screen.getByLabelText("Opponents")).getAllByRole("option");
+    const options = within(screen.getByLabelText("Bots")).getAllByRole("option");
     expect(options.map((o) => o.textContent)).toEqual(["1", "2", "3", "4", "5"]);
   });
 });
@@ -266,11 +266,19 @@ describe("Setup layout", () => {
     render(<Setup onStart={() => {}} />);
     const rowOf = (label: RegExp) => screen.getByLabelText(label).closest(".field-row");
     expect(rowOf(/^Lives$/)).not.toBeNull();
-    expect(rowOf(/^Lives$/)).toBe(rowOf(/^Opponents$/));
-    expect(rowOf(/^Lives$/)).toBe(rowOf(/^Use Characters$/)); // the checkbox sits in that row, after Opponents
+    expect(rowOf(/^Lives$/)).toBe(rowOf(/^Bots$/));
+    expect(rowOf(/^Lives$/)).toBe(rowOf(/^Use Characters$/)); // the checkbox sits in that row, after Bots
     expect(rowOf(/^Bot level$/)).not.toBeNull();
     expect(rowOf(/^Bot level$/)).toBe(rowOf(/^Bot pace$/));
     expect(rowOf(/^Lives$/)).not.toBe(rowOf(/^Bot level$/));
+  });
+
+  it("puts the name, lives, bots and characters in one group, which a wide screen lays out as a row", () => {
+    render(<Setup onStart={() => {}} />);
+    const groupOf = (label: RegExp) => screen.getByLabelText(label).closest(".who-row");
+    expect(groupOf(/^Your name$/)).not.toBeNull();
+    for (const label of [/^Lives$/, /^Bots$/, /^Use Characters$/]) expect(groupOf(label)).toBe(groupOf(/^Your name$/));
+    expect(groupOf(/^Bot level$/)).toBeNull();
   });
 
   it("keeps the bot level description attached to its field", async () => {
@@ -301,7 +309,7 @@ describe("Setup", () => {
     await userEvent.clear(screen.getByLabelText("Your name"));
     await userEvent.type(screen.getByLabelText("Your name"), "Caleb");
     await userEvent.selectOptions(screen.getByLabelText("Lives"), "5");
-    await userEvent.selectOptions(screen.getByLabelText("Opponents"), "3");
+    await userEvent.selectOptions(screen.getByLabelText("Bots"), "3");
     expect(screen.getByText(/A balanced opponent/)).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText(/Bot level/), "stabby");
     await userEvent.selectOptions(screen.getByLabelText("Bot pace"), "slow");

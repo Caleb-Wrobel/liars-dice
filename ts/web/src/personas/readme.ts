@@ -19,8 +19,13 @@ export function readmeFor(themeId: ThemeId): string {
 
 # ${theme.label} table: ${theme.meet}
 
-Spoilers ahead. In the game, the "Meet the ${theme.meet}" page shows only a name, a title and a short bio for each
-character, and players learn the rest by watching them play. This page is for the curious.
+${
+  themeId === "hacker"
+    ? `There are no characters here. The bots wear the engine's own archetype names, and the "Meet the ${theme.meet}" page
+shows their weights as the bios, so choosing this table is choosing to see the balancing data. The player is \`root\`.`
+    : `Spoilers ahead. In the game, the "Meet the ${theme.meet}" page shows only a name, a title and a short bio for each
+character, and players learn the rest by watching them play. This page is for the curious.`
+}
 
 ## The characters
 
@@ -48,7 +53,7 @@ habits never change how strong it is. Strength belongs to the bot level you pick
 ## In plain words
 
 ${rows
-  .map(({ archetype, persona }) => `- **${persona.name}** (${archetype.name}): ${archetype.brief}\n  - Bio: ${persona.bio}`)
+  .map(({ archetype, persona }) => `- **${persona.name}** (${archetype.name}): ${archetype.brief}\n  - Bio: ${persona.bio.split("\n").join(", ")}`)
   .join("\n")}
 `;
 }

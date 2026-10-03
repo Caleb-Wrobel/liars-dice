@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { BOT_LEVEL_NAMES } from "@liars-dice/engine";
+import { ExternalLink } from "./ExternalLink.tsx";
+import { COPYRIGHT, FEEDBACK_URL, LICENSE_URL, NOTICES_URL, REPO_URL } from "./links.ts";
 import { MeetDialog } from "./MeetDialog.tsx";
 import { pickPlayerName } from "./playerNames.ts";
 import { RulesDialog } from "./RulesDialog.tsx";
@@ -22,7 +24,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [nameTyped, setNameTyped] = useState(false);
   const [lives, setLives] = useState(3);
   const [advanced, setAdvanced] = useState(false);
-  const [opponents, setOpponents] = useState(1);
+  const [opponents, setOpponents] = useState(2);
   const [level, setLevel] = useState<LevelChoice>("normal");
   const [characters, setCharacters] = useState(true);
   // With characters, slow is the default so players can watch the table and get to know who they are up against.
@@ -36,9 +38,13 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
     <main className="setup">
       <header className="setup-header">
         <h1>Liar's Dice</h1>
-        <button type="button" className="link" onClick={() => setShowRules(true)}>
-          How to play
-        </button>
+        <nav className="setup-links" aria-label="Help and links">
+          <button type="button" className="link" onClick={() => setShowRules(true)}>
+            How to play
+          </button>
+          <ExternalLink href={FEEDBACK_URL}>Feedback</ExternalLink>
+          <ExternalLink href={REPO_URL}>Source on GitHub</ExternalLink>
+        </nav>
       </header>
       <p className="tagline">Pass the dice. Peer, roll, peek, claim. Bluff well.</p>
       {showRules && <RulesDialog onClose={() => setShowRules(false)} />}
@@ -58,50 +64,52 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           });
         }}
       >
-        <label>
-          Your name
-          <input
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setNameTyped(true);
-            }}
-            maxLength={16}
-          />
-        </label>
-        <div className="field-row compact">
+        <div className="who-row">
           <label>
-            Lives
-            <select className="digit" value={lives} onChange={(e) => setLives(Number(e.target.value))}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Opponents
-            <select className="digit" value={opponents} onChange={(e) => setOpponents(Number(e.target.value))}>
-              {BOT_NAMES.map((_, i) => (
-                <option key={i} value={i + 1}>
-                  {i + 1}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="choice characters">
+            Your name
             <input
-              type="checkbox"
-              checked={characters}
-              aria-describedby="characters-hint"
+              value={name}
               onChange={(e) => {
-                setCharacters(e.target.checked);
-                if (!paceChosen) setPace(e.target.checked ? "slow" : "normal");
+                setName(e.target.value);
+                setNameTyped(true);
               }}
+              maxLength={16}
             />
-            <span>Use Characters</span>
           </label>
+          <div className="field-row compact">
+            <label>
+              Lives
+              <select className="digit" value={lives} onChange={(e) => setLives(Number(e.target.value))}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Bots
+              <select className="digit" value={opponents} onChange={(e) => setOpponents(Number(e.target.value))}>
+                {BOT_NAMES.map((_, i) => (
+                  <option key={i} value={i + 1}>
+                    {i + 1}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="choice characters">
+              <input
+                type="checkbox"
+                checked={characters}
+                aria-describedby="characters-hint"
+                onChange={(e) => {
+                  setCharacters(e.target.checked);
+                  if (!paceChosen) setPace(e.target.checked ? "slow" : "normal");
+                }}
+              />
+              <span>Use Characters</span>
+            </label>
+          </div>
         </div>
         <p id="characters-hint" className="hint">
           {characters
@@ -187,6 +195,12 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           Play
         </button>
       </form>
+      <footer className="setup-footer">
+        <small>
+          {COPYRIGHT} · <ExternalLink href={LICENSE_URL}>MIT licence</ExternalLink> ·{" "}
+          <ExternalLink href={NOTICES_URL}>Third-party notices</ExternalLink>
+        </small>
+      </footer>
     </main>
   );
 }

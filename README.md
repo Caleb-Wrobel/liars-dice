@@ -51,6 +51,8 @@ Then open the address it prints. `npm run dev:lan` makes it reachable from a pho
   - **Casino:** green felt and gold, with casino chips for lives. The cast is the High Rollers.
   - **Spooky:** candlelight, bone and parchment, with a jack-o'-lantern for every life. The cast is the Graveyard
     Shift: a witch, a skeleton, a mummy, a werewolf and a ghost.
+  - **Hacker:** green phosphor on black, with a command-line look. There are no characters: the bots are the raw
+    archetypes, their bios are their weights, and you are `root`.
 
 The in-depth rules, for the curious, are in [`RULES.md`](RULES.md). The short version is the **How to play** page in the game.
 
@@ -89,4 +91,5 @@ reports are carried over to it by hand.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The web game includes third-party software and fonts under their own licences, credited in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

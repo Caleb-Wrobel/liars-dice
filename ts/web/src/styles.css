@@ -50,6 +50,13 @@ label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
 .setup h1 { font-size: 2.4rem; color: var(--accent); }
 .tagline { color: var(--muted); }
 .setup-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.setup-links { display: grid; justify-items: end; }
+.setup-links .link { min-height: 32px; padding-block: 2px; }
+/* On a phone the links go in a row under the title, left aligned, instead of a ragged stack beside it. */
+@media (max-width: 480px) {
+  .setup-links { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 0 18px; }
+}
+a.link { display: inline-flex; align-items: center; min-height: 32px; color: var(--muted); text-decoration: underline; }
 .setup-header .link { padding-inline: 0; } /* so the text lines up with the form fields, on the right or when it wraps to the left */
 .setup form { display: grid; gap: var(--gap); margin-top: 8px; }
 /* Short fields sit two to a row so the whole form stays compact on a phone. A description spans both. */
@@ -62,6 +69,17 @@ label { display: grid; gap: 4px; color: var(--muted); font-size: 0.9rem; }
 .field-row.compact select.digit { width: auto; }
 .field-row.compact .characters { min-height: 44px; align-items: center; }
 @media (max-width: 290px) { .field-row { grid-template-columns: 1fr; } } /* too narrow even for two short columns */
+/*
+ * Your name, Lives, Bots and the Characters box share a row once the screen is wide enough: the name takes whatever
+ * the short fields leave, and the short fields wrap beneath it if it gets tight. On a phone the wrapper vanishes, so
+ * the form is exactly what it was.
+ */
+.who-row { display: contents; }
+@media (min-width: 640px) {
+  .who-row { display: flex; flex-wrap: wrap; align-items: end; gap: var(--gap); }
+  .who-row > label:first-child { flex: 1 1 220px; min-width: 0; }
+  .who-row > .field-row.compact { flex: 0 0 auto; flex-wrap: nowrap; }
+}
 fieldset { border: 2px solid var(--surface-edge); border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
 legend { color: var(--muted); padding: 0 6px; }
 .choice { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 10px; color: var(--text); }
@@ -206,3 +224,12 @@ legend { color: var(--muted); padding: 0 6px; }
   .die-button { transition: transform 120ms ease; }
   .die-button.dragging { transition: none; }
 }
+
+/* Text for screen readers only, such as "(opens in a new tab)" after an external link. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.setup-footer { text-align: center; color: var(--muted); padding-bottom: 8px; }
+.setup-footer a.link { display: inline; min-height: 0; color: inherit; }
