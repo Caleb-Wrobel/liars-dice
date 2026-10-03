@@ -128,3 +128,18 @@
   border-color: var(--accent);
   background: radial-gradient(ellipse at 50% 0%, #2f2236, var(--surface) 70%);
 }
+
+/*
+ * The title is a wide tombstone with the graveyard's odds and ends round its foot. It is still the page's one h1,
+ * in real text over a picture with no letters in it, so a screen reader reads just the heading. Which of two
+ * tombstones it wears is picked once per visit (pickSign in src/theme.ts, which sets data-sign).
+ */
+:root[data-theme="spooky"] .setup h1 {
+  display: grid; place-items: center; text-align: center;
+  width: min(100%, 380px); aspect-ratio: 380 / 170; padding: 18px 16% 40px;
+  font-size: 2rem; line-height: 1.05; color: #f2e7d1; text-shadow: 0 2px 0 #14101a;
+  background: url("./spooky/sign-resting.svg") center / 100% 100% no-repeat;
+}
+:root[data-theme="spooky"][data-sign="perch"] .setup h1 {
+  background-image: url("./spooky/sign-perch.svg");
+}

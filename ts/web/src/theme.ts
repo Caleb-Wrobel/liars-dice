@@ -49,17 +49,6 @@ export function applyTheme(id: ThemeId, root: HTMLElement = document.documentEle
   root.dataset.theme = id;
 }
 
-/**
- * The Casino's left-hand scenery varies a little: the roulette betting layout, or a poker spread. It is picked once
- * per visit, so a refresh mid-game does not change the room, and applied as data-scene for the stylesheet.
- */
-export const SCENES = ["roulette", "poker"] as const;
-export type SceneId = (typeof SCENES)[number];
-
-export const SCENE_STORAGE_KEY = "liars-dice:scene";
-
-const isSceneId = (value: unknown): value is SceneId => SCENES.some((scene) => scene === value);
-
 const sessionStore = (): Store | null => {
   try {
     return window.sessionStorage;
@@ -68,22 +57,52 @@ const sessionStore = (): Store | null => {
   }
 };
 
-export function pickScene(store: Store | null = sessionStore(), random: () => number = Math.random): SceneId {
+/**
+ * Picks one of `options` the first time it is asked in a visit and keeps that pick in the store, so a refresh
+ * mid-game does not change the room. A stored value that is not one of the options is ignored.
+ */
+function pickForVisit<T extends string>(options: readonly T[], key: string, store: Store | null, random: () => number): T {
   try {
-    const kept = store?.getItem(SCENE_STORAGE_KEY);
-    if (isSceneId(kept)) return kept;
+    const kept = store?.getItem(key);
+    const known = options.find((option) => option === kept);
+    if (known) return known;
   } catch {
     // Fall through and pick afresh.
   }
-  const scene = SCENES[Math.min(SCENES.length - 1, Math.floor(random() * SCENES.length))]!;
+  const picked = options[Math.min(options.length - 1, Math.floor(random() * options.length))]!;
   try {
-    store?.setItem(SCENE_STORAGE_KEY, scene);
+    store?.setItem(key, picked);
   } catch {
     // It just won't be kept for the visit.
   }
-  return scene;
+  return picked;
 }
+
+/**
+ * The Casino's left-hand scenery varies a little: the roulette betting layout, or a poker spread. It is applied as
+ * data-scene for the stylesheet.
+ */
+export const SCENES = ["roulette", "poker"] as const;
+export type SceneId = (typeof SCENES)[number];
+
+export const SCENE_STORAGE_KEY = "liars-dice:scene";
+
+export const pickScene = (store: Store | null = sessionStore(), random: () => number = Math.random): SceneId =>
+  pickForVisit(SCENES, SCENE_STORAGE_KEY, store, random);
 
 export function applyScene(id: SceneId, root: HTMLElement = document.documentElement): void {
   root.dataset.scene = id;
+}
+
+/** The Spooky title is one of two tombstones, applied as data-sign for the stylesheet. */
+export const SIGNS = ["resting", "perch"] as const;
+export type SignId = (typeof SIGNS)[number];
+
+export const SIGN_STORAGE_KEY = "liars-dice:sign";
+
+export const pickSign = (store: Store | null = sessionStore(), random: () => number = Math.random): SignId =>
+  pickForVisit(SIGNS, SIGN_STORAGE_KEY, store, random);
+
+export function applySign(id: SignId, root: HTMLElement = document.documentElement): void {
+  root.dataset.sign = id;
 }
