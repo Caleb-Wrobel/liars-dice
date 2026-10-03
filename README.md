@@ -1,5 +1,6 @@
 # Liar's Dice
 
+[![CI](https://github.com/Caleb-Wrobel/liars-dice/actions/workflows/ci.yml/badge.svg)](https://github.com/Caleb-Wrobel/liars-dice/actions/workflows/ci.yml)
 ![engine coverage](docs/badges/coverage-engine.svg)
 ![web coverage](docs/badges/coverage-web.svg)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -14,13 +15,22 @@ Lose a challenge and you lose a life. The last player standing wins.
 The idea behind it is that complexity should come from removing rules, not adding them. There are no straights, a claim
 only has to be strictly higher than the last one, and impossible claims are legal.
 
+## Play it online
+
+**[Play Liar's Dice in your browser](https://caleb-wrobel.github.io/liars-dice/)**: nothing to install. It is **single
+player, against bots**, with no accounts and nothing collected. It is a work in progress, and some of the names and bios
+of the bot characters are first drafts. See [Feedback](#feedback) for where to say what you think.
+
 | Saloon | Casino |
 |---|---|
 | ![The table in the Saloon style](docs/images/table-saloon.png) | ![The table in the Casino style](docs/images/table-casino.png) |
 
 ## Playing
 
-The web version runs in the browser against bots. You can drag dice between the trays, or tap them to move them.
+The web version runs in the browser against bots, online at the link above or on your own machine. You can drag dice
+between the trays, or tap them to move them.
+
+To run it yourself:
 
 ```
 cd ts
@@ -36,7 +46,7 @@ Then open the address it prints. `npm run dev:lan` makes it reachable from a pho
 - **Characters.** With **Use Characters** ticked, the bots are characters from the table style's cast, each with habits
   of their own. The **Meet** link beside the table style tells you who they are. The details for the curious are in
   [`docs/tables`](docs/tables).
-- **Table styles.** Saloon and Casino, each with its own cast and a colour-vision-tested palette.
+- **Table styles.** Saloon, Casino and Spooky, each with its own cast and a colour-vision-tested palette.
 
 The in-depth rules, for the curious, are in [`RULES.md`](RULES.md). The short version is the **How to play** page in the game.
 
@@ -48,6 +58,7 @@ The in-depth rules, for the curious, are in [`RULES.md`](RULES.md). The short ve
 | [`ts/web`](ts/web) | The React app: the table, the table styles, and the personas that dress each archetype. |
 | [`ts/engine/sim`](ts/engine/sim) | Simulation sweeps used to balance the bots. See its [README](ts/engine/sim/README.md). |
 | [`docs`](docs) | Per-style character READMEs, screenshots and the coverage badges. |
+| [`.github/workflows`](.github/workflows) | The checks that run on every branch, and the publishing of the online game. |
 
 The engine knows how a bot plays and nothing about how it looks. A table style supplies the names and bios, and a bio
 cannot change how a bot plays.
@@ -64,6 +75,13 @@ npm run badges         # coverage, then regenerate the badges in docs/badges
 
 The coverage badges are files in this repository, drawn from the last `npm run badges`, so they are only as fresh as
 that run.
+
+## Feedback
+
+This is an early version, and feedback is very welcome: a rule that was unclear, something that felt wrong, a bug, or an
+idea. Please [open an issue](https://github.com/Caleb-Wrobel/liars-dice/issues). It helps to say which device and browser
+you used, and which table style and rules you were playing. The project's own planning happens elsewhere, and useful
+reports are carried over to it by hand.
 
 ## License
 
