@@ -43,16 +43,19 @@ jobs:
       - name: Tests
         run: npm test
 
-      # A project site lives at /<repo-name>/, so the build needs that as its base path. The flag must be passed to the
-      # web workspace directly: through the root build script it is silently dropped and the page comes out blank.
+      # Relative asset links (--base=./) make the same build work wherever the site is served: at /<repo-name>/ on the
+      # default github.io address and at the root of a custom domain, so changing the address never needs a rebuild
+      # with a different base. The flag must be passed to the web workspace directly: through the root build script it
+      # is silently dropped and the page comes out blank.
       - name: Build the web app
-        run: npm run build -w @liars-dice/web -- --base=/${{ github.event.repository.name }}/
+        run: npm run build -w @liars-dice/web -- --base=./
 
-      # Fail here, not on the live site, if the links do not carry the base path.
-      - name: Check the base path made it into the build
+      # Fail here, not on the live site, if the links came out absolute and so would break at one of those addresses.
+      - name: Check the asset links are relative
         run: |
-          grep -q 'src="/${{ github.event.repository.name }}/assets/' web/dist/index.html
-          grep -q 'href="/${{ github.event.repository.name }}/assets/' web/dist/index.html
+          grep -q 'src="./assets/' web/dist/index.html
+          grep -q 'href="./assets/' web/dist/index.html
+          if grep -q 'src="/' web/dist/index.html; then echo 'an absolute link slipped in'; exit 1; fi
 
       - uses: actions/upload-pages-artifact@v3
         with:
