@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App.tsx";
+import { PERSONAS } from "./personas/index.ts";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -14,6 +15,7 @@ describe("App", () => {
     await userEvent.clear(screen.getByLabelText("Your name"));
     await userEvent.type(screen.getByLabelText("Your name"), "Sam");
     await userEvent.selectOptions(screen.getByLabelText("Lives"), "1");
+    await userEvent.selectOptions(screen.getByLabelText("Bots"), "1"); // one bot, so one lost bluff ends the game
     await userEvent.click(screen.getByRole("checkbox", { name: "Use Characters" })); // plain bots, named Bob
     await userEvent.selectOptions(screen.getByLabelText("Bot pace"), "fast");
     await userEvent.click(screen.getByRole("radio", { name: /Advanced/ }));
@@ -44,6 +46,7 @@ describe("App", () => {
     vi.spyOn(Math, "random").mockReturnValue(0); // every draw picks the first level, easy
     render(<App />);
     await userEvent.selectOptions(screen.getByLabelText("Lives"), "1");
+    await userEvent.selectOptions(screen.getByLabelText("Bots"), "1"); // one bot, so one lost bluff ends the game
     await userEvent.click(screen.getByRole("checkbox", { name: "Use Characters" })); // plain bots, named Bob
     await userEvent.selectOptions(screen.getByLabelText("Bot level"), "random");
     await userEvent.selectOptions(screen.getByLabelText("Bot pace"), "fast");
@@ -60,6 +63,7 @@ describe("App", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     render(<App />);
     await userEvent.selectOptions(screen.getByLabelText("Lives"), "1");
+    await userEvent.selectOptions(screen.getByLabelText("Bots"), "1"); // one bot, so one lost bluff ends the game
     await userEvent.selectOptions(screen.getByLabelText("Bot pace"), "fast");
     await userEvent.click(screen.getByRole("radio", { name: /Advanced/ }));
     await userEvent.click(screen.getByRole("button", { name: "Play" }));
@@ -71,6 +75,14 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "Change settings" }));
     expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
     expect(screen.getByLabelText("Your name")).toBeInTheDocument();
+  });
+
+  it("starts a fresh game with two bots, drawn as two different characters", async () => {
+    render(<App />);
+    expect(screen.getByLabelText("Bots")).toHaveValue("2");
+    await userEvent.click(screen.getByRole("button", { name: "Play" }));
+    const seated = Object.values(PERSONAS.saloon).filter((persona) => screen.queryByText(persona.name));
+    expect(seated).toHaveLength(2); // the player plus two distinct characters
   });
 
   it("seats characters from the table's cast by default, and plain bots when the box is cleared", async () => {
