@@ -1,5 +1,6 @@
 /*
- * Hacker: green phosphor on black, a monospaced face and faint scanlines, like a terminal in a 1980s film.
+ * Hacker: green phosphor on black and a monospaced face, like a terminal. Austere on purpose: no glow, no boxes and
+ * no scanlines. The only ornament is the > before the title.
  * Keep every colour a solid hex: src/themes/contrast.test.ts reads these values. Brightness, not hue, tells the
  * pairs apart, so the palette holds under the colour-vision simulations.
  */
@@ -50,26 +51,14 @@
   --radius: 3px;
 }
 
-/* Faint scanlines over a dim glow at the top, all behind the page. */
-:root[data-theme="hacker"] body {
-  font-size: 0.98rem;
-  background:
-    repeating-linear-gradient(0deg, #00000047 0 1px, transparent 1px 3px),
-    radial-gradient(ellipse 80% 40% at 50% 0%, #3dff7a1f, transparent 70%),
-    var(--page);
-}
+/* Plain black, in a slightly smaller monospaced size. */
+:root[data-theme="hacker"] body { font-size: 0.98rem; }
 
 /* Lives are lit memory cells: a bright square with a dark core, so a life reads by shape and brightness. */
 :root[data-theme="hacker"] .life {
   width: 0.9em; height: 0.9em; border-radius: 1px;
   background: var(--accent);
-  box-shadow: inset 0 0 0 0.2em #02150a, inset 0 0 0 0.34em var(--accent), 0 0 6px #3dff7a99;
-}
-
-/* The standing claim is a boxed readout. */
-:root[data-theme="hacker"] .claim-card {
-  border: 1px solid var(--claim-edge);
-  box-shadow: inset 0 0 0 3px var(--claim-bg), inset 0 0 0 4px #1f6b36;
+  box-shadow: inset 0 0 0 0.2em #02150a, inset 0 0 0 0.34em var(--accent);
 }
 
 /* The table top is a grid, and the cup is hatched like a locked file. */
@@ -85,11 +74,10 @@
 }
 
 :root[data-theme="hacker"] button:not(.die-button) {
-  background: var(--control-bg);
-  box-shadow: inset 0 0 0 1px #00000066;
+  background: var(--control-bg); box-shadow: none;
 }
 :root[data-theme="hacker"] button.primary:not(.die-button) {
-  background: var(--accent); box-shadow: 0 0 10px #3dff7a66;
+  background: var(--accent); box-shadow: none;
 }
 :root[data-theme="hacker"] button.link { background: none; box-shadow: none; }
 
@@ -99,19 +87,12 @@
 :root[data-theme="hacker"] .dialog {
   border-color: var(--accent);
   background: var(--surface);
-  box-shadow: 0 0 18px #3dff7a33;
 }
 
 /*
- * The title is a terminal readout: bright text with a glow, in a thin box, after a prompt. The prompt is drawn by
- * CSS with empty alternative text, so a screen reader reads just the heading.
+ * The title is plain bright text after a prompt. The prompt is drawn by CSS with empty alternative text, so a screen
+ * reader reads just the heading.
  */
-:root[data-theme="hacker"] .setup h1 {
-  display: inline-block; justify-self: start; padding: 6px 16px 8px;
-  color: var(--accent); background: var(--surface); border: 1px solid #2a8a46;
-  text-shadow: 0 0 8px #3dff7a99;
-  box-shadow: inset 0 0 0 3px var(--surface), inset 0 0 0 4px #1f6b36, 0 0 14px #3dff7a2e;
-}
 :root[data-theme="hacker"] .setup h1::before { content: "> " / ""; color: var(--muted); }
 
 /* A bio on the Meet page is the weights, one to a line, so its line breaks are kept. */
