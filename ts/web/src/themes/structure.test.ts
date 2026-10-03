@@ -7,7 +7,9 @@ import saloon from "./saloon.css?raw";
 import spooky from "./spooky.css?raw";
 import perch from "./spooky/sign-perch.svg?raw";
 import resting from "./spooky/sign-resting.svg?raw";
+import cat from "./spooky/cat.svg?raw";
 import grass from "./spooky/grass.svg?raw";
+import grave from "./spooky/grave.svg?raw";
 import sceneLeft from "./spooky/scene-left.svg?raw";
 import sceneRight from "./spooky/scene-right.svg?raw";
 
@@ -92,6 +94,14 @@ describe("the Spooky decorations", () => {
     expect(spooky).toMatch(/@media \(min-width: 900px\) \{\s*:root\[data-theme="spooky"\] body \{ display: flex; flex-direction: column; \}\s*\}/);
   });
 
+  it("places the dug grave right of centre and the cat lower and left of it, off-balance on purpose", () => {
+    const scene = rule(':root[data-theme="spooky"] body::after');
+    const at = (file: string) => Number(scene.match(new RegExp(`${file}"\\) (\\d+)% top`))?.[1]);
+    expect(at("grave.svg")).toBeGreaterThan(50); // right of centre
+    expect(at("cat.svg")).toBeLessThan(50); // left of centre, between the grave and the candle
+    expect(at("cat.svg")).toBeLessThan(at("grave.svg"));
+  });
+
   it("pulls the scenery up on the setup page only, so the table screen keeps clear of it", () => {
     expect(rule(':root[data-theme="spooky"] body:has(.setup)::after')).toMatch(/margin-top:\s*-\d+px/);
   });
@@ -104,6 +114,8 @@ describe("the Spooky decorations", () => {
     ["left", sceneLeft],
     ["right", sceneRight],
     ["grass", grass],
+    ["grave", grave],
+    ["cat", cat],
   ])("keeps the %s picture free of letters", (_name, picture) => {
     expect(picture).not.toMatch(/<text[\s>]/);
   });

@@ -47,7 +47,7 @@
     <path d="M0 3L-2 7H2Z" fill="#14101a"/>
     <path d="M-4.5 7.5V11M-1.5 7.5V11M1.5 7.5V11M4.5 7.5V11" stroke="#9d8f6e" stroke-width="1"/>
   </g>
-  <g transform="translate(250 70) scale(-0.8 0.8)" fill="#14101a" stroke="#4a3856" stroke-width=".8">
+  <g transform="translate(250 62) scale(-0.8 0.8)" fill="#14101a" stroke="#4a3856" stroke-width=".8">
     <path d="M0 0C-5 -9 -18 -9 -27 -3C-22 0 -21 3 -18 7C-14 3 -9 3 -5 8C-3 5 3 5 5 8C9 3 14 3 18 7C21 3 22 0 27 -3C18 -9 5 -9 0 0Z"/>
     <path d="M-3 -4L-4 -9L0 -6L4 -9L3 -4Z"/><circle cx="-1.6" cy="-2" r=".8" fill="#f7b855" stroke="none"/><circle cx="1.6" cy="-2" r=".8" fill="#f7b855" stroke="none"/>
   </g>
@@ -55,6 +55,10 @@
     <path d="M0 0C-5 -9 -18 -9 -27 -3C-22 0 -21 3 -18 7C-14 3 -9 3 -5 8C-3 5 3 5 5 8C9 3 14 3 18 7C21 3 22 0 27 -3C18 -9 5 -9 0 0Z"/>
     <path d="M-3 -4L-4 -9L0 -6L4 -9L3 -4Z"/><circle cx="-1.6" cy="-2" r=".8" fill="#f7b855" stroke="none"/><circle cx="1.6" cy="-2" r=".8" fill="#f7b855" stroke="none"/>
   </g>
+  <g transform="translate(278 124) scale(0.95)" opacity=".55">
+    <path d="M-14 22V0C-14 -18 14 -18 14 0V22L9 16L4 22L-1 16L-6 22L-10 16Z" fill="#e8e4f4"/>
+    <ellipse cx="-5" cy="2" rx="2.6" ry="3.6" fill="#1a1220"/><ellipse cx="5" cy="2" rx="2.6" ry="3.6" fill="#1a1220"/>
+    <ellipse cx="0" cy="11" rx="2" ry="2.6" fill="#1a1220"/></g>
   <path d="M20 204Q22 197 23 192M23 204Q25 197 28 194M26 204Q28 197 29 196M29 204Q31 197 34 192M32 204Q34 197 35 194" fill="none" stroke="#35552c" stroke-width="1.4" stroke-linecap="round"/>
   <path d="M150 204Q152 197 153 192M153 204Q155 197 158 194M156 204Q158 197 159 196M159 204Q161 197 164 192" fill="none" stroke="#35552c" stroke-width="1.4" stroke-linecap="round"/>
   <path d="M240 206Q238 199 237 194M243 206Q241 199 238 196M246 206Q244 199 243 198M249 206Q247 199 244 194" fill="none" stroke="#35552c" stroke-width="1.4" stroke-linecap="round"/>

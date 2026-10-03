@@ -59,8 +59,4 @@
   <path d="M126 198Q128 191 129 186M129 198Q131 191 134 188M132 198Q134 191 135 190M135 198Q137 191 140 186" fill="none" stroke="#35552c" stroke-width="1.4" stroke-linecap="round"/>
   <path d="M280 200Q278 193 277 188M283 200Q281 193 278 190M286 200Q284 193 283 192M289 200Q287 193 284 188" fill="none" stroke="#35552c" stroke-width="1.4" stroke-linecap="round"/>
   <g transform="translate(188 202) scale(0.8)"><rect x="-1.8" y="-6" width="3.6" height="7" fill="#e6dcc4"/><path d="M-7 -5C-7 -13 7 -13 7 -5Z" fill="#b8402e"/><circle cx="-2.5" cy="-8.5" r="1.1" fill="#f6efd8"/><circle cx="2.5" cy="-7.5" r="1" fill="#f6efd8"/></g>
-  <g transform="translate(168 134) scale(0.85)" opacity=".55">
-    <path d="M-14 22V0C-14 -18 14 -18 14 0V22L9 16L4 22L-1 16L-6 22L-10 16Z" fill="#e8e4f4"/>
-    <ellipse cx="-5" cy="2" rx="2.6" ry="3.6" fill="#1a1220"/><ellipse cx="5" cy="2" rx="2.6" ry="3.6" fill="#1a1220"/>
-    <ellipse cx="0" cy="11" rx="2" ry="2.6" fill="#1a1220"/></g>
 </svg>
