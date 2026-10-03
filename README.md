@@ -1,6 +1,6 @@
 # Liar's Dice
 
-[![CI](https://github.com/Caleb-Wrobel/liars-dice/actions/workflows/ci.yml/badge.svg)](https://github.com/Caleb-Wrobel/liars-dice/actions/workflows/ci.yml)
+[![CI](https://github.com/NotTheMentalist/liars-dice/actions/workflows/ci.yml/badge.svg)](https://github.com/NotTheMentalist/liars-dice/actions/workflows/ci.yml)
 ![engine coverage](docs/badges/coverage-engine.svg)
 ![web coverage](docs/badges/coverage-web.svg)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -17,7 +17,7 @@ only has to be strictly higher than the last one, and impossible claims are lega
 
 ## Play it online
 
-**[Play Liar's Dice in your browser](https://caleb-wrobel.github.io/liars-dice/)**: nothing to install. It is **single
+**[Play Liar's Dice in your browser](https://liars.notthementalist.com/)**: nothing to install. It is **single
 player, against bots**, with no accounts and nothing collected. It is a work in progress, and some of the names and bios
 of the bot characters are first drafts. See [Feedback](#feedback) for where to say what you think.
 
@@ -85,7 +85,7 @@ that run.
 ## Feedback
 
 This is an early version, and feedback is very welcome: a rule that was unclear, something that felt wrong, a bug, or an
-idea. Please [open an issue](https://github.com/Caleb-Wrobel/liars-dice/issues). It helps to say which device and browser
+idea. Please [open an issue](https://github.com/NotTheMentalist/liars-dice/issues). It helps to say which device and browser
 you used, and which table style and rules you were playing. The project's own planning happens elsewhere, and useful
 reports are carried over to it by hand.
 
