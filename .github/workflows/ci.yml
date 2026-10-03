@@ -1,0 +1,68 @@
+# Runs the checks on every branch the forge mirrors here, so a broken change shows up before it reaches main.
+# The forge is the source of truth. This workflow only reports; it changes nothing.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch makes an older run on it pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ts
+
+jobs:
+  checks:
+    name: Tests, types, coverage and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ts/package-lock.json
+
+      - run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      # Fails if coverage drops below the floors set in each package's config.
+      - name: Coverage
+        run: npm run test:coverage
+
+      - name: Build the web app
+        run: npm run build
+
+  strength:
+    name: Strength guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ts/package-lock.json
+
+      - run: npm ci
+
+      # No archetype may change how strong a bot is. It takes about a minute.
+      - name: Slow strength check
+        run: npm run test:slow
