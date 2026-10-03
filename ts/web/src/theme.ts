@@ -13,6 +13,21 @@ export type ThemeId = (typeof THEMES)[number]["id"];
 
 export const DEFAULT_THEME: ThemeId = "saloon";
 
+/**
+ * Tables that are the default in their season, for a visitor who has not chosen one. Months count from 1, January.
+ * In any other month the default is Saloon. A table someone has picked is stored and always wins. Add a line when a
+ * seasonally appropriate table exists; index.html carries the same table (a test keeps the two in step).
+ */
+export const SEASONS: readonly { readonly theme: ThemeId; readonly months: readonly number[] }[] = [
+  { theme: "spooky", months: [10] },
+];
+
+/** The table to open on when none has been chosen: the one for this month if there is one, otherwise Saloon. */
+export function defaultThemeFor(date: Date = new Date()): ThemeId {
+  const month = date.getMonth() + 1;
+  return SEASONS.find((season) => season.months.includes(month))?.theme ?? DEFAULT_THEME;
+}
+
 /** index.html reads this key before the page paints, to avoid a flash of the wrong skin. */
 export const THEME_STORAGE_KEY = "liars-dice:theme";
 
@@ -29,12 +44,12 @@ const browserStore = (): Store | null => {
   }
 };
 
-export function loadTheme(store: Store | null = browserStore()): ThemeId {
+export function loadTheme(store: Store | null = browserStore(), date: Date = new Date()): ThemeId {
   try {
     const stored = store?.getItem(THEME_STORAGE_KEY);
-    return isThemeId(stored) ? stored : DEFAULT_THEME;
+    return isThemeId(stored) ? stored : defaultThemeFor(date);
   } catch {
-    return DEFAULT_THEME;
+    return defaultThemeFor(date);
   }
 }
 

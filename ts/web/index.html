@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Liar's Dice</title>
     <script>
-      // Apply the saved skin before first paint. The key matches THEME_STORAGE_KEY in src/theme.ts.
+      // Apply the saved skin before first paint, or this month's seasonal table, or Saloon. The key matches
+      // THEME_STORAGE_KEY and the seasons match SEASONS in src/theme.ts, which a test checks.
+      var seasons = { "10": "spooky" };
+      var theme = seasons[new Date().getMonth() + 1] || "saloon";
       try {
-        var saved = localStorage.getItem("liars-dice:theme");
-        if (saved) document.documentElement.dataset.theme = saved;
+        theme = localStorage.getItem("liars-dice:theme") || theme;
       } catch (e) {}
+      document.documentElement.dataset.theme = theme;
     </script>
   </head>
   <body>
