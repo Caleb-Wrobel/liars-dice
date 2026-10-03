@@ -5,7 +5,13 @@
 export const THEMES = [
   { id: "saloon", label: "Saloon", blurb: "Warm walnut, brass and leather.", meet: "Rogues' Gallery" },
   { id: "casino", label: "Casino", blurb: "Green felt and gold.", meet: "High Rollers" },
-  { id: "spooky", label: "Spooky", blurb: "Candlelight, bone and a pumpkin for every life.", meet: "Graveyard Shift" },
+  {
+    id: "spooky",
+    label: "Spooky",
+    blurb: "Candlelight, bone and a pumpkin for every life.",
+    meet: "Graveyard Shift",
+    animated: true,
+  },
   { id: "hacker", label: "Hacker", blurb: "Green phosphor and a command line.", meet: "Process List" },
 ] as const;
 
@@ -121,4 +127,39 @@ export const pickSign = (store: Store | null = sessionStore(), random: () => num
 
 export function applySign(id: SignId, root: HTMLElement = document.documentElement): void {
   root.dataset.sign = id;
+}
+
+/**
+ * "Still scenery". A table with moving scenery (the Spooky candles) can be made still from the page, which is what
+ * WCAG 2.2.2 asks of anything that moves on its own for more than five seconds. The choice is remembered in the browser,
+ * and index.html applies it before the first paint so a visitor who chose it never sees a frame of movement.
+ */
+export const MOTION_STORAGE_KEY = "liars-dice:still";
+
+export const isAnimated = (id: ThemeId): boolean => THEMES.some((theme) => theme.id === id && "animated" in theme);
+
+export function loadStill(store: Store | null = browserStore()): boolean {
+  try {
+    return store?.getItem(MOTION_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function saveStill(still: boolean, store: Store | null = browserStore()): void {
+  try {
+    store?.setItem(MOTION_STORAGE_KEY, still ? "1" : "0");
+  } catch {
+    // The choice just won't be remembered.
+  }
+}
+
+export function applyStill(still: boolean, root: HTMLElement = document.documentElement): void {
+  if (still) root.dataset.motion = "still";
+  else delete root.dataset.motion;
+}
+
+/** Someone who has asked their system for reduced motion already gets still scenery, so they are not offered the control. */
+export function prefersReducedMotion(win: Pick<Window, "matchMedia"> | undefined = typeof window === "undefined" ? undefined : window): boolean {
+  return win?.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
 }

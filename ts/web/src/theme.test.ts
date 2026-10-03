@@ -8,6 +8,12 @@ import {
   THEME_STORAGE_KEY,
   THEMES,
   applyScene,
+  applyStill,
+  isAnimated,
+  loadStill,
+  MOTION_STORAGE_KEY,
+  prefersReducedMotion,
+  saveStill,
   applySign,
   applyTheme,
   defaultThemeFor,
@@ -157,5 +163,49 @@ describe("the seasonal default table", () => {
       expect(isThemeId(theme)).toBe(true);
       for (const month of months) expect(month >= 1 && month <= 12 && Number.isInteger(month)).toBe(true);
     }
+  });
+});
+
+describe("the Still scenery choice", () => {
+  it("knows which tables animate", () => {
+    expect(THEMES.filter((t) => isAnimated(t.id)).map((t) => t.id)).toEqual(["spooky"]);
+  });
+
+  it("loads, saves and applies the choice, treating anything but a saved 1 as moving", () => {
+    expect(loadStill(store())).toBe(false);
+    expect(loadStill(store({ [MOTION_STORAGE_KEY]: "0" }))).toBe(false);
+    expect(loadStill(store({ [MOTION_STORAGE_KEY]: "1" }))).toBe(true);
+    const kept = store();
+    saveStill(true, kept);
+    expect(kept.data[MOTION_STORAGE_KEY]).toBe("1");
+    saveStill(false, kept);
+    expect(kept.data[MOTION_STORAGE_KEY]).toBe("0");
+    const root = document.createElement("div");
+    applyStill(true, root);
+    expect(root.dataset.motion).toBe("still");
+    applyStill(false, root);
+    expect(root.dataset.motion).toBeUndefined();
+  });
+
+  it("copes with storage that throws or is missing", () => {
+    const broken = {
+      getItem: () => {
+        throw new Error("blocked");
+      },
+      setItem: () => {
+        throw new Error("blocked");
+      },
+    };
+    expect(loadStill(broken)).toBe(false);
+    expect(() => saveStill(true, broken)).not.toThrow();
+    expect(loadStill(null)).toBe(false);
+  });
+
+  it("reads the system's reduced-motion setting, and copes with a browser that cannot say", () => {
+    const win = (reduce: boolean) => ({ matchMedia: () => ({ matches: reduce }) as MediaQueryList });
+    expect(prefersReducedMotion(win(true))).toBe(true);
+    expect(prefersReducedMotion(win(false))).toBe(false);
+    expect(prefersReducedMotion({} as Pick<Window, "matchMedia">)).toBe(false);
+    expect(prefersReducedMotion(undefined)).toBe(false);
   });
 });

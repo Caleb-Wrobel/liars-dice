@@ -1,12 +1,21 @@
 import { describe, expect, it } from "vitest";
 import html from "../../index.html?raw";
-import { SEASONS } from "../theme.ts";
+import { MOTION_STORAGE_KEY, SEASONS } from "../theme.ts";
 import styles from "../styles.css?raw";
 import casino from "./casino.css?raw";
 import saloon from "./saloon.css?raw";
 import spooky from "./spooky.css?raw";
 import perch from "./spooky/sign-perch.svg?raw";
 import resting from "./spooky/sign-resting.svg?raw";
+import graveLit from "./spooky/grave-lit.svg?raw";
+import sceneLeftLit from "./spooky/scene-left-lit.svg?raw";
+import sceneRightLit from "./spooky/scene-right-lit.svg?raw";
+import signPerchLit from "./spooky/sign-perch-lit.svg?raw";
+import signRestingLit from "./spooky/sign-resting-lit.svg?raw";
+import grass from "./spooky/grass.svg?raw";
+import grave from "./spooky/grave.svg?raw";
+import sceneLeft from "./spooky/scene-left.svg?raw";
+import sceneRight from "./spooky/scene-right.svg?raw";
 
 describe("the layout stylesheet", () => {
   it("gives controls their own text colour instead of inheriting one", () => {
@@ -63,27 +72,125 @@ describe("index.html", () => {
   });
 });
 
+describe("the Spooky flicker", () => {
+  const lit = { "sign-resting": signRestingLit, "sign-perch": signPerchLit, "scene-left": sceneLeftLit, "scene-right": sceneRightLit, grave: graveLit };
+  const still = { "sign-resting": resting, "sign-perch": perch, "scene-left": sceneLeft, "scene-right": sceneRight, grave };
+  const marker = "@media (prefers-reduced-motion: no-preference) {";
+
+  it("swaps in the animated pictures only for visitors who have not asked for reduced motion", () => {
+    const at = spooky.indexOf(marker);
+    expect(at, "expected a no-preference block").toBeGreaterThan(-1);
+    const before = spooky.slice(0, at);
+    const inside = spooky.slice(at);
+    expect(before).not.toContain("-lit.svg"); // the base rules use the still pictures
+    for (const name of Object.keys(lit)) expect(inside, name).toContain(`${name}-lit.svg`);
+    for (const name of ["sign-resting", "sign-perch", "scene-left", "scene-right", "grave"]) expect(before, name).toContain(`${name}.svg`);
+  });
+
+  it("lets the Still scenery control switch every animated picture off", () => {
+    const inside = spooky.slice(spooky.indexOf(marker));
+    const rules = [...inside.matchAll(/:root\[data-theme="spooky"\][^{]*\{/g)].map((m) => m[0]);
+    expect(rules.length).toBeGreaterThanOrEqual(3);
+    for (const rule of rules) expect(rule, rule).toContain(':not([data-motion="still"])');
+  });
+
+  it("applies a saved Still scenery choice before the first paint, with the same key and attribute as the app", () => {
+    expect(html).toContain(`localStorage.getItem("${MOTION_STORAGE_KEY}") === "1"`);
+    expect(html).toContain('document.documentElement.dataset.motion = "still"');
+  });
+
+  it.each(Object.entries(still))("keeps the still %s picture free of animation", (_name, picture) => {
+    expect(picture).not.toMatch(/@keyframes|animation/);
+  });
+
+  it.each(Object.entries(lit))("animates the %s picture, and stops the animation itself under reduced motion too", (_name, picture) => {
+    expect(picture).toMatch(/@keyframes/);
+    expect(picture).toMatch(/@media \(prefers-reduced-motion:reduce\)\{[^}]*animation:none/);
+    expect(picture).not.toMatch(/<text[\s>]/);
+  });
+
+  it("never changes faster than about three times a second, far below the flash limit", () => {
+    // The fastest possible change is the shortest animation length times the smallest gap between two keyframe stops.
+    const seconds: number[] = [];
+    const gaps: number[] = [];
+    for (const picture of Object.values(lit)) {
+      for (const [, value] of picture.matchAll(/animation(?:-duration)?:[^;"}]*?(\d+(?:\.\d+)?)s/g)) seconds.push(Number(value));
+      for (const [, name, body] of picture.matchAll(/@keyframes (\w+)\{((?:[^{}]|\{[^}]*\})*)\}/g)) {
+        const stops = [...new Set([0, 100, ...[...body!.matchAll(/(\d+(?:\.\d+)?)%/g)].map((m) => Number(m[1]))])].sort((a, b) => a - b);
+        for (let i = 1; i < stops.length; i++) gaps.push(stops[i]! - stops[i - 1]!);
+        expect(stops.length, String(name)).toBeGreaterThan(2);
+      }
+    }
+    const shortest = Math.min(...seconds);
+    const tightest = Math.min(...gaps);
+    expect(shortest).toBeGreaterThanOrEqual(2.4);
+    expect(shortest * (tightest / 100)).toBeGreaterThanOrEqual(0.3); // so at most about 1.7 flashes a second
+  });
+});
+
+describe("the Spooky fonts", () => {
+  it("sets headings in IM Fell with a serif fallback, the tombstone title in Cinzel, and text in Alegreya", () => {
+    expect(spooky).toMatch(/--font-display:\s*"IM Fell English",[^;]*\bserif;/);
+    expect(spooky).toMatch(/--font-body:\s*"Alegreya",[^;]*\bserif;/);
+    expect(spooky).toMatch(/\.setup h1 \{[^}]*font-family:\s*"Cinzel",[^}]*\bserif;/);
+    expect(spooky).toMatch(/--display-weight:\s*400;/); // IM Fell has one weight, so none is faked
+  });
+
+  it("keeps the standing claim in the body face, so a 1 is never mistaken for a capital I", () => {
+    expect(spooky).toMatch(/\.claim-text \{[^}]*font-family:\s*var\(--font-body\)/);
+  });
+});
+
 describe("the Spooky decorations", () => {
-  // The corner pictures are decoration only. They must never catch a click or sit in front of the table.
+  // The pictures are decoration only. They must never catch a click or put text where a screen reader would find it.
   const rule = (selector: string) => {
     const match = spooky.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*{([^}]*)}`));
     expect(match, `expected a rule for ${selector}`).not.toBeNull();
     return match![1]!;
   };
 
-  it.each([':root[data-theme="spooky"] body::before', ':root[data-theme="spooky"] body::after'])(
-    "keeps %s behind the page, inert and out of the way of clicks",
-    (selector) => {
-      const body = rule(selector);
-      expect(body).toMatch(/pointer-events:\s*none/);
-      expect(body).toMatch(/z-index:\s*-1/);
-      expect(body).toMatch(/position:\s*fixed/);
-      expect(body).toMatch(/content:\s*""/); // no text, so nothing for a screen reader to read
-    },
-  );
+  it("keeps the corner web behind the page, inert and out of the way of clicks", () => {
+    const web = rule(':root[data-theme="spooky"] body::before');
+    expect(web).toMatch(/pointer-events:\s*none/);
+    expect(web).toMatch(/z-index:\s*-1/);
+    expect(web).toMatch(/position:\s*fixed/);
+    expect(web).toMatch(/content:\s*""/); // no text, so nothing for a screen reader to read
+  });
 
-  it("drops the skull on a narrow screen, so text stays clear", () => {
+  it("keeps the graveyard scenery inert, text-free, in the page flow and behind the form", () => {
+    const scene = rule(':root[data-theme="spooky"] body::after');
+    expect(scene).toMatch(/pointer-events:\s*none/);
+    expect(scene).toMatch(/content:\s*""/);
+    expect(scene).not.toMatch(/position:\s*(fixed|absolute)/); // in the flow, so it can never cover the form
+    expect(scene).toMatch(/flex:\s*1 0 240px/); // it takes the height the content leaves, and never less than its own
+    expect(scene).toMatch(/z-index:\s*-1/); // behind the form, so the cauldron's vapour rises from behind the Play bar
+    expect(spooky).toMatch(/@media \(min-width: 900px\) \{\s*:root\[data-theme="spooky"\] body \{ display: flex; flex-direction: column; \}\s*\}/);
+  });
+
+  it("places the dug grave right of centre, with the cat drawn into the left picture beside the candle", () => {
+    const scene = rule(':root[data-theme="spooky"] body::after');
+    expect(Number(scene.match(/grave\.svg"\) (\d+)% top/)?.[1])).toBeGreaterThan(50); // right of centre
+    // The cat is part of the left picture, so its distance from the candle cannot change with the window's width.
+    expect(sceneLeft).toContain('id="cat"');
+    expect(Number(sceneLeft.match(/viewBox="0 0 (\d+)/)?.[1])).toBeGreaterThan(400);
+    expect(scene).not.toContain("cat.svg");
+  });
+
+  it("pulls the scenery up on the setup page only, so the table screen keeps clear of it", () => {
+    expect(rule(':root[data-theme="spooky"] body:has(.setup)::after')).toMatch(/margin-top:\s*-\d+px/);
+  });
+
+  it("drops the scenery on a narrow screen, so text stays clear", () => {
     expect(spooky).toMatch(/@media \(max-width: \d+px\) \{[^}]*body::after \{ display: none; \}/);
+  });
+
+  it.each([
+    ["left", sceneLeft],
+    ["right", sceneRight],
+    ["grass", grass],
+    ["grave", grave],
+  ])("keeps the %s picture free of letters", (_name, picture) => {
+    expect(picture).not.toMatch(/<text[\s>]/);
   });
 });
 
