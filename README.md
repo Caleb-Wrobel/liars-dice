@@ -91,4 +91,5 @@ reports are carried over to it by hand.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The web game includes third-party software and fonts under their own licences, credited in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

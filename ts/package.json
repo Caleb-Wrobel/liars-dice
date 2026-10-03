@@ -13,6 +13,7 @@
     "dev:lan": "npm run dev:lan -w @liars-dice/web",
     "build": "npm run build -w @liars-dice/web",
     "test:coverage": "npm run test:coverage --workspaces --if-present",
-    "badges": "npm run test:coverage && node scripts/coverage-badges.mjs"
+    "badges": "npm run test:coverage && node scripts/coverage-badges.mjs",
+    "notices": "node scripts/third-party-notices.mjs"
   }
 }

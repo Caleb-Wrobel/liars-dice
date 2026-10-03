@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BOT_LEVEL_NAMES } from "@liars-dice/engine";
 import { ExternalLink } from "./ExternalLink.tsx";
-import { COPYRIGHT, FEEDBACK_URL, LICENSE_URL, REPO_URL } from "./links.ts";
+import { COPYRIGHT, FEEDBACK_URL, LICENSE_URL, NOTICES_URL, REPO_URL } from "./links.ts";
 import { MeetDialog } from "./MeetDialog.tsx";
 import { pickPlayerName } from "./playerNames.ts";
 import { RulesDialog } from "./RulesDialog.tsx";
@@ -197,7 +197,8 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
       </form>
       <footer className="setup-footer">
         <small>
-          {COPYRIGHT} · <ExternalLink href={LICENSE_URL}>MIT licence</ExternalLink>
+          {COPYRIGHT} · <ExternalLink href={LICENSE_URL}>MIT licence</ExternalLink> ·{" "}
+          <ExternalLink href={NOTICES_URL}>Third-party notices</ExternalLink>
         </small>
       </footer>
     </main>
