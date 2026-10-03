@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_THEME,
   SCENE_STORAGE_KEY,
@@ -10,6 +10,8 @@ import {
   applyScene,
   applySign,
   applyTheme,
+  defaultThemeFor,
+  SEASONS,
   isThemeId,
   loadTheme,
   pickScene,
@@ -35,10 +37,11 @@ describe("themes", () => {
   });
 
   it("loads the saved theme, falling back to the default", () => {
-    expect(loadTheme(store())).toBe(DEFAULT_THEME);
-    expect(loadTheme(store({ [THEME_STORAGE_KEY]: "casino" }))).toBe("casino");
-    expect(loadTheme(store({ [THEME_STORAGE_KEY]: "no-such-skin" }))).toBe(DEFAULT_THEME);
-    expect(loadTheme(null)).toBe(DEFAULT_THEME);
+    const june = new Date(2026, 5, 15); // no table is seasonal in June, so the default is plain Saloon
+    expect(loadTheme(store(), june)).toBe(DEFAULT_THEME);
+    expect(loadTheme(store({ [THEME_STORAGE_KEY]: "casino" }), june)).toBe("casino");
+    expect(loadTheme(store({ [THEME_STORAGE_KEY]: "no-such-skin" }), june)).toBe(DEFAULT_THEME);
+    expect(loadTheme(null, june)).toBe(DEFAULT_THEME);
   });
 
   it("copes with storage that throws", () => {
@@ -50,7 +53,7 @@ describe("themes", () => {
         throw new Error("blocked");
       },
     };
-    expect(loadTheme(broken)).toBe(DEFAULT_THEME);
+    expect(loadTheme(broken, new Date(2026, 5, 15))).toBe(DEFAULT_THEME);
     expect(() => saveTheme("casino", broken)).not.toThrow();
   });
 
@@ -125,5 +128,34 @@ describe("the Spooky title pick", () => {
     const root = document.createElement("div");
     applySign("perch", root);
     expect(root.dataset.sign).toBe("perch");
+  });
+});
+
+describe("the seasonal default table", () => {
+  it("opens on Spooky in October and on Saloon in every other month", () => {
+    expect(defaultThemeFor(new Date(2026, 9, 1))).toBe("spooky");
+    expect(defaultThemeFor(new Date(2026, 9, 31, 23, 59))).toBe("spooky");
+    for (const month of [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11]) expect(defaultThemeFor(new Date(2026, month, 15)), String(month + 1)).toBe("saloon");
+  });
+
+  it("uses the date it is given, and today's by default", () => {
+    expect(defaultThemeFor()).toBe("saloon"); // the test setup pins the date to June
+    vi.setSystemTime(new Date(2026, 9, 3));
+    expect(defaultThemeFor()).toBe("spooky");
+    expect(loadTheme(store())).toBe("spooky");
+  });
+
+  it("never overrides a table the visitor has chosen", () => {
+    const october = new Date(2026, 9, 15);
+    expect(loadTheme(store({ [THEME_STORAGE_KEY]: "saloon" }), october)).toBe("saloon");
+    expect(loadTheme(store({ [THEME_STORAGE_KEY]: "casino" }), october)).toBe("casino");
+    expect(loadTheme(store({ [THEME_STORAGE_KEY]: "no-such-skin" }), october)).toBe("spooky"); // junk falls back to the season
+  });
+
+  it("only names registered tables, and real months", () => {
+    for (const { theme, months } of SEASONS) {
+      expect(isThemeId(theme)).toBe(true);
+      for (const month of months) expect(month >= 1 && month <= 12 && Number.isInteger(month)).toBe(true);
+    }
   });
 });

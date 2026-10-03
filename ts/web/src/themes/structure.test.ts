@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import html from "../../index.html?raw";
+import { SEASONS } from "../theme.ts";
 import styles from "../styles.css?raw";
 import casino from "./casino.css?raw";
 import saloon from "./saloon.css?raw";
@@ -24,6 +25,22 @@ describe("the layout stylesheet", () => {
   it("keeps the big headroom above the setup title for wide screens only", () => {
     expect(styles).toMatch(/\.setup \{ padding-top: 16px; \}/);
     expect(styles).toMatch(/@media \(min-width: 640px\) \{ \.setup \{ padding-top: 48px; \} \}/);
+  });
+});
+
+describe("index.html's seasonal default", () => {
+  it("carries the same seasons as SEASONS, so the first paint and the app agree", () => {
+    const literal = html.match(/var seasons = (\{[^}]*\});/);
+    expect(literal, "expected a seasons table in index.html").not.toBeNull();
+    const inPage = JSON.parse(literal![1]!) as Record<string, string>;
+    const inApp: Record<string, string> = {};
+    for (const { theme, months } of SEASONS) for (const month of months) inApp[String(month)] = theme;
+    expect(inPage).toEqual(inApp);
+  });
+
+  it("falls back to Saloon, and lets a saved choice win over the season", () => {
+    expect(html).toMatch(/seasons\[new Date\(\)\.getMonth\(\) \+ 1\] \|\| "saloon"/);
+    expect(html).toMatch(/theme = localStorage\.getItem\("liars-dice:theme"\) \|\| theme;/);
   });
 });
 
