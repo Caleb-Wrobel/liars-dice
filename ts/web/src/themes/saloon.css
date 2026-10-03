@@ -107,3 +107,47 @@
   border-color: var(--accent);
   background: radial-gradient(ellipse at 50% 0%, #3b2616, var(--surface) 70%);
 }
+
+/*
+ * The title is a painted sign hanging from two brass chains. It is still the page's one h1, in real text, so a
+ * screen reader reads it as a heading; the plank, the lettering shadow and the chains are all CSS.
+ * Its colours are checked in structure.test.ts.
+ */
+:root[data-theme="saloon"] .setup h1 {
+  position: relative;
+  padding: 8px 18px 10px;
+  color: #f0c968;
+  text-shadow: 0 2px 0 #1a0d05;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 46px, #0000002e 46px 48px),
+    linear-gradient(#6b4527, #4a2f1a);
+  border: 3px solid #24130a;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px #8a6238, 0 5px 0 #00000077;
+}
+:root[data-theme="saloon"] .setup h1::before,
+:root[data-theme="saloon"] .setup h1::after {
+  content: ""; position: absolute; bottom: 100%; width: 5px; height: 60px; pointer-events: none;
+  background: repeating-linear-gradient(#d9a441 0 7px, #5a3b14 7px 10px);
+}
+:root[data-theme="saloon"] .setup h1::before { left: 22px; }
+:root[data-theme="saloon"] .setup h1::after { right: 22px; }
+@media (min-width: 640px) {
+  :root[data-theme="saloon"] .setup h1 { padding: 10px 28px 12px; }
+}
+
+/*
+ * The scenery sits behind the page at the bottom: a player piano against the back wall, and a plank table in front
+ * of it with a mug of ale, a bottle and glass, a hand of cards and a lamp. It is one fixed picture with no text and
+ * no click handling, so a screen reader and the keyboard never meet it. It needs width, so it goes on a narrow screen.
+ */
+:root[data-theme="saloon"] body::before {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 240px; z-index: -1; pointer-events: none;
+  background:
+    url("./saloon/bar.svg") right 2% bottom / auto 100% no-repeat,
+    linear-gradient(transparent 72%, #7a5530 72% 73.5%, #3b2518 73.5%),
+    url("./saloon/piano.svg") left 3% bottom / auto 100% no-repeat;
+}
+@media (max-width: 899px) {
+  :root[data-theme="saloon"] body::before { display: none; }
+}

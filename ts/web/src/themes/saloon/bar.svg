@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 240" width="330" height="240">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#f7b855" stop-opacity=".5"/><stop offset="1" stop-color="#f7b855" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- the lamp -->
+  <circle cx="290" cy="150" r="46" fill="url(#glow)"/>
+  <ellipse cx="290" cy="202" rx="17" ry="5" fill="#00000066"/>
+  <path d="M276 200H304L300 190H280Z" fill="#7a5420" stroke="#3a2410" stroke-width="1.5"/>
+  <path d="M280 190C276 172 278 158 290 146C302 158 304 172 300 190Z" fill="#cfe3d640" stroke="#c1912f" stroke-width="1.5"/>
+  <path d="M290 152C296 162 295 172 290 180C285 172 284 162 290 152Z" fill="#f7b855"/>
+  <path d="M290 164C292 169 291 174 290 177C289 174 288 169 290 164Z" fill="#ffe08a"/>
+  <path d="M282 146H298L296 140H284Z" fill="#7a5420"/>
+  <!-- a hand of cards fanned on the table -->
+  <g stroke="#b9a77a" stroke-width="1.5" fill="#efe3c2">
+    <rect x="203" y="168" width="22" height="30" rx="3" transform="rotate(-22 214 198)"/>
+    <rect x="203" y="168" width="22" height="30" rx="3" transform="rotate(-4 214 198)"/>
+    <rect x="203" y="168" width="22" height="30" rx="3" transform="rotate(16 214 198)"/>
+  </g>
+  <path d="M214 178c-3-5-9-1-5 3l5 5 5-5c4-4-2-8-5-3Z" fill="#b8402e" transform="rotate(16 214 198)"/>
+  <!-- the bottle and a shot glass -->
+  <ellipse cx="160" cy="203" rx="19" ry="5" fill="#00000066"/>
+  <path d="M146 198V140C146 128 154 124 154 112V90H166V112C166 124 174 128 174 140V198Z" fill="#33432a" stroke="#1a2414" stroke-width="2"/>
+  <rect x="153" y="82" width="14" height="10" rx="2" fill="#a47838" stroke="#5a3b14" stroke-width="1.5"/>
+  <rect x="148" y="150" width="24" height="30" fill="#e9d8a8" stroke="#a07a3c" stroke-width="1.5"/>
+  <path d="M154 160h12M154 166h12M154 172h8" stroke="#5b4528" stroke-width="2"/>
+  <path d="M150 140V196" stroke="#ffffff33" stroke-width="3"/>
+  <ellipse cx="192" cy="200" rx="10" ry="3" fill="#00000066"/>
+  <path d="M184 176H200L198 198H186Z" fill="#c8841f99" stroke="#e9d8a8" stroke-width="1.5"/>
+  <!-- the mug of ale, with a head of foam -->
+  <ellipse cx="82" cy="210" rx="40" ry="8" fill="#00000066"/>
+  <path d="M104 150h12c14 0 14 38 0 38h-14" fill="none" stroke="#e9d8a8" stroke-width="7" stroke-linecap="round"/>
+  <path d="M50 134H106L102 206H54Z" fill="#c8841f" stroke="#e9d8a8" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M54 160H102L100 206H56Z" fill="#a8681a"/>
+  <path d="M60 140V196" stroke="#ffe08a66" stroke-width="5" stroke-linecap="round"/>
+  <path d="M46 138C42 124 54 116 62 122C66 110 82 110 88 120C98 114 110 124 108 136C108 140 104 142 100 140H54C48 142 46 140 46 138Z" fill="#f6ecd2" stroke="#d8c39b" stroke-width="2"/>
+  <circle cx="64" cy="126" r="4" fill="#fffaf0"/><circle cx="90" cy="125" r="5" fill="#fffaf0"/>
+</svg>
