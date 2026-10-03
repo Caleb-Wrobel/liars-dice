@@ -7,6 +7,9 @@ import saloon from "./saloon.css?raw";
 import spooky from "./spooky.css?raw";
 import perch from "./spooky/sign-perch.svg?raw";
 import resting from "./spooky/sign-resting.svg?raw";
+import grass from "./spooky/grass.svg?raw";
+import sceneLeft from "./spooky/scene-left.svg?raw";
+import sceneRight from "./spooky/scene-right.svg?raw";
 
 describe("the layout stylesheet", () => {
   it("gives controls their own text colour instead of inheriting one", () => {
@@ -64,26 +67,45 @@ describe("index.html", () => {
 });
 
 describe("the Spooky decorations", () => {
-  // The corner pictures are decoration only. They must never catch a click or sit in front of the table.
+  // The pictures are decoration only. They must never catch a click or put text where a screen reader would find it.
   const rule = (selector: string) => {
     const match = spooky.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*{([^}]*)}`));
     expect(match, `expected a rule for ${selector}`).not.toBeNull();
     return match![1]!;
   };
 
-  it.each([':root[data-theme="spooky"] body::before', ':root[data-theme="spooky"] body::after'])(
-    "keeps %s behind the page, inert and out of the way of clicks",
-    (selector) => {
-      const body = rule(selector);
-      expect(body).toMatch(/pointer-events:\s*none/);
-      expect(body).toMatch(/z-index:\s*-1/);
-      expect(body).toMatch(/position:\s*fixed/);
-      expect(body).toMatch(/content:\s*""/); // no text, so nothing for a screen reader to read
-    },
-  );
+  it("keeps the corner web behind the page, inert and out of the way of clicks", () => {
+    const web = rule(':root[data-theme="spooky"] body::before');
+    expect(web).toMatch(/pointer-events:\s*none/);
+    expect(web).toMatch(/z-index:\s*-1/);
+    expect(web).toMatch(/position:\s*fixed/);
+    expect(web).toMatch(/content:\s*""/); // no text, so nothing for a screen reader to read
+  });
 
-  it("drops the skull on a narrow screen, so text stays clear", () => {
+  it("keeps the graveyard scenery inert, text-free, in the page flow and behind the form", () => {
+    const scene = rule(':root[data-theme="spooky"] body::after');
+    expect(scene).toMatch(/pointer-events:\s*none/);
+    expect(scene).toMatch(/content:\s*""/);
+    expect(scene).not.toMatch(/position:\s*(fixed|absolute)/); // in the flow, so it can never cover the form
+    expect(scene).toMatch(/flex:\s*1 0 240px/); // it takes the height the content leaves, and never less than its own
+    expect(scene).toMatch(/z-index:\s*-1/); // behind the form, so the cauldron's vapour rises from behind the Play bar
+    expect(spooky).toMatch(/@media \(min-width: 900px\) \{\s*:root\[data-theme="spooky"\] body \{ display: flex; flex-direction: column; \}\s*\}/);
+  });
+
+  it("pulls the scenery up on the setup page only, so the table screen keeps clear of it", () => {
+    expect(rule(':root[data-theme="spooky"] body:has(.setup)::after')).toMatch(/margin-top:\s*-\d+px/);
+  });
+
+  it("drops the scenery on a narrow screen, so text stays clear", () => {
     expect(spooky).toMatch(/@media \(max-width: \d+px\) \{[^}]*body::after \{ display: none; \}/);
+  });
+
+  it.each([
+    ["left", sceneLeft],
+    ["right", sceneRight],
+    ["grass", grass],
+  ])("keeps the %s picture free of letters", (_name, picture) => {
+    expect(picture).not.toMatch(/<text[\s>]/);
   });
 });
 

@@ -68,9 +68,14 @@
 }
 
 /*
- * Decorations for the corners of the page: a spiderweb at the top right, and a candle burning on a skull at the
- * bottom left. They are background pictures on the page, behind the table, faint, and never take a click, so they
- * are invisible to a screen reader and to the keyboard. On a narrow screen the skull goes, to keep text clear.
+ * A spiderweb sits in the top right corner of the page, fixed behind the table, faint, and never takes a click.
+ *
+ * The scenery follows the page and never covers the form: a grassy graveyard along the bottom. On the left, a dead
+ * tree, a crooked fence with a raven, tombstones, a ghost and a skull with a candle; on the right, a cauldron with green
+ * vapour curling up, pumpkins, bones and bats. On the setup page it starts at the copyright line, straight under the Play
+ * bar, and the ground runs on down to the bottom of the window, so a tall window shows ground and not a gap. The pictures
+ * are anchored to the top and are 240px tall, with the ground beginning 176px down. They carry no text and take no
+ * clicks, so a screen reader and the keyboard never meet them. They need width, so they go on a narrow screen.
  */
 :root[data-theme="spooky"] body::before {
   content: ""; position: fixed; top: 0; right: 0; z-index: -1; pointer-events: none;
@@ -79,13 +84,21 @@
   opacity: 0.5;
 }
 :root[data-theme="spooky"] body::after {
-  content: ""; position: fixed; bottom: 0; left: 0; z-index: -1; pointer-events: none;
-  width: 150px; aspect-ratio: 120 / 150;
-  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20120%20150'%3E%3Cdefs%3E%3CradialGradient%20id='g'%20cx='50%25'%20cy='50%25'%20r='50%25'%3E%3Cstop%20offset='0'%20stop-color='%23f7b855'%20stop-opacity='.55'/%3E%3Cstop%20offset='1'%20stop-color='%23f7b855'%20stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle%20cx='60'%20cy='24'%20r='30'%20fill='url%28%23g%29'/%3E%3Crect%20x='53'%20y='36'%20width='14'%20height='36'%20rx='2'%20fill='%23efe3c2'/%3E%3Cpath%20d='M53%2044h14v6c-2%204-3%209-3%2014c0%203-3%203-3%200c0-3-1-5-3-5c-2%200-3%203-5%200z'%20fill='%23d9cba4'%20opacity='.7'/%3E%3Cpath%20d='M60%2030V37'%20stroke='%233a2a1a'%20stroke-width='1.4'/%3E%3Cpath%20d='M60%208C67%2017%2069%2024%2060%2032C51%2024%2053%2017%2060%208Z'%20fill='%23f7b855'/%3E%3Cpath%20d='M60%2017C63%2021%2063%2025%2060%2029C57%2025%2057%2021%2060%2017Z'%20fill='%23ffe08a'/%3E%3Cpath%20d='M60%2066C34%2066%2022%2084%2024%20104C25%20114%2030%20120%2038%20124L38%20138C38%20141%2040%20143%2043%20143L77%20143C80%20143%2082%20141%2082%20138L82%20124C90%20120%2095%20114%2096%20104C98%2084%2086%2066%2060%2066Z'%20fill='%23d9cdb4'/%3E%3Cpath%20d='M24%20104C25%20114%2030%20120%2038%20124L38%20138C38%20141%2040%20143%2043%20143L60%20143C45%20140%2034%20128%2030%20108Z'%20fill='%23a99a7c'%20opacity='.55'/%3E%3Cellipse%20cx='46'%20cy='100'%20rx='9'%20ry='10'%20fill='%231a1220'/%3E%3Cellipse%20cx='74'%20cy='100'%20rx='9'%20ry='10'%20fill='%231a1220'/%3E%3Cpath%20d='M60%20108L54%20121H66Z'%20fill='%231a1220'/%3E%3Cpath%20d='M46%20131V143M53%20131V143M60%20131V143M67%20131V143M74%20131V143'%20stroke='%231a1220'%20stroke-width='1.6'/%3E%3Cpath%20d='M38%20131H82'%20stroke='%231a1220'%20stroke-width='1.6'/%3E%3C/svg%3E") bottom left / contain no-repeat;
-  opacity: 0.6;
+  content: ""; display: block; flex: 1 0 240px; pointer-events: none; z-index: -1;
+  background:
+    url("./spooky/scene-right.svg") right 2% top / auto 240px no-repeat,
+    url("./spooky/scene-left.svg") left 3% top / auto 240px no-repeat,
+    url("./spooky/grass.svg") repeat-x 0 160px / 48px 16px,
+    linear-gradient(transparent 176px, #16241a 176px);
 }
-@media (max-width: 560px) {
+/* On the setup page, pull the scenery up behind the form: the ground sits just under the copyright line, and the cauldron's vapour rises from behind the Play bar. */
+:root[data-theme="spooky"] body:has(.setup)::after { margin-top: -190px; }
+@media (max-width: 899px) {
   :root[data-theme="spooky"] body::after { display: none; }
+}
+/* The page fills the screen, and the scenery takes whatever height the content leaves. */
+@media (min-width: 900px) {
+  :root[data-theme="spooky"] body { display: flex; flex-direction: column; }
 }
 
 /* The standing claim is an aged slip of parchment. */
