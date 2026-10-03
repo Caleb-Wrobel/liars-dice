@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_THEME, THEME_STORAGE_KEY, THEMES, applyTheme, isThemeId, loadTheme, saveTheme } from "./theme.ts";
+import {
+  DEFAULT_THEME,
+  SCENE_STORAGE_KEY,
+  SCENES,
+  THEME_STORAGE_KEY,
+  THEMES,
+  applyScene,
+  applyTheme,
+  isThemeId,
+  loadTheme,
+  pickScene,
+  saveTheme,
+} from "./theme.ts";
 
 const store = (initial: Record<string, string> = {}) => {
   const data = { ...initial };
@@ -48,5 +60,43 @@ describe("themes", () => {
     const root = document.createElement("div");
     applyTheme("casino", root);
     expect(root.dataset.theme).toBe("casino");
+  });
+});
+
+describe("the Casino scenery pick", () => {
+  it("picks either scene from the dice, and keeps the pick for the visit", () => {
+    const kept = store();
+    expect(pickScene(kept, () => 0)).toBe("roulette");
+    expect(kept.data[SCENE_STORAGE_KEY]).toBe("roulette");
+    expect(pickScene(kept, () => 0.99)).toBe("roulette"); // already picked, so the dice are ignored
+    expect(pickScene(store(), () => 0.99)).toBe("poker");
+    expect(SCENES).toEqual(["roulette", "poker"]);
+  });
+
+  it("ignores a stored value it does not know", () => {
+    expect(pickScene(store({ [SCENE_STORAGE_KEY]: "bingo" }), () => 0.99)).toBe("poker");
+  });
+
+  it("never runs off the end of the list, even when the dice return exactly 1", () => {
+    expect(pickScene(store(), () => 1)).toBe("poker");
+  });
+
+  it("copes with storage that throws or is missing", () => {
+    const broken = {
+      getItem: () => {
+        throw new Error("blocked");
+      },
+      setItem: () => {
+        throw new Error("blocked");
+      },
+    };
+    expect(pickScene(broken, () => 0.99)).toBe("poker");
+    expect(pickScene(null, () => 0)).toBe("roulette");
+  });
+
+  it("applies the pick to the page for the stylesheet", () => {
+    const root = document.createElement("div");
+    applyScene("poker", root);
+    expect(root.dataset.scene).toBe("poker");
   });
 });
