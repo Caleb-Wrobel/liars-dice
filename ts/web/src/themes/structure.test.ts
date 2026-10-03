@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import html from "../../index.html?raw";
 import styles from "../styles.css?raw";
+import casino from "./casino.css?raw";
 import saloon from "./saloon.css?raw";
 import spooky from "./spooky.css?raw";
 
@@ -57,6 +58,19 @@ describe("the Spooky decorations", () => {
   });
 });
 
+/** WCAG contrast ratio of two #rrggbb colours. */
+const ratio = (a: string, b: string) => {
+  const lum = (hex: string) => {
+    const lin = [1, 3, 5].map((i) => {
+      const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * lin[0]! + 0.7152 * lin[1]! + 0.0722 * lin[2]!;
+  };
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+};
+
 describe("the Saloon decorations", () => {
   const rule = (selector: string) => {
     const match = saloon.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*{([^}]*)}`));
@@ -83,17 +97,6 @@ describe("the Saloon decorations", () => {
   });
 
   it("can be read: the sign lettering on its plank, and the page text on the table strip", () => {
-    const ratio = (a: string, b: string) => {
-      const lum = (hex: string) => {
-        const lin = [1, 3, 5].map((i) => {
-          const c = parseInt(hex.slice(i, i + 2), 16) / 255;
-          return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-        });
-        return 0.2126 * lin[0]! + 0.7152 * lin[1]! + 0.0722 * lin[2]!;
-      };
-      const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
-      return (hi! + 0.05) / (lo! + 0.05);
-    };
     const sign = rule(':root[data-theme="saloon"] .setup h1');
     const lettering = sign.match(/color:\s*(#[0-9a-f]{6})/i)![1]!;
     const plank = [...sign.matchAll(/linear-gradient\((#[0-9a-f]{6}),\s*(#[0-9a-f]{6})\)/gi)][0]!.slice(1);
@@ -101,5 +104,49 @@ describe("the Saloon decorations", () => {
     const strip = saloon.match(/#7a5530 72% 73\.5%, (#[0-9a-f]{6}) 73\.5%/)![1]!;
     expect(ratio("#f3e6c8", strip)).toBeGreaterThanOrEqual(4.5); // --text
     expect(ratio("#c7b08a", strip)).toBeGreaterThanOrEqual(4.5); // --muted
+  });
+});
+
+describe("the Casino decorations", () => {
+  const rule = (selector: string) => {
+    const match = casino.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*{([^}]*)}`));
+    expect(match, `expected a rule for ${selector}`).not.toBeNull();
+    return match![1]!;
+  };
+
+  it("keeps the scenery behind the page, inert and without text", () => {
+    const body = rule(':root[data-theme="casino"] body::before');
+    expect(body).toMatch(/pointer-events:\s*none/);
+    expect(body).toMatch(/z-index:\s*-1/);
+    expect(body).toMatch(/position:\s*fixed/);
+    expect(body).toMatch(/content:\s*""/);
+  });
+
+  it("always shows the wheel, and varies only the left side with data-scene", () => {
+    const base = rule(':root[data-theme="casino"] body::before');
+    const poker = rule(':root[data-theme="casino"][data-scene="poker"] body::before');
+    for (const layers of [base, poker]) expect(layers).toContain("roulette-right.svg");
+    expect(base).toContain("roulette-left.svg");
+    expect(poker).toContain("poker-left.svg");
+  });
+
+  it("drops the scenery on a narrow screen, so text stays clear", () => {
+    expect(casino).toMatch(/@media \(max-width: \d+px\) \{[^}]*body::before \{ display: none; \}/);
+  });
+
+  it("keeps the starburst empty and inert, so the sign is read as the heading it is", () => {
+    const burst = rule(':root[data-theme="casino"] .setup h1::before');
+    expect(burst).toMatch(/content:\s*""/);
+    expect(burst).toMatch(/pointer-events:\s*none/);
+  });
+
+  it("can be read: the sign lettering on its face, and the page text on the felt and the rail", () => {
+    const sign = rule(':root[data-theme="casino"] .setup h1');
+    expect(ratio(sign.match(/color:\s*(#[0-9a-f]{6})/i)![1]!, "#fbf6e6")).toBeGreaterThanOrEqual(4.5); // the sign's face, in sign.svg
+    const strip = casino.match(/#8a6a2a 72% 73%, (#[0-9a-f]{6}) 73% 75%, (#[0-9a-f]{6}) 75%/)!;
+    for (const surface of [strip[1]!, strip[2]!]) {
+      expect(ratio("#f1f4ec", surface)).toBeGreaterThanOrEqual(4.5); // --text
+      expect(ratio("#a7bbaf", surface)).toBeGreaterThanOrEqual(4.5); // --muted
+    }
   });
 });

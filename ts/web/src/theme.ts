@@ -48,3 +48,42 @@ export function saveTheme(id: ThemeId, store: Store | null = browserStore()): vo
 export function applyTheme(id: ThemeId, root: HTMLElement = document.documentElement): void {
   root.dataset.theme = id;
 }
+
+/**
+ * The Casino's left-hand scenery varies a little: the roulette betting layout, or a poker spread. It is picked once
+ * per visit, so a refresh mid-game does not change the room, and applied as data-scene for the stylesheet.
+ */
+export const SCENES = ["roulette", "poker"] as const;
+export type SceneId = (typeof SCENES)[number];
+
+export const SCENE_STORAGE_KEY = "liars-dice:scene";
+
+const isSceneId = (value: unknown): value is SceneId => SCENES.some((scene) => scene === value);
+
+const sessionStore = (): Store | null => {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+};
+
+export function pickScene(store: Store | null = sessionStore(), random: () => number = Math.random): SceneId {
+  try {
+    const kept = store?.getItem(SCENE_STORAGE_KEY);
+    if (isSceneId(kept)) return kept;
+  } catch {
+    // Fall through and pick afresh.
+  }
+  const scene = SCENES[Math.min(SCENES.length - 1, Math.floor(random() * SCENES.length))]!;
+  try {
+    store?.setItem(SCENE_STORAGE_KEY, scene);
+  } catch {
+    // It just won't be kept for the visit.
+  }
+  return scene;
+}
+
+export function applyScene(id: SceneId, root: HTMLElement = document.documentElement): void {
+  root.dataset.scene = id;
+}

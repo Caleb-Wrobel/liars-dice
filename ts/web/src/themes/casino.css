@@ -72,3 +72,43 @@
 :root[data-theme="casino"] .tray-hidden {
   background: repeating-linear-gradient(135deg, var(--tray-b) 0 12px, #143a29 12px 24px);
 }
+
+/*
+ * The title is a Las Vegas style sign: an elongated diamond ringed with bulbs, crowned with a starburst. It is
+ * still the page's one h1, in real text, over a picture with no letters in it. The pictures are inert and the
+ * starburst is an empty pseudo-element, so a screen reader reads just the heading.
+ */
+:root[data-theme="casino"] .setup h1 {
+  position: relative; display: grid; place-items: center; text-align: center;
+  width: min(100%, 320px); aspect-ratio: 320 / 112; margin-top: 40px; padding: 0 44px;
+  font-size: 1.9rem; line-height: 1.05; letter-spacing: 0.01em; color: #b01b25;
+  background: url("./casino/sign.svg") center / 100% 100% no-repeat;
+}
+:root[data-theme="casino"] .setup h1::before {
+  content: ""; position: absolute; left: 50%; bottom: calc(100% - 14px); width: 64px; height: 64px;
+  transform: translateX(-50%); pointer-events: none;
+  background: url("./casino/starburst.svg") center / contain no-repeat;
+}
+
+/*
+ * The scenery sits behind the page at the bottom, on a strip of felt with a padded rail: a roulette wheel on the
+ * right, always, and on the left either the roulette betting layout or a poker spread, picked once per visit
+ * (see pickScene in src/theme.ts, which sets data-scene). It is one fixed picture with no text and no click
+ * handling, so a screen reader and the keyboard never meet it. It needs width, so it goes on a narrow screen.
+ */
+:root[data-theme="casino"] body::before {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 240px; z-index: -1; pointer-events: none;
+  background:
+    url("./casino/roulette-right.svg") right 2% bottom / auto 100% no-repeat,
+    url("./casino/roulette-left.svg") left 2% bottom / auto 100% no-repeat,
+    linear-gradient(transparent 72%, #8a6a2a 72% 73%, #4d2e16 73% 75%, #0f3a26 75%);
+}
+:root[data-theme="casino"][data-scene="poker"] body::before {
+  background:
+    url("./casino/roulette-right.svg") right 2% bottom / auto 100% no-repeat,
+    url("./casino/poker-left.svg") left 2% bottom / auto 100% no-repeat,
+    linear-gradient(transparent 72%, #8a6a2a 72% 73%, #4d2e16 73% 75%, #0f3a26 75%);
+}
+@media (max-width: 899px) {
+  :root[data-theme="casino"] body::before { display: none; }
+}
