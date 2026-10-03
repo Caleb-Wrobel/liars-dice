@@ -13,6 +13,10 @@
         theme = localStorage.getItem("liars-dice:theme") || theme;
       } catch (e) {}
       document.documentElement.dataset.theme = theme;
+      // "Still scenery": stop the flicker before it can start. The key matches MOTION_STORAGE_KEY in src/theme.ts.
+      try {
+        if (localStorage.getItem("liars-dice:still") === "1") document.documentElement.dataset.motion = "still";
+      } catch (e) {}
     </script>
   </head>
   <body>

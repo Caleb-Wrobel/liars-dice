@@ -14,9 +14,11 @@ import { useState, type ReactNode } from "react";
 import { ClaimDice } from "./ClaimDice.tsx";
 import { ClaimPicker } from "./ClaimPicker.tsx";
 import { Die } from "./Die.tsx";
+import { MotionToggle } from "./MotionToggle.tsx";
 import { PullDialog } from "./PullDialog.tsx";
 import { RulesDialog } from "./RulesDialog.tsx";
 import { HUMAN, PACES, useSession, type Config, type Pace, type Tray } from "./session.ts";
+import { DEFAULT_THEME } from "./theme.ts";
 
 const PACE_LABELS: Record<Pace, string> = { fast: "Fast", normal: "Normal", slow: "Slow", step: "Step by step" };
 
@@ -160,6 +162,7 @@ export function Table({
           <button type="button" className="link" onClick={onQuit}>
             New game
           </button>
+          <MotionToggle theme={config.theme ?? DEFAULT_THEME} />
         </div>
       </header>
 
