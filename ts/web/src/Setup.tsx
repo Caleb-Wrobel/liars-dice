@@ -64,50 +64,52 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           });
         }}
       >
-        <label>
-          Your name
-          <input
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setNameTyped(true);
-            }}
-            maxLength={16}
-          />
-        </label>
-        <div className="field-row compact">
+        <div className="who-row">
           <label>
-            Lives
-            <select className="digit" value={lives} onChange={(e) => setLives(Number(e.target.value))}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Opponents
-            <select className="digit" value={opponents} onChange={(e) => setOpponents(Number(e.target.value))}>
-              {BOT_NAMES.map((_, i) => (
-                <option key={i} value={i + 1}>
-                  {i + 1}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="choice characters">
+            Your name
             <input
-              type="checkbox"
-              checked={characters}
-              aria-describedby="characters-hint"
+              value={name}
               onChange={(e) => {
-                setCharacters(e.target.checked);
-                if (!paceChosen) setPace(e.target.checked ? "slow" : "normal");
+                setName(e.target.value);
+                setNameTyped(true);
               }}
+              maxLength={16}
             />
-            <span>Use Characters</span>
           </label>
+          <div className="field-row compact">
+            <label>
+              Lives
+              <select className="digit" value={lives} onChange={(e) => setLives(Number(e.target.value))}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Bots
+              <select className="digit" value={opponents} onChange={(e) => setOpponents(Number(e.target.value))}>
+                {BOT_NAMES.map((_, i) => (
+                  <option key={i} value={i + 1}>
+                    {i + 1}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="choice characters">
+              <input
+                type="checkbox"
+                checked={characters}
+                aria-describedby="characters-hint"
+                onChange={(e) => {
+                  setCharacters(e.target.checked);
+                  if (!paceChosen) setPace(e.target.checked ? "slow" : "normal");
+                }}
+              />
+              <span>Use Characters</span>
+            </label>
+          </div>
         </div>
         <p id="characters-hint" className="hint">
           {characters

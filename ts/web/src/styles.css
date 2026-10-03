@@ -69,6 +69,17 @@ a.link { display: inline-flex; align-items: center; min-height: 32px; color: var
 .field-row.compact select.digit { width: auto; }
 .field-row.compact .characters { min-height: 44px; align-items: center; }
 @media (max-width: 290px) { .field-row { grid-template-columns: 1fr; } } /* too narrow even for two short columns */
+/*
+ * Your name, Lives, Bots and the Characters box share a row once the screen is wide enough: the name takes whatever
+ * the short fields leave, and the short fields wrap beneath it if it gets tight. On a phone the wrapper vanishes, so
+ * the form is exactly what it was.
+ */
+.who-row { display: contents; }
+@media (min-width: 640px) {
+  .who-row { display: flex; flex-wrap: wrap; align-items: end; gap: var(--gap); }
+  .who-row > label:first-child { flex: 1 1 220px; min-width: 0; }
+  .who-row > .field-row.compact { flex: 0 0 auto; flex-wrap: nowrap; }
+}
 fieldset { border: 2px solid var(--surface-edge); border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
 legend { color: var(--muted); padding: 0 6px; }
 .choice { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 10px; color: var(--text); }

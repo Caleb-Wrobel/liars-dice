@@ -27,6 +27,16 @@ describe("the layout stylesheet", () => {
   });
 });
 
+describe("the setup row", () => {
+  it("leaves the phone layout alone, and only lays the name and short fields in a row on a wide screen", () => {
+    expect(styles).toMatch(/\.who-row \{ display: contents; \}/); // the wrapper vanishes on a phone
+    const wide = styles.match(/@media \(min-width: 640px\) \{\s*\.who-row \{([^}]*)\}/);
+    expect(wide, "expected a wide-screen rule for .who-row").not.toBeNull();
+    expect(wide![1]).toMatch(/display:\s*flex/);
+    expect(wide![1]).toMatch(/flex-wrap:\s*wrap/); // it wraps back to the phone layout when tight
+  });
+});
+
 describe("index.html", () => {
   it("does not run the page under system bars", () => {
     // viewport-fit=cover lets content sit under the notch and the browser's bottom bar, and nothing
