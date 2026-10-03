@@ -116,6 +116,19 @@ describe("the Spooky flicker", () => {
   });
 });
 
+describe("the Spooky fonts", () => {
+  it("sets headings in IM Fell with a serif fallback, the tombstone title in Cinzel, and text in Alegreya", () => {
+    expect(spooky).toMatch(/--font-display:\s*"IM Fell English",[^;]*\bserif;/);
+    expect(spooky).toMatch(/--font-body:\s*"Alegreya",[^;]*\bserif;/);
+    expect(spooky).toMatch(/\.setup h1 \{[^}]*font-family:\s*"Cinzel",[^}]*\bserif;/);
+    expect(spooky).toMatch(/--display-weight:\s*400;/); // IM Fell has one weight, so none is faked
+  });
+
+  it("keeps the standing claim in the body face, so a 1 is never mistaken for a capital I", () => {
+    expect(spooky).toMatch(/\.claim-text \{[^}]*font-family:\s*var\(--font-body\)/);
+  });
+});
+
 describe("the Spooky decorations", () => {
   // The pictures are decoration only. They must never catch a click or put text where a screen reader would find it.
   const rule = (selector: string) => {
