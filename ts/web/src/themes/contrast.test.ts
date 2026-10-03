@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ThemeId } from "../theme.ts";
 import casino from "./casino.css?raw";
+import hacker from "./hacker.css?raw";
 import saloon from "./saloon.css?raw";
 import spooky from "./spooky.css?raw";
 
 /** Every registered theme must have a stylesheet here: adding one to THEMES breaks the build until it does. */
-const STYLESHEETS: Record<ThemeId, string> = { saloon, casino, spooky };
+const STYLESHEETS: Record<ThemeId, string> = { saloon, casino, spooky, hacker };
 
 /** All `--token: value;` declarations in a stylesheet. */
 function tokens(css: string): Map<string, string> {

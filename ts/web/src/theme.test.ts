@@ -25,7 +25,7 @@ const store = (initial: Record<string, string> = {}) => {
 describe("themes", () => {
   it("registers saloon first, as the default", () => {
     expect(DEFAULT_THEME).toBe("saloon");
-    expect(THEMES.map((t) => t.id)).toEqual(["saloon", "casino", "spooky"]);
+    expect(THEMES.map((t) => t.id)).toEqual(["saloon", "casino", "spooky", "hacker"]);
   });
 
   it("recognises only registered ids", () => {

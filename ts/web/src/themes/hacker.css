@@ -1,0 +1,107 @@
+/*
+ * Hacker: green phosphor on black and a monospaced face, like a terminal. Austere on purpose: no glow and no boxes.
+ * The only ornaments are the > before the title and very faint scanlines, an eighties nod.
+ * Keep every colour a solid hex: src/themes/contrast.test.ts reads these values. Brightness, not hue, tells the
+ * pairs apart, so the palette holds under the colour-vision simulations.
+ */
+:root[data-theme="hacker"] {
+  color-scheme: dark;
+
+  --page: #030a05;
+  --surface: #07140b;
+  --surface-edge: #1f6b36;
+  --text: #c8ffd4;
+  --muted: #7fcf93;
+  --accent: #3dff7a;      /* bright phosphor */
+  --accent-ink: #02150a;
+  --danger: #ff8a6a;
+  --ok: #5dff9a;
+
+  --control-bg: #0a1d10;
+  --control-ink: #c8ffd4;
+  --control-edge: #2a8a46;
+
+  --tray-a: #0a2013;      /* the table top, a grid */
+  --tray-b: #061109;      /* the encrypted cup */
+  --tray-edge: #1f6b36;
+  --tray-title: #9be8ae;
+
+  --claim-bg: #0a1d10;
+  --claim-ink: #c8ffd4;
+  --claim-muted: #7fcf93;
+  --claim-edge: #2a8a46;
+  --claim-dice-bg: #07140b;
+  --kicker: #3dff7a;
+
+  --die-body: #c8ffd4;    /* a lit cell, with dark pips */
+  --die-pip: #03150a;
+  --die-edge: #3dff7a;
+  --die-edge-width: 2;
+  --die-radius: 2px;
+  --unseen-body: #07140b;
+  --unseen-edge: #3dff7a;
+  --unseen-mark: #3dff7a;
+
+  --log-bg: #050e08;
+  --log-ink: #9be8ae;
+
+  --font-display: ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
+  --font-body: ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
+  --display-weight: 700;
+  --radius: 3px;
+}
+
+/*
+ * Plain black with very faint scanlines, drawn as the page's own background so they sit behind everything and can
+ * never touch the text. They are a whisper of green, so they show on black without needing any contrast.
+ */
+:root[data-theme="hacker"] body {
+  font-size: 0.98rem;
+  background:
+    repeating-linear-gradient(0deg, #3dff7a0b 0 1px, transparent 1px 3px),
+    var(--page);
+}
+
+/* Lives are lit memory cells: a bright square with a dark core, so a life reads by shape and brightness. */
+:root[data-theme="hacker"] .life {
+  width: 0.9em; height: 0.9em; border-radius: 1px;
+  background: var(--accent);
+  box-shadow: inset 0 0 0 0.2em #02150a, inset 0 0 0 0.34em var(--accent);
+}
+
+/* The table top is a grid, and the cup is hatched like a locked file. */
+:root[data-theme="hacker"] .tray-visible {
+  background:
+    linear-gradient(#1f6b3640 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, #1f6b3640 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--tray-a);
+}
+:root[data-theme="hacker"] .tray-hidden {
+  background: repeating-linear-gradient(135deg, var(--tray-b) 0 8px, #0b2414 8px 16px);
+  outline: 1px dashed #2a8a46; outline-offset: -8px;
+}
+
+:root[data-theme="hacker"] button:not(.die-button) {
+  background: var(--control-bg); box-shadow: none;
+}
+:root[data-theme="hacker"] button.primary:not(.die-button) {
+  background: var(--accent); box-shadow: none;
+}
+:root[data-theme="hacker"] button.link { background: none; box-shadow: none; }
+
+:root[data-theme="hacker"] .step-rail li { border: 1px solid var(--surface-edge); }
+:root[data-theme="hacker"] .step-rail li.current { border-color: var(--accent); }
+:root[data-theme="hacker"] .log { border: 1px solid #1f6b36; }
+:root[data-theme="hacker"] .dialog {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+/*
+ * The title is plain bright text after a prompt. The prompt is drawn by CSS with empty alternative text, so a screen
+ * reader reads just the heading.
+ */
+:root[data-theme="hacker"] .setup h1::before { content: "> " / ""; color: var(--muted); }
+
+/* A bio on the Meet page is the weights, one to a line, so its line breaks are kept. */
+:root[data-theme="hacker"] .persona p:last-child { white-space: pre-line; }
