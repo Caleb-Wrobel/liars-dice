@@ -1,0 +1,71 @@
+# Publishes the web game to GitHub Pages from main. The forge is the source of truth and mirrors main here, so a
+# merge on the forge is what publishes a new version. Nothing is collected: the game runs entirely in the browser.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancel it half way, but keep only the latest one waiting.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ts
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ts/package-lock.json
+
+      - run: npm ci
+
+      # A broken game must never be published, so the checks run before the build is uploaded.
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      # A project site lives at /<repo-name>/, so the build needs that as its base path. The flag must be passed to the
+      # web workspace directly: through the root build script it is silently dropped and the page comes out blank.
+      - name: Build the web app
+        run: npm run build -w @liars-dice/web -- --base=/${{ github.event.repository.name }}/
+
+      # Fail here, not on the live site, if the links do not carry the base path.
+      - name: Check the base path made it into the build
+        run: |
+          grep -q 'src="/${{ github.event.repository.name }}/assets/' web/dist/index.html
+          grep -q 'href="/${{ github.event.repository.name }}/assets/' web/dist/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ts/web/dist
+
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
