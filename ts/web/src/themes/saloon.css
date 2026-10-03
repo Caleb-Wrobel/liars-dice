@@ -137,12 +137,13 @@
 }
 
 /*
- * The scenery sits behind the page at the bottom: a player piano against the back wall, and a plank table in front
- * of it with a mug of ale, a bottle and glass, a hand of cards and a lamp. It is one fixed picture with no text and
- * no click handling, so a screen reader and the keyboard never meet it. It needs width, so it goes on a narrow screen.
+ * The scenery sits at the foot of the page, below the copyright line, so it can never cover the form: a player piano
+ * against the back wall, and a plank table in front of it with a mug of ale, a bottle and glass, a hand of cards and a
+ * lamp. It is one picture with no text and no click handling, so a screen reader and the keyboard never meet it. It
+ * needs width, so it goes on a narrow screen.
  */
 :root[data-theme="saloon"] body::before {
-  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 240px; z-index: -1; pointer-events: none;
+  content: ""; display: block; flex: none; order: 2; height: 240px; pointer-events: none;
   background:
     url("./saloon/bar.svg") right 2% bottom / auto 100% no-repeat,
     linear-gradient(transparent 72%, #7a5530 72% 73.5%, #3b2518 73.5%),
@@ -150,4 +151,9 @@
 }
 @media (max-width: 899px) {
   :root[data-theme="saloon"] body::before { display: none; }
+}
+/* The page fills the screen, so the scenery sits at the foot of a short page and after the content of a long one. */
+@media (min-width: 900px) {
+  :root[data-theme="saloon"] body { display: flex; flex-direction: column; }
+  :root[data-theme="saloon"] #root { flex: 1 0 auto; }
 }

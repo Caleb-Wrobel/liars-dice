@@ -91,13 +91,14 @@
 }
 
 /*
- * The scenery sits behind the page at the bottom, on a strip of felt with a padded rail: a roulette wheel on the
- * right, always, and on the left either the roulette betting layout or a poker spread, picked once per visit
- * (see pickScene in src/theme.ts, which sets data-scene). It is one fixed picture with no text and no click
- * handling, so a screen reader and the keyboard never meet it. It needs width, so it goes on a narrow screen.
+ * The scenery sits at the foot of the page, below the copyright line, so it can never cover the form, on a strip of
+ * felt with a padded rail: a roulette wheel on the right, always, and on the left either the roulette betting layout
+ * or a poker spread, picked once per visit (see pickScene in src/theme.ts, which sets data-scene). It is one picture
+ * with no text and no click handling, so a screen reader and the keyboard never meet it. It needs width, so it goes
+ * on a narrow screen.
  */
 :root[data-theme="casino"] body::before {
-  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 240px; z-index: -1; pointer-events: none;
+  content: ""; display: block; flex: none; order: 2; height: 240px; pointer-events: none;
   background:
     url("./casino/roulette-right.svg") right 2% bottom / auto 100% no-repeat,
     url("./casino/roulette-left.svg") left 2% bottom / auto 100% no-repeat,
@@ -111,4 +112,9 @@
 }
 @media (max-width: 899px) {
   :root[data-theme="casino"] body::before { display: none; }
+}
+/* The page fills the screen, so the scenery sits at the foot of a short page and after the content of a long one. */
+@media (min-width: 900px) {
+  :root[data-theme="casino"] body { display: flex; flex-direction: column; }
+  :root[data-theme="casino"] #root { flex: 1 0 auto; }
 }

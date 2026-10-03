@@ -90,12 +90,14 @@ describe("the Saloon decorations", () => {
     return match![1]!;
   };
 
-  it("keeps the scenery behind the page, inert and without text", () => {
+  it("keeps the scenery inert and without text, in the flow after the page so it can never cover the form", () => {
     const body = rule(':root[data-theme="saloon"] body::before');
     expect(body).toMatch(/pointer-events:\s*none/);
-    expect(body).toMatch(/z-index:\s*-1/);
-    expect(body).toMatch(/position:\s*fixed/);
     expect(body).toMatch(/content:\s*""/);
+    expect(body).toMatch(/order:\s*2/);
+    expect(body).not.toMatch(/position:\s*(fixed|absolute)/);
+    // The page grows to fill the screen, so the scenery rests at the foot of a short page and follows a long one.
+    expect(saloon).toMatch(/@media \(min-width: 900px\) \{\s*:root\[data-theme="saloon"\] body \{ display: flex; flex-direction: column; \}\s*:root\[data-theme="saloon"\] #root \{ flex: 1 0 auto; \}/);
   });
 
   it("drops the scenery on a narrow screen, so text stays clear", () => {
@@ -126,12 +128,14 @@ describe("the Casino decorations", () => {
     return match![1]!;
   };
 
-  it("keeps the scenery behind the page, inert and without text", () => {
+  it("keeps the scenery inert and without text, in the flow after the page so it can never cover the form", () => {
     const body = rule(':root[data-theme="casino"] body::before');
     expect(body).toMatch(/pointer-events:\s*none/);
-    expect(body).toMatch(/z-index:\s*-1/);
-    expect(body).toMatch(/position:\s*fixed/);
     expect(body).toMatch(/content:\s*""/);
+    expect(body).toMatch(/order:\s*2/);
+    expect(body).not.toMatch(/position:\s*(fixed|absolute)/);
+    // The page grows to fill the screen, so the scenery rests at the foot of a short page and follows a long one.
+    expect(casino).toMatch(/@media \(min-width: 900px\) \{\s*:root\[data-theme="casino"\] body \{ display: flex; flex-direction: column; \}\s*:root\[data-theme="casino"\] #root \{ flex: 1 0 auto; \}/);
   });
 
   it("always shows the wheel, and varies only the left side with data-scene", () => {
