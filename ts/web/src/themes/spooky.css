@@ -74,7 +74,8 @@
  * tree, a crooked fence with a raven, tombstones, a ghost and a skull with a candle; on the right, a cauldron with green
  * vapour curling up, pumpkins, bones, a ghost and bats. In the middle, slightly right of centre, a freshly dug grave with
  * a shovel and a green lantern, the shovel reaching up to touch the third-party notices link, and, a little lower and left of
- * centre, a black cat watching it. They are placed off-balance on purpose. On the setup page it starts at the copyright line, straight under the Play
+ * centre, a black cat watching it, as far from the candle on the left as the grave is from the cat. The cat is drawn into
+ * the left picture, so it keeps its distance from the candle at every width. They are placed off-balance on purpose. On the setup page it starts at the copyright line, straight under the Play
  * bar, and the ground runs on down to the bottom of the window, so a tall window shows ground and not a gap. The pictures
  * are anchored to the top and are 240px tall, with the ground beginning 176px down. They carry no text and take no
  * clicks, so a screen reader and the keyboard never meet them. They need width, so they go on a narrow screen.
@@ -91,7 +92,6 @@
     url("./spooky/scene-right.svg") right 2% top / auto 240px no-repeat,
     url("./spooky/scene-left.svg") left 3% top / auto 240px no-repeat,
     url("./spooky/grave.svg") 58% top / auto 240px no-repeat,
-    url("./spooky/cat.svg") 42% top / auto 240px no-repeat,
     url("./spooky/grass.svg") repeat-x 0 160px / 48px 16px,
     linear-gradient(transparent 176px, #16241a 176px);
 }

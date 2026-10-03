@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 240" width="330" height="240">
 <defs>
 <radialGradient id="glow"><stop offset="0" stop-color="#f7b855" stop-opacity=".55"/><stop offset="1" stop-color="#f7b855" stop-opacity="0"/></radialGradient>
+<radialGradient id="eyeglow"><stop offset="0" stop-color="#ffd75a" stop-opacity=".8"/><stop offset="1" stop-color="#ffd75a" stop-opacity="0"/></radialGradient>
 <radialGradient id="fire"><stop offset="0" stop-color="#f58a22" stop-opacity=".8"/><stop offset="1" stop-color="#f58a22" stop-opacity="0"/></radialGradient>
 <linearGradient id="vap" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#8fe39a" stop-opacity=".55"/><stop offset="1" stop-color="#8fe39a" stop-opacity="0"/></linearGradient>
 <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a7284"/><stop offset="1" stop-color="#413b4b"/></linearGradient>
