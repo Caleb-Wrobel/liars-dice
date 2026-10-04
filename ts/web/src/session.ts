@@ -169,6 +169,9 @@ export function useSession(config: Config) {
   };
 
   const isHuman = (seat: number) => kinds[seat] === "human";
+  const humanCount = kinds.filter((kind) => kind === "human").length;
+  /** The human who last had the device, once they have tapped through the handoff. */
+  const [holder, setHolder] = useState<number | null>(null);
 
   /**
    * The human whose screen this is: whoever's turn it is, or, while bots play, the human who handed over to them
@@ -184,6 +187,15 @@ export function useSession(config: Config) {
     }
     return 0; // a table always has a human
   })();
+
+  /**
+   * The seat the device must be handed to before the table shows, or null. That is only when several humans share it,
+   * it is a human's turn, and that human is not the one who last held the device. Bots' turns never need a handoff.
+   */
+  const handoff =
+    humanCount > 1 && game.winner === null && pulled === null && isHuman(game.current) && holder !== game.current
+      ? game.current
+      : null;
 
   /** The seat of the bot about to move, or null when it's a human's turn or the game is over. */
   const botSeat = game.winner === null && !isHuman(game.current) && pulled === null ? game.current : null;
@@ -215,7 +227,11 @@ export function useSession(config: Config) {
     /** Who sits where: a seat is a human or a bot. */
     seatKinds: kinds,
     isHuman,
+    humanCount,
     viewer,
+    handoff,
+    /** The right person has the device: show the table. */
+    acceptHandoff: () => setHolder(game.current),
     log,
     pulled,
     error,

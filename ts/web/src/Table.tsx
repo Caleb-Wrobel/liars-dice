@@ -10,11 +10,12 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { NUM_DICE, Step, formatRank } from "@liars-dice/engine";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ClaimDice } from "./ClaimDice.tsx";
 import { ClaimPicker } from "./ClaimPicker.tsx";
 import { Die } from "./Die.tsx";
 import { MotionToggle } from "./MotionToggle.tsx";
+import { Handoff } from "./Handoff.tsx";
 import { PullDialog } from "./PullDialog.tsx";
 import { RulesDialog } from "./RulesDialog.tsx";
 import { PACES, useSession, type Config, type Pace, type Tray } from "./session.ts";
@@ -134,8 +135,26 @@ export function Table({
       ? "Roll the dice to see them before you claim."
       : "Peek at the hidden dice before you claim.";
 
+  // Once the right person has tapped through a handoff, put focus on the turn so a screen reader starts there.
+  const turnHeading = useRef<HTMLHeadingElement>(null);
+  const wasHandoff = useRef(false);
+  useEffect(() => {
+    if (s.handoff !== null) wasHandoff.current = true;
+    else if (wasHandoff.current) {
+      wasHandoff.current = false;
+      turnHeading.current?.focus();
+    }
+  }, [s.handoff]);
+
+  if (s.handoff !== null) return <Handoff name={game.names[s.handoff]!} onShow={s.acceptHandoff} onQuit={onQuit} />;
+
   return (
     <main className="table">
+      {s.humanCount > 1 && (
+        <h1 className="sr-only" tabIndex={-1} ref={turnHeading}>
+          {game.names[game.current]}'s turn
+        </h1>
+      )}
       <header className="scoreboard">
         {game.names.map((name, i) => (
           <div key={i} className={`player${game.current === i && game.winner === null ? " active" : ""}`}>
