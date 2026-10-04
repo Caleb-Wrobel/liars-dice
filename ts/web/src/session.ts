@@ -3,6 +3,7 @@ import {
   Game,
   NUM_DICE,
   RuleError,
+  Step,
   advancedRules,
   basicRules,
   drawArchetypes,
@@ -27,8 +28,13 @@ export const MAX_SEATS = 6;
 /** How fast the bots move. "step" waits for you to press Next move after each action. */
 export type Pace = "fast" | "normal" | "slow" | "step";
 export const PACES: readonly Pace[] = ["fast", "normal", "slow", "step"];
-/** Pause before each bot action, in milliseconds. */
-export const PACE_MS = { fast: 250, normal: 700, slow: 1600 } as const;
+/** Pause before each bot action, in milliseconds. Tuned by watching hot-seat games: a human player is slower. */
+export const PACE_MS = { fast: 250, normal: 1600, slow: 3200 } as const;
+/**
+ * The pause is this many times longer before a bot's decisions, pulling or peering at the start of its turn and
+ * claiming at the end of it, so the moments that matter get a beat, as they would from a person.
+ */
+export const DECISION_BEAT = 1.5;
 /** Opponents are seated after the human, in this order. */
 export const BOT_NAMES = ["Bob", "Carol", "Dave", "Eve", "Frank"] as const;
 
@@ -211,7 +217,8 @@ export function useSession(config: Config) {
 
   useEffect(() => {
     if (botSeat === null || pace === "step" || paused) return;
-    const timer = setTimeout(botStep, PACE_MS[pace]);
+    const deciding = game.step === Step.Decide || game.step === Step.Claim;
+    const timer = setTimeout(botStep, PACE_MS[pace] * (deciding ? DECISION_BEAT : 1));
     return () => clearTimeout(timer);
   }, [botSeat, tick, pace, paused]); // eslint-disable-line react-hooks/exhaustive-deps
 

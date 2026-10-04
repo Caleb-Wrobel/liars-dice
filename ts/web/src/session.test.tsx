@@ -2,7 +2,7 @@ import { Step, formatRank, parseRank } from "@liars-dice/engine";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PERSONAS } from "./personas/index.ts";
-import { HUMAN, PACE_MS, useSession, type Config } from "./session.ts";
+import { DECISION_BEAT, HUMAN, PACE_MS, useSession, type Config } from "./session.ts";
 
 // Alice opens, so these tests can start from her turn. The opener is random otherwise.
 const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1, opener: 0 };
@@ -245,7 +245,7 @@ describe("useSession", () => {
     expect(result.current.botTurn).toBe(true);
 
     act(() => {
-      vi.advanceTimersByTime(PACE_MS.normal + 10);
+      vi.advanceTimersByTime(PACE_MS.normal * DECISION_BEAT + 10); // Bob's first move is a decision
     });
     expect(result.current.log.filter((line) => line.startsWith("Bob "))).toHaveLength(1);
     expect(result.current.game.current).toBe(1); // still mid-turn: one move, not the whole turn
@@ -314,7 +314,7 @@ describe("useSession", () => {
 
     act(() => result.current.setPaused(false));
     act(() => {
-      vi.advanceTimersByTime(PACE_MS.normal + 10);
+      vi.advanceTimersByTime(PACE_MS.normal * DECISION_BEAT + 10);
     });
     expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(true);
   });
@@ -325,11 +325,11 @@ describe("useSession", () => {
       const { result } = renderHook(() => useSession({ ...advanced, pace: "slow" }));
       act(() => result.current.claim(parseRank("none 1")));
       act(() => {
-        vi.advanceTimersByTime(PACE_MS.normal + 10);
+        vi.advanceTimersByTime(PACE_MS.normal * DECISION_BEAT + 10);
       });
       expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(false);
       act(() => {
-        vi.advanceTimersByTime(PACE_MS.slow - PACE_MS.normal);
+        vi.advanceTimersByTime((PACE_MS.slow - PACE_MS.normal) * DECISION_BEAT);
       });
       expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(true);
     });
@@ -340,9 +340,34 @@ describe("useSession", () => {
       act(() => result.current.claim(parseRank("none 1")));
       act(() => result.current.setPace("fast"));
       act(() => {
-        vi.advanceTimersByTime(PACE_MS.fast + 10);
+        vi.advanceTimersByTime(PACE_MS.fast * DECISION_BEAT + 10);
       });
       expect(result.current.log.some((line) => line.startsWith("Bob "))).toBe(true);
+    });
+
+    it("gives a bot's decisions an extra beat, and its other moves the plain pause", () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useSession({ ...advanced, pace: "normal" }));
+      act(() => result.current.claim(parseRank("none 1")));
+      expect(result.current.game.step).toBe(Step.Decide); // Bob is about to pull or peer
+      act(() => {
+        vi.advanceTimersByTime(PACE_MS.normal + 10); // the plain pause is not enough for a decision
+      });
+      expect(result.current.game.step).toBe(Step.Decide);
+      act(() => {
+        vi.advanceTimersByTime(PACE_MS.normal * (DECISION_BEAT - 1));
+      });
+      expect(result.current.game.step).toBe(Step.Rearrange); // Bob peered
+      act(() => {
+        vi.advanceTimersByTime(PACE_MS.normal + 10); // a move that is not a decision takes just the plain pause
+      });
+      expect(result.current.game.step).not.toBe(Step.Rearrange);
+    });
+
+    it("keeps the pauses long enough to follow: normal 1.6 s, slow 3.2 s, with a longer beat on decisions", () => {
+      expect(PACE_MS.normal).toBe(1600);
+      expect(PACE_MS.slow).toBe(3200);
+      expect(DECISION_BEAT).toBeGreaterThan(1);
     });
 
     it("waits for Next move in step-by-step mode", () => {
