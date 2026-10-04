@@ -132,7 +132,7 @@ Lobby --(host presses Start)--> Playing --(one player has lives left)--> Finishe
 
 JSON messages over a WebSocket. Every message has a `v` (protocol version, starting at 1) and a `type`. The server
 validates every incoming message against a schema (type, field types, string lengths, array sizes, integer ranges) and
-drops the connection on garbage or on anything oversized. Unknown versions are refused with an `error`.
+drops the connection on garbage or on anything oversized. Text that is not JSON closes it with code 1007, and a binary frame with 1003. Unknown versions are refused with an `error`.
 
 Client to server:
 
