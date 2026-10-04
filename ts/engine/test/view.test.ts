@@ -36,8 +36,11 @@ function playGame(rules: Rules, players: number, seed: number, onState: (g: Game
   throw new Error("the game did not finish");
 }
 
+/** How many seeds each table shape gets. A bigger net (VIEW_SEEDS=2000 npx vitest run test/view.test.ts) is cheap on a big machine. */
+const SEEDS = Number((globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.VIEW_SEEDS) || 12;
+
 /** Every table shape and rule set, over many seeds. */
-function everyState(onState: (g: Game) => void, seeds = 12) {
+function everyState(onState: (g: Game) => void, seeds = SEEDS) {
   for (const rules of [basicRules(2), advancedRules(2)]) {
     for (const players of [2, 3, 6]) {
       for (let seed = 0; seed < seeds; seed++) playGame(rules, players, seed, onState);
