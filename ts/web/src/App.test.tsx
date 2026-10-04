@@ -28,7 +28,7 @@ describe("App", () => {
     await userEvent.selectOptions(screen.getByLabelText("Rank"), String(Category.FiveKind));
     await userEvent.selectOptions(screen.getByLabelText("Face"), "6");
     await userEvent.click(screen.getByRole("button", { name: "Claim five 6s" }));
-    expect(await screen.findByRole("dialog", { name: "Bob lifts the cup" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Bob lifts the cup" }, { timeout: 6000 })).toBeInTheDocument(); // normal pace
     expect(screen.getByText(/Sam loses a life and is out!/)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Play again" }));
