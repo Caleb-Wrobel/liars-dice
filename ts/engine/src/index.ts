@@ -6,3 +6,5 @@ export * from "./archetype.ts";
 export * from "./archetypes.ts";
 export * from "./view.ts";
 export * from "./core.ts";
+export * from "./pace.ts";
+export * from "./table.ts";
