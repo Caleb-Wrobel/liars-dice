@@ -1,4 +1,4 @@
-import { Step, parseRank } from "@liars-dice/engine";
+import { Step, formatRank, parseRank } from "@liars-dice/engine";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PERSONAS } from "./personas/index.ts";
@@ -31,6 +31,90 @@ function afterBotsAnswer(config: Config) {
   letBotsPlay(hook);
   return hook;
 }
+
+describe("seats with a kind", () => {
+  const solo: Config = { name: "Alice", lives: 3, advanced: false, opponents: 2 };
+  const hotSeat: Config = { ...solo, otherHumans: ["Blake", "Casey"], opponents: 2 };
+  const seated = (config: Config) => renderHook(() => useSession(config)).result.current;
+  const kindsOf = (config: Config) => seated(config).seatKinds;
+
+  it("keeps a lone human in seat 0, ahead of the bots", () => {
+    const s = seated({ ...solo, seed: 5 });
+    expect(s.seatKinds).toEqual(["human", "bot", "bot"]);
+    expect(s.game.names[0]).toBe("Alice");
+    expect(s.isHuman(0)).toBe(true);
+    expect(s.isHuman(1)).toBe(false);
+  });
+
+  it("seats every human and every bot, and shuffles them when there are several humans", () => {
+    const tables = Array.from({ length: 40 }, (_, seed) => seated({ ...hotSeat, seed }));
+    for (const t of tables) {
+      expect([...t.game.names].sort()).toEqual(["Alice", "Blake", "Bob", "Carol", "Casey"]);
+      expect(t.seatKinds.filter((k) => k === "human")).toHaveLength(3);
+    }
+    expect(new Set(tables.map((t) => t.game.names.join())).size).toBeGreaterThan(10);
+    expect(new Set(tables.map((t) => t.seatKinds.join())).size).toBeGreaterThan(3);
+    expect(seated({ ...hotSeat, seed: 7 }).game.names).toEqual(seated({ ...hotSeat, seed: 7 }).game.names);
+  });
+
+  it("trims the bots to fit: at most 6 seats, at least 1 bot for a lone human, none needed for two humans", () => {
+    expect(kindsOf({ ...solo, opponents: 9 })).toHaveLength(6);
+    expect(kindsOf({ ...solo, opponents: 0 })).toEqual(["human", "bot"]);
+    expect(kindsOf({ ...hotSeat, opponents: 9 })).toHaveLength(6);
+    expect(kindsOf({ ...solo, otherHumans: ["Blake"], opponents: 0 })).toEqual(["human", "human"]);
+    expect(kindsOf({ ...solo, otherHumans: ["B", "C", "D", "E", "F", "G"], opponents: 3 })).toEqual(
+      Array(6).fill("human"),
+    );
+  });
+
+  it("lets bots move only on bot seats", () => {
+    vi.useFakeTimers();
+    const kinds = kindsOf({ ...hotSeat, seed: 4 });
+    for (let opener = 0; opener < kinds.length; opener++) {
+      const { result } = renderHook(() => useSession({ ...hotSeat, seed: 4, opener }));
+      expect(result.current.botSeat).toBe(kinds[opener] === "bot" ? opener : null);
+      expect(result.current.botTurn).toBe(kinds[opener] === "bot");
+    }
+  });
+
+  it("names the human who acts in the table talk, whichever human it is", () => {
+    const kinds = kindsOf({ ...hotSeat, seed: 2 });
+    const second = kinds.findIndex((k, i) => k === "human" && i > kinds.indexOf("human"));
+    const { result } = renderHook(() => useSession({ ...hotSeat, seed: 2, opener: second }));
+    const who = result.current.game.names[second]!;
+    act(() => result.current.roll("hidden"));
+    act(() => result.current.claim(parseRank("none 1")));
+    expect(result.current.log).toContain(`${who} rolls the cup`);
+    expect(result.current.log).toContain(`${who} claims ${formatRank(parseRank("none 1"))}`);
+  });
+
+  it("shows the screen to whoever's turn it is, and to the last human while the bots play", () => {
+    let found = false;
+    for (let seed = 0; seed < 40 && !found; seed++) {
+      const kinds = kindsOf({ ...hotSeat, seed });
+      const human = kinds.findIndex((k, i) => k === "human" && kinds[(i + 1) % kinds.length] === "bot");
+      if (human < 0) continue;
+      found = true;
+      const { result } = renderHook(() => useSession({ ...hotSeat, seed, opener: human }));
+      expect(result.current.viewer).toBe(human);
+      act(() => result.current.roll("hidden"));
+      act(() => result.current.claim(parseRank("none 1")));
+      expect(result.current.botSeat).toBe((human + 1) % kinds.length);
+      expect(result.current.viewer).toBe(human);
+    }
+    expect(found).toBe(true);
+  });
+
+  it("lists each bot's level in seat order, whichever seats they got", () => {
+    const config: Config = { ...hotSeat, level: "random", opponents: 3 };
+    for (let seed = 0; seed < 10; seed++) {
+      const s = seated({ ...config, seed });
+      expect(s.botLevels).toHaveLength(s.seatKinds.filter((k) => k === "bot").length);
+      // The same table again gives the same levels in the same seats.
+      expect(seated({ ...config, seed }).botLevels).toEqual(s.botLevels);
+    }
+  });
+});
 
 describe("who opens", () => {
   const unpinned: Config = { name: "Alice", lives: 3, advanced: false, opponents: 3 };

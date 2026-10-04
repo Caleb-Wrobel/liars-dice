@@ -17,7 +17,7 @@ import { Die } from "./Die.tsx";
 import { MotionToggle } from "./MotionToggle.tsx";
 import { PullDialog } from "./PullDialog.tsx";
 import { RulesDialog } from "./RulesDialog.tsx";
-import { HUMAN, PACES, useSession, type Config, type Pace, type Tray } from "./session.ts";
+import { PACES, useSession, type Config, type Pace, type Tray } from "./session.ts";
 import { DEFAULT_THEME } from "./theme.ts";
 
 const PACE_LABELS: Record<Pace, string> = { fast: "Fast", normal: "Normal", slow: "Slow", step: "Step by step" };
@@ -96,11 +96,11 @@ export function Table({
   };
   const { game } = s;
   const available = game.available();
-  const myTurn = game.current === HUMAN && game.winner === null && s.pulled === null;
+  const myTurn = s.isHuman(game.current) && game.winner === null && s.pulled === null;
   const canArrange = myTurn && available.includes("rearrange");
 
-  // `game.known` is whatever the current player has seen, so only trust it on your own turn.
-  const known = game.current === HUMAN ? game.known : game.visible;
+  // `game.known` is whatever the current player has seen, so only trust it on the viewer's own turn.
+  const known = game.current === s.viewer ? game.known : game.visible;
   const faceOf = (i: number) => (known.has(i) || s.visibleSet.has(i) ? game.dice[i]! : null);
 
   const sensors = useSensors(
@@ -125,6 +125,8 @@ export function Table({
           onTap={() => s.moveDie(i, s.visibleSet.has(i) ? "hidden" : "visible")}
         />
       ));
+
+  const humansOut = s.seatKinds.every((kind, i) => kind !== "human" || game.lives[i] === 0);
 
   const rollable = game.rules.rollable;
   const lockHint =
@@ -203,8 +205,12 @@ export function Table({
             )}
           </div>
         )}
-        {game.lives[HUMAN] === 0 && game.winner === null && (
-          <p className="hint">You're out. Watching the rest of the game.</p>
+        {humansOut && game.winner === null && (
+          <p className="hint">
+            {s.seatKinds.filter((k) => k === "human").length === 1
+              ? "You're out. Watching the rest of the game."
+              : "Every human is out. Watching the bots finish."}
+          </p>
         )}
       </section>
 
@@ -296,7 +302,9 @@ export function Table({
           final={game.winner !== null}
           reveal={
             config.level === "random"
-              ? game.names.slice(1).map((name, i) => ({ name, level: s.botLevels[i]! }))
+              ? game.names
+                  .filter((_, i) => s.seatKinds[i] === "bot")
+                  .map((name, i) => ({ name, level: s.botLevels[i]! }))
               : undefined
           }
           onContinue={s.dismissPull}

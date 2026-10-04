@@ -5,7 +5,7 @@ import { COPYRIGHT, FEEDBACK_URL, LICENSE_URL, NOTICES_URL, REPO_URL } from "./l
 import { MeetDialog } from "./MeetDialog.tsx";
 import { pickPlayerName } from "./playerNames.ts";
 import { RulesDialog } from "./RulesDialog.tsx";
-import { BOT_NAMES, type Config, type LevelChoice, type Pace } from "./session.ts";
+import { BOT_NAMES, MAX_SEATS, type Config, type LevelChoice, type Pace } from "./session.ts";
 import { MotionToggle } from "./MotionToggle.tsx";
 import { THEMES, applyTheme, loadTheme, saveTheme, type ThemeId } from "./theme.ts";
 
@@ -26,6 +26,9 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [lives, setLives] = useState(3);
   const [advanced, setAdvanced] = useState(false);
   const [opponents, setOpponents] = useState(2);
+  // Humans sharing this device: you plus the others, whose names stay blank until typed.
+  const [humans, setHumans] = useState(1);
+  const [otherNames, setOtherNames] = useState<readonly string[]>([]);
   const [level, setLevel] = useState<LevelChoice>("normal");
   const [characters, setCharacters] = useState(true);
   // With characters, slow is the default so players can watch the table and get to know who they are up against.
@@ -34,6 +37,13 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [paceChosen, setPaceChosen] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [showMeet, setShowMeet] = useState(false);
+
+  // A lone human needs a bot to play against, and a table seats at most MAX_SEATS, humans and bots together.
+  const minBots = humans === 1 ? 1 : 0;
+  const maxBots = Math.min(BOT_NAMES.length, MAX_SEATS - humans);
+  const bots = Math.min(Math.max(opponents, minBots), maxBots);
+  const botChoices = Array.from({ length: maxBots - minBots + 1 }, (_, i) => minBots + i);
+  const others = Array.from({ length: humans - 1 }, (_, i) => otherNames[i] ?? "");
 
   return (
     <main className="setup">
@@ -57,7 +67,8 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
             name: name.trim() || pickPlayerName(theme),
             lives,
             advanced,
-            opponents,
+            ...(humans > 1 ? { otherHumans: others.map((n, i) => n.trim() || `Player ${i + 2}`) } : {}),
+            opponents: bots,
             level,
             pace,
             personas: characters,
@@ -89,11 +100,21 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
               </select>
             </label>
             <label>
-              Bots
-              <select className="digit" value={opponents} onChange={(e) => setOpponents(Number(e.target.value))}>
-                {BOT_NAMES.map((_, i) => (
+              Players
+              <select className="digit" value={humans} onChange={(e) => setHumans(Number(e.target.value))}>
+                {Array.from({ length: MAX_SEATS }, (_, i) => (
                   <option key={i} value={i + 1}>
                     {i + 1}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Bots
+              <select className="digit" value={bots} onChange={(e) => setOpponents(Number(e.target.value))}>
+                {botChoices.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
                   </option>
                 ))}
               </select>
@@ -112,6 +133,26 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
             </label>
           </div>
         </div>
+        {humans > 1 && (
+          <fieldset className="other-players">
+            <legend>Other players</legend>
+            {others.map((other, i) => (
+              <label key={i}>
+                {`Player ${i + 2} name`}
+                <input
+                  value={other}
+                  placeholder={`Player ${i + 2}`}
+                  maxLength={16}
+                  onChange={(e) => setOtherNames(others.map((n, k) => (k === i ? e.target.value : n)))}
+                />
+              </label>
+            ))}
+            <p className="hint">
+              Players share this device and are seated at random. What you see on one turn you may remember on the
+              next, so a bot between two seats of your own is for trying the game out, not for fair play.
+            </p>
+          </fieldset>
+        )}
         <p id="characters-hint" className="hint">
           {characters
             ? "Your opponents are characters from this table, each with habits of their own."
