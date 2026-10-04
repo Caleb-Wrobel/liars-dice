@@ -329,3 +329,27 @@ describe("Setup", () => {
     });
   });
 });
+
+describe("Table with several humans", () => {
+  const hotSeat: Config = { ...basic, otherHumans: ["Blake"], opponents: 1 };
+
+  it("offers the controls on every human's turn and waits on the bot's", () => {
+    // Three seats, two of them human: whoever opens, only the bot's turn shows the thinking line.
+    const thinking = [0, 1, 2].map((opener) => {
+      const { unmount } = render(<Table config={{ ...hotSeat, opener }} onQuit={() => {}} onRematch={() => {}} />);
+      const rolls = screen.queryAllByRole("button", { name: "Roll dice" }).length;
+      const waiting = screen.queryByText(/is thinking/) !== null;
+      unmount();
+      return { rolls, waiting };
+    });
+    expect(thinking.filter((t) => t.rolls === 1)).toHaveLength(2);
+    expect(thinking.filter((t) => t.waiting)).toHaveLength(1);
+    expect(thinking.every((t) => (t.rolls === 1) !== t.waiting)).toBe(true);
+  });
+
+  it("lists everyone on the scoreboard, humans and bots", () => {
+    render(<Table config={hotSeat} onQuit={() => {}} onRematch={() => {}} />);
+    const names = screen.getAllByText(/^(Alice|Blake|Bob)$/).map((n) => n.textContent);
+    expect(names.sort()).toEqual(["Alice", "Blake", "Bob"]);
+  });
+});

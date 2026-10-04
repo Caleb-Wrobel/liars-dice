@@ -239,3 +239,6 @@ legend { color: var(--muted); padding: 0 6px; }
 .motion-toggle { display: flex; align-items: center; gap: 8px; min-height: 44px; color: var(--muted); font-size: 0.9rem; cursor: pointer; }
 .motion-toggle input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
 .table-controls .motion-toggle { min-height: 36px; font-size: 0.85rem; }
+
+.other-players label { display: grid; gap: 0.25rem; }
+.other-players .hint { margin: 0; }

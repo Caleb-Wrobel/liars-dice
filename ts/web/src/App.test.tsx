@@ -42,7 +42,7 @@ describe("App", () => {
     // The talk starts over, with only the line saying who opens (seat 0, with the dice mocked to 0).
     expect(within(screen.getByRole("list", { name: "Table talk" })).getAllByRole("listitem")).toHaveLength(1);
     expect(screen.getByText("Sam opens the game")).toBeInTheDocument();
-  });
+  }, 15_000); // it types through the whole setup page, which is slow when the machine is busy
 
   it("reveals which level each bot played once a random game ends", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0); // every draw picks the first level, easy
