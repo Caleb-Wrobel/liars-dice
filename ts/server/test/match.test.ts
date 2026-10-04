@@ -218,6 +218,63 @@ describe("a whole match", () => {
   });
 });
 
+describe("a bot taking over a seat", () => {
+  const botOnTurn = (names: string[], capacity: number) => {
+    for (let seed = 0; seed < 200; seed++) {
+      const x = start(setupOf(names, capacity), seed);
+      if (x.clock.pending === 1) return x;
+    }
+    throw new Error("no seed had a bot open");
+  };
+  const humanOnTurn = (names: string[], capacity: number) => {
+    for (let seed = 0; seed < 200; seed++) {
+      const x = start(setupOf(names, capacity), seed);
+      if (x.clock.pending === 0) return x;
+    }
+    throw new Error("no seed had a human open");
+  };
+
+  it("plays the seat from then on, under the same name, and the player can no longer move or see", () => {
+    const { match, clock, updates } = humanOnTurn(["Ann", "Bo"], 3);
+    const seat = match.seatOf(1) ?? match.seatOf(2)!;
+    const mover = match.seatOf(1) === match.initial.views[0]!.current ? 1 : 2;
+    const name = match.seats[match.seatOf(mover)!]!.name;
+    expect(match.takeOver(mover)).toBe(match.initial.views[0]!.current);
+    expect(match.seats[match.initial.views[0]!.current]).toEqual({ kind: "bot", name });
+    expect(match.seatOf(mover)).toBeUndefined();
+    expect(match.view(mover)).toBeUndefined();
+    expect(match.submit(mover, { action: "roll" })).toEqual({ ok: false, error: "you are not in this game" });
+    expect(seat).toBeDefined();
+    expect(clock.pending).toBe(1); // the new bot is on the clock for the turn it inherited
+    clock.advance(120_000);
+    expect(updates.length).toBeGreaterThan(0);
+  });
+
+  it("does nothing for someone who holds no seat, or has already given it up", () => {
+    const { match } = humanOnTurn(["Ann", "Bo"], 3);
+    expect(match.takeOver(99)).toBeUndefined();
+    expect(match.takeOver(1)).toBeDefined();
+    expect(match.takeOver(1)).toBeUndefined();
+  });
+
+  it("leaves a bot's move that is already on the clock to happen when it was due", () => {
+    const { match, clock } = botOnTurn(["Ann", "Bo"], 3);
+    const due = clock.nextAt!;
+    clock.advance(1);
+    match.takeOver(1);
+    expect(clock.pending).toBe(1);
+    expect(clock.nextAt).toBe(due);
+  });
+
+  it("lets the game finish with no humans left at all", () => {
+    const { match, clock } = start(setupOf(["Ann", "Bo"], 3, { lives: 1 }), 3);
+    match.takeOver(1);
+    match.takeOver(2);
+    for (let i = 0; i < 5000 && match.winner === null; i++) clock.advance(10_000);
+    expect(match.winner).not.toBeNull();
+  });
+});
+
 describe("the real clock", () => {
   afterEach(() => vi.useRealTimers());
 

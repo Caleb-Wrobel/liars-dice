@@ -92,17 +92,10 @@ describe("bad messages", () => {
     hub.receive(c.conn, { v: 1, type: "start" });
     expect(c.messages).toEqual([]);
   });
-
-  it("resume is not supported yet, and says so", () => {
-    const { client } = newHub();
-    const c = client();
-    c.send({ type: "resume", token: "x" });
-    expect(c.last).toMatchObject({ type: "error", code: "unsupported" });
-  });
 });
 
 describe("leaving a lobby", () => {
-  it("passes the host on, closes an empty room, and refuses to leave a game in progress", () => {
+  it("passes the host on and closes an empty room", () => {
     const { clients, hub } = lobbyOf(["Ann", "Bo", "Cy"], 4);
     const [ann, bo, cy] = clients as [(typeof clients)[0], (typeof clients)[0], (typeof clients)[0]];
     ann.send({ type: "leave" });
@@ -112,11 +105,6 @@ describe("leaving a lobby", () => {
     bo.send({ type: "leave" });
     cy.send({ type: "leave" });
     expect(hub.roomCount).toBe(0);
-
-    const started = lobbyOf(["Ann", "Bo"], 3);
-    started.clients[0]!.send({ type: "start" });
-    started.clients[1]!.send({ type: "leave" });
-    expect(started.clients[1]!.last).toMatchObject({ type: "error", code: "in_game" });
   });
 
   it("lets the same connection make a fresh room afterwards", () => {

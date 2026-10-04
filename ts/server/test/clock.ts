@@ -21,6 +21,12 @@ export class FakeClock implements Clock {
     return this.timers.size;
   }
 
+  /** When the next timer is due, or undefined if none is waiting. */
+  get nextAt(): number | undefined {
+    const times = [...this.timers.values()].map((t) => t.at);
+    return times.length === 0 ? undefined : Math.min(...times);
+  }
+
   /** Moves time on, running every timer that falls due, in order, including ones that run schedules. */
   advance(ms: number): void {
     const end = this.now + ms;

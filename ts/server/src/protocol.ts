@@ -7,6 +7,13 @@
 import type { GameEvent, SeatView } from "@liars-dice/engine";
 import type { LobbyView } from "./rooms.ts";
 
+/**
+ * What the table is told about absence, beside the game's own events: a seat's player dropped, came back, or was
+ * replaced by a bot (they left, or the window ran out). Public, like every event.
+ */
+export type PresenceEvent = { readonly type: "dropped" | "back" | "botTook"; readonly seat: number };
+export type RoomEvent = GameEvent | PresenceEvent;
+
 /** Bumped when the messages change in a way an old client could not follow. */
 export const PROTOCOL_VERSION = 1;
 
@@ -94,11 +101,15 @@ export type ServerMessage =
       /** This player's id in the lobby, to tell which entry is theirs and whether they are the host. */
       readonly you: number;
       readonly lobby: LobbyView;
+      /** Only when resuming into a game that has started: this seat's view of it, as it stands. */
+      readonly view?: SeatView;
     }
   | { readonly v: typeof PROTOCOL_VERSION; readonly type: "lobby"; readonly lobby: LobbyView }
-  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "started"; readonly view: SeatView; readonly events: readonly GameEvent[] }
-  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "state"; readonly view: SeatView; readonly events: readonly GameEvent[] }
+  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "started"; readonly view: SeatView; readonly events: readonly RoomEvent[] }
+  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "state"; readonly view: SeatView; readonly events: readonly RoomEvent[] }
   | { readonly v: typeof PROTOCOL_VERSION; readonly type: "left" }
+  /** To an older connection when a newer one resumes the same place. The socket layer closes it after sending this. */
+  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "replaced" }
   | { readonly v: typeof PROTOCOL_VERSION; readonly type: "error"; readonly code: string; readonly error: string };
 
 /** Distributes the version tag, so a message is written once without it. */

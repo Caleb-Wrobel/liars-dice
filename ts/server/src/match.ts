@@ -69,7 +69,7 @@ export function botNames(count: number, taken: readonly string[]): string[] {
  * docs/multiplayer.md.
  */
 export class Match {
-  readonly seats: readonly SeatInfo[];
+  private readonly seatList: SeatInfo[];
   /** Every seat's view as the game begins, with the opening round announced; the server sends it at Start. */
   readonly initial: MatchUpdate;
   private readonly core: Core;
@@ -87,14 +87,14 @@ export class Match {
       setup.players.map((p) => p.name),
     ).map((name): SeatInfo => ({ kind: "bot", name }));
     const humans = setup.players.map((p): SeatInfo => ({ kind: "human", name: p.name, player: p.id }));
-    this.seats = shuffled([...humans, ...bots], options.rng);
-    this.seats.forEach((seat, index) => {
+    this.seatList = shuffled([...humans, ...bots], options.rng);
+    this.seatList.forEach((seat, index) => {
       if (seat.kind === "human") this.seatOfPlayer.set(seat.player, index);
       else this.bots.set(index, new Bot({ level: "normal", rng: options.rng }));
     });
     const rules = setup.advanced ? advancedRules(setup.lives) : basicRules(setup.lives);
     const game = new Game(
-      this.seats.map((s) => s.name),
+      this.seatList.map((s) => s.name),
       rules,
       options.rng,
       "random",
@@ -102,6 +102,11 @@ export class Match {
     this.core = new Core(game);
     this.initial = { events: [{ type: "round", opener: game.current }], views: this.core.views() };
     this.schedule();
+  }
+
+  /** Who sits where. A seat a human gave up shows as a bot, under the name the game knows it by. */
+  get seats(): readonly SeatInfo[] {
+    return this.seatList;
   }
 
   /** The seat that has won, or null while the game is on. */
@@ -128,6 +133,22 @@ export class Match {
     this.options.onUpdate({ events: res.events, views: res.views });
     this.schedule();
     return { ok: true };
+  }
+
+  /**
+   * A fresh normal bot takes this player's seat for the rest of the game, carrying on from the exact state of play (a
+   * bot has no memory of the round to inherit). The player can no longer move or see. Returns the seat, or undefined if
+   * they hold none.
+   */
+  takeOver(player: PlayerId): number | undefined {
+    const seat = this.seatOfPlayer.get(player);
+    if (seat === undefined) return undefined;
+    this.seatOfPlayer.delete(player);
+    this.seatList[seat] = { kind: "bot", name: this.seatList[seat]!.name };
+    this.bots.set(seat, new Bot({ level: "normal", rng: this.options.rng }));
+    // A move already on the clock is another bot's, and keeps its pause.
+    if (this.timer === null) this.schedule();
+    return seat;
   }
 
   /** Stops the bots, for when the room closes. */

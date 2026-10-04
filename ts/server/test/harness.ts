@@ -7,9 +7,15 @@ import { FakeClock } from "./clock.ts";
 export class TestClient {
   readonly messages: ServerMessage[] = [];
   readonly conn: ConnId;
+  private latest: SeatView | undefined;
+  private secret = "";
 
   constructor(private readonly hub: Hub) {
-    this.conn = hub.connect((m) => this.messages.push(m));
+    this.conn = hub.connect((m) => {
+      this.messages.push(m);
+      if (m.type === "joined") this.secret = m.token;
+      if (m.type === "started" || m.type === "state" || (m.type === "joined" && m.view !== undefined)) this.latest = m.view;
+    });
   }
 
   send(message: Record<string, unknown>): void {
@@ -38,17 +44,14 @@ export class TestClient {
     this.messages.length = 0;
   }
 
-  /** The latest view of the game this client has been sent, if it has been. */
+  /** The latest view of the game this client has been sent, if it has been; `clear` does not forget it. */
   get view(): SeatView | undefined {
-    for (let i = this.messages.length - 1; i >= 0; i--) {
-      const m = this.messages[i]!;
-      if (m.type === "started" || m.type === "state") return m.view;
-    }
-    return undefined;
+    return this.latest;
   }
 
+  /** The latest token this client was given; `clear` does not forget it. */
   get token(): string {
-    return this.all("joined").at(-1)!.token;
+    return this.secret;
   }
 }
 
