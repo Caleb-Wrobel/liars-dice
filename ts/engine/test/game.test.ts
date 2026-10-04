@@ -66,6 +66,31 @@ describe("the opening turn", () => {
   });
 });
 
+describe("who opens the game", () => {
+  const opener = (names: string[], seed: number) => new Game(names, basicRules(), seededRng(seed), "random").current;
+
+  it("is seat 0 unless told otherwise, and any seat that is named", () => {
+    expect(make().current).toBe(0);
+    expect(new Game(["A", "B", "C"], basicRules(), seededRng(1), 2).current).toBe(2);
+  });
+
+  it("can be drawn at random, reaching every seat and never one that doesn't exist", () => {
+    const seats = Array.from({ length: 200 }, (_, seed) => opener(["A", "B", "C", "D"], seed));
+    expect(new Set(seats)).toEqual(new Set([0, 1, 2, 3]));
+    expect(seats.every((n) => Number.isInteger(n) && n >= 0 && n < 4)).toBe(true);
+  });
+
+  it("repeats for the same seed, and starts the round at the roll step with the opener's dice unseen", () => {
+    const names = ["A", "B", "C", "D", "E"];
+    expect(Array.from({ length: 20 }, (_, seed) => opener(names, seed))).toEqual(
+      Array.from({ length: 20 }, (_, seed) => opener(names, seed)),
+    );
+    const g = new Game(names, basicRules(), seededRng(9), "random");
+    expect(g.step).toBe(Step.Roll);
+    expect(g.known.size).toBe(0);
+  });
+});
+
 describe("turn order and the basic/advanced switches", () => {
   it("basic requires roll and peek before claiming", () => {
     const g = make();

@@ -49,6 +49,8 @@ export interface Config {
   readonly theme?: ThemeId;
   /** How fast the bots move. Defaults to "normal". Can be changed during the game. */
   readonly pace?: Pace;
+  /** The seat that opens the game, 0 being the player. Omitted means a random seat. Used by tests. */
+  readonly opener?: number;
   /** Makes dice and the bots deterministic. Used by tests. */
   readonly seed?: number;
 }
@@ -78,7 +80,12 @@ export function useSession(config: Config) {
       config.level === "random" ? randomBotLevel(draw) : (config.level ?? "normal"),
     );
     return {
-      game: new Game([config.name, ...seats], rules, seeded ? seededRng(config.seed!) : undefined),
+      game: new Game(
+        [config.name, ...seats],
+        rules,
+        seeded ? seededRng(config.seed!) : undefined,
+        config.opener ?? "random",
+      ),
       // bots[i] sits in seat i + 1
       bots: levels.map(
         (level, i) =>
@@ -95,7 +102,7 @@ export function useSession(config: Config) {
   const [pace, setPace] = useState<Pace>(config.pace ?? "normal");
   /** Bots wait while this is true, e.g. while the rules are open. */
   const [paused, setPaused] = useState(false);
-  const [log, setLog] = useState<readonly string[]>([]);
+  const [log, setLog] = useState<readonly string[]>(() => [`${game.names[game.current]} opens the game`]);
   const [pulled, setPulled] = useState<PullResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Dice dragged into the visible tray this turn, committed when the player moves on. */
