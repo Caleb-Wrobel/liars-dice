@@ -21,6 +21,8 @@ describe("creating a room", () => {
       host: made.player,
       players: [{ id: made.player, name: "Sam" }],
       bots: 3,
+      lives: 3,
+      advanced: false,
     });
     expect(rooms.size).toBe(1);
     expect(rooms.lobby(made.code)).toEqual(made.lobby);
@@ -176,5 +178,78 @@ describe("rooms under random use", () => {
         expect(new Set(lower).size).toBe(lower.length); // no two people share a name
       }
     }
+  });
+});
+
+describe("the rules of a room", () => {
+  it("default to 3 lives and basic rules, and show what the host chose in the lobby", () => {
+    const rooms = fresh();
+    expect(ok(rooms.create("Sam", 3)).lobby).toMatchObject({ lives: 3, advanced: false });
+    const custom = ok(rooms.create("Sam", 3, { lives: 5, advanced: true }));
+    expect(custom.lobby).toMatchObject({ lives: 5, advanced: true });
+    expect(ok(rooms.join(custom.code, "Ann")).lobby).toMatchObject({ lives: 5, advanced: true });
+  });
+
+  it("turn away lives outside 1 to 5 and rules that are not a yes or no, and make no room", () => {
+    const rooms = fresh();
+    for (const lives of [0, 6, -1, 2.5, NaN, "3", null]) {
+      expect(rooms.create("Sam", 3, { lives })).toMatchObject({ ok: false, code: "bad_rules" });
+    }
+    for (const advanced of ["yes", 1, 0, null, {}]) {
+      expect(rooms.create("Sam", 3, { advanced })).toMatchObject({ ok: false, code: "bad_rules" });
+    }
+    for (const lives of [1, 2, 3, 4, 5]) expect(rooms.create("Sam", 3, { lives })).toMatchObject({ ok: true });
+    expect(rooms.size).toBe(5);
+  });
+});
+
+describe("starting a game", () => {
+  it("is for the host alone, once, and hands over everything a match needs", () => {
+    const rooms = fresh();
+    const a = ok(rooms.create("Ann", 4, { lives: 2, advanced: true }));
+    const b = ok(rooms.join(a.code, "Bo"));
+    expect(rooms.start(a.code, b.player)).toMatchObject({ ok: false, code: "not_host" });
+    expect(rooms.start("BBBB", a.player)).toMatchObject({ ok: false, code: "no_room" });
+    const started = rooms.start(a.code, a.player);
+    expect(started).toEqual({
+      ok: true,
+      setup: {
+        code: a.code,
+        capacity: 4,
+        lives: 2,
+        advanced: true,
+        players: [
+          { id: a.player, name: "Ann" },
+          { id: b.player, name: "Bo" },
+        ],
+      },
+    });
+    expect(rooms.start(a.code, a.player)).toMatchObject({ ok: false, code: "started" });
+  });
+
+  it("closes the lobby: nobody joins, and leaving is no longer the lobby's business", () => {
+    const rooms = fresh();
+    const a = ok(rooms.create("Ann", 4));
+    ok(rooms.start(a.code, a.player) as never);
+    expect(rooms.join(a.code, "Late")).toMatchObject({ ok: false, code: "started" });
+    expect(rooms.leave(a.code, a.player)).toEqual({ ok: false });
+    expect(rooms.size).toBe(1);
+  });
+
+  it("lets the host start with nobody else: the bots fill every other seat", () => {
+    const rooms = fresh();
+    const a = ok(rooms.create("Ann", 6));
+    const started = rooms.start(a.code, a.player);
+    expect(started).toMatchObject({ ok: true, setup: { capacity: 6, players: [{ name: "Ann" }] } });
+  });
+
+  it("is not possible after the room has been forgotten, and a forgotten room's code can be used again", () => {
+    const rooms = fresh();
+    const a = ok(rooms.create("Ann", 2));
+    expect(rooms.close(a.code)).toBe(true);
+    expect(rooms.close(a.code)).toBe(false);
+    expect(rooms.size).toBe(0);
+    expect(rooms.start(a.code, a.player)).toMatchObject({ ok: false, code: "no_room" });
+    expect(rooms.join(a.code, "Bo")).toMatchObject({ ok: false, code: "no_room" });
   });
 });
