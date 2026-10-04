@@ -149,15 +149,18 @@ Server to client:
 
 | `type` | Fields | Notes |
 |---|---|---|
-| `joined` | `code`, `token`, `you` | The token is a random secret the client keeps to resume. |
+| `joined` | `code`, `token`, `you`, `lobby`, `view`? | The token is a random secret the client keeps to resume. Resuming is answered with the same message; `view` is present when a game is on, and is that seat's view exactly as it stands. |
 | `lobby` | `code`, `host`, `seats`, `players` | Names and open seats; the lobby also shows how many bots will fill the rest. |
 | `state` | `view`, `events` | After every accepted intent, each seat gets its own view and the public events. |
 | `error` | `code`, `message` | A rejected intent or request. The game state is unchanged. |
-| `replaced` | none | Sent to an older connection when a newer one resumes the same seat; it is then closed. |
+| `replaced` | none | Sent to an older connection when a newer one resumes the same seat; the socket layer then closes it. |
+| `left` | none | Answers `leave`. |
 
 **Events** are the public log lines the table-talk list shows: who rearranged, rolled or peeked (never the result), who
 claimed what, who pulled and the revealed dice, who lost a life, who was eliminated, who dropped and who was replaced.
-They carry no hidden faces. Private results (the dice a `peer` or `peek` showed) reach only the actor, through their view.
+Absence adds three, each naming a seat: `dropped`, `back` and `botTook` (a bot took the seat, because the player left or
+their window ended). They are sent in a `state` message, so every player gets their own view with them. They carry no
+hidden faces. Private results (the dice a `peer` or `peek` showed) reach only the actor, through their view.
 
 Ordering and races: the server handles one room's messages one at a time, in arrival order, so a stale intent is simply
 rejected as out of turn or out of step.

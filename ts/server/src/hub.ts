@@ -5,6 +5,7 @@ import {
   serverMessage,
   type ClientMessage,
   type ServerBody,
+  type RoomEvent,
   type ServerMessage,
 } from "./protocol.ts";
 import { newToken } from "./random.ts";
@@ -13,12 +14,17 @@ import { RoomRegistry, type Entered, type LobbyView, type PlayerId } from "./roo
 export type ConnId = number;
 export type Send = (message: ServerMessage) => void;
 
+/** How long a dropped player's place is held before a bot takes it (or, in a lobby, the place is freed). */
+export const GRACE_MS = 60_000;
+
 export interface HubOptions {
   /** Codes, tokens, shuffles and dice. The server passes secure randomness; tests pass a seeded one. */
   readonly rng: Rng;
   readonly clock: Clock;
   readonly pace?: BotPace;
   readonly maxRooms?: number;
+  /** The window for coming back after a drop. */
+  readonly graceMs?: number;
 }
 
 /** One person's place in a room, for as long as they are in it. */
@@ -29,6 +35,8 @@ interface Member {
   readonly code: string;
   /** Their connection right now, or null while they are not connected. */
   conn: ConnId | null;
+  /** The timer that gives the place up, while they are away. */
+  grace: unknown;
 }
 
 interface Room {
@@ -53,6 +61,8 @@ export class Hub {
   private readonly registry: RoomRegistry;
   private readonly conns = new Map<ConnId, Conn>();
   private readonly rooms = new Map<string, Room>();
+  /** Whose place each token opens. */
+  private readonly tokens = new Map<string, Member>();
   private nextConn = 1;
 
   constructor(private readonly options: HubOptions) {
@@ -79,7 +89,15 @@ export class Hub {
     const c = this.conns.get(conn);
     if (c === undefined) return;
     this.conns.delete(conn);
-    if (c.member !== null) c.member.conn = null;
+    const member = c.member;
+    if (member === null) return;
+    member.conn = null;
+    const room = this.rooms.get(member.code)!;
+    // Nobody is waiting on a finished game, so there is nothing to hold the place for.
+    if (room.match !== null && room.match.winner !== null) return this.depart(room, member);
+    const seat = room.match?.seatOf(member.player);
+    if (seat !== undefined) this.announce(room, [{ type: "dropped", seat }]);
+    member.grace = this.options.clock.setTimeout(() => this.depart(room, member), this.options.graceMs ?? GRACE_MS);
   }
 
   /** A message arrived, already parsed from JSON but not yet trusted. */
@@ -136,18 +154,74 @@ export class Hub {
       case "leave": {
         const member = c.member;
         if (member === null) return this.refuse(c, "no_room", "you are not in a room");
-        const room = this.rooms.get(member.code)!;
-        if (room.match !== null) return this.refuse(c, "in_game", "leaving a game in progress is not supported yet");
-        this.registry.leave(member.code, member.player);
-        room.members.splice(room.members.indexOf(member), 1);
-        c.member = null;
         this.tell(c, { type: "left" });
-        if (room.members.length === 0) this.rooms.delete(room.code);
-        else this.broadcastLobby(room);
+        return this.depart(this.rooms.get(member.code)!, member);
+      }
+      case "resume": {
+        if (c.member !== null) return this.refuse(c, "in_room", "you are already in a room");
+        const member = this.tokens.get(message.token);
+        if (member === undefined) return this.refuse(c, "unknown_token", "that place is no longer yours");
+        const room = this.rooms.get(member.code)!;
+        // The newest connection wins; the older one is told, and the socket layer closes it.
+        const older = member.conn === null ? undefined : this.conns.get(member.conn);
+        if (older !== undefined) {
+          older.member = null;
+          this.tell(older, { type: "replaced" });
+        }
+        if (member.grace !== null) this.options.clock.clearTimeout(member.grace);
+        member.grace = null;
+        member.conn = conn;
+        c.member = member;
+        const view = room.match?.view(member.player);
+        this.tell(c, {
+          type: "joined",
+          code: room.code,
+          token: member.token,
+          you: member.player,
+          lobby: this.registry.lobby(room.code)!,
+          ...(view === undefined ? {} : { view }),
+        });
+        const seat = room.match?.seatOf(member.player);
+        if (seat !== undefined) this.announce(room, [{ type: "back", seat }], member);
         return;
       }
-      case "resume":
-        return this.refuse(c, "unsupported", "resuming is not supported yet");
+    }
+  }
+
+  /**
+   * A person's place is given up, by their own choice or because their window ran out. In a lobby the seat is freed and
+   * the host passes on; in a game a fresh bot takes the seat at once. The room closes when no person is left in it.
+   */
+  private depart(room: Room, member: Member): void {
+    if (member.grace !== null) this.options.clock.clearTimeout(member.grace);
+    member.grace = null;
+    this.tokens.delete(member.token);
+    room.members.splice(room.members.indexOf(member), 1);
+    const c = member.conn === null ? undefined : this.conns.get(member.conn);
+    if (c !== undefined) c.member = null;
+    member.conn = null;
+    if (room.match === null) {
+      this.registry.leave(room.code, member.player);
+    } else {
+      const seat = room.match.takeOver(member.player);
+      if (seat !== undefined) this.announce(room, [{ type: "botTook", seat }]);
+    }
+    if (room.members.length === 0) {
+      room.match?.stop();
+      this.registry.close(room.code);
+      this.rooms.delete(room.code);
+    } else if (room.match === null) {
+      this.broadcastLobby(room);
+    }
+  }
+
+  /** Tells every connected player something that is not a move, with their own view as it now stands. */
+  private announce(room: Room, events: readonly RoomEvent[], except?: Member): void {
+    const match = room.match;
+    if (match === null) return;
+    for (const m of room.members) {
+      const view = match.view(m.player);
+      if (m !== except && view !== undefined) this.toMember(m, { type: "state", view, events });
     }
   }
 
@@ -155,8 +229,9 @@ export class Hub {
   private admit(conn: ConnId, c: Conn, res: Entered): void {
     const room = this.rooms.get(res.code)!;
     const name = res.lobby.players.find((p) => p.id === res.player)!.name;
-    const member: Member = { player: res.player, name, token: newToken(this.options.rng), code: res.code, conn };
+    const member: Member = { player: res.player, name, token: newToken(this.options.rng), code: res.code, conn, grace: null };
     room.members.push(member);
+    this.tokens.set(member.token, member);
     c.member = member;
     this.tell(c, { type: "joined", code: res.code, token: member.token, you: member.player, lobby: res.lobby });
     this.broadcastLobby(room, member);
