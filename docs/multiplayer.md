@@ -111,13 +111,21 @@ Lobby --(host presses Start)--> Playing --(one player has lives left)--> Finishe
 
 ### Absence
 
-- A **disconnect** starts a 60-second window for that seat. Reconnecting in the window, with the token the server issued at
-  join, resumes the seat as if nothing happened.
-- When the window ends, a generic normal bot takes over the seat for the rest of the game, continuing from the exact game
-  state, including what the player had already seen this turn. The table is told ("Sam dropped, a bot took over").
-- After a takeover the seat stays with the bot. Letting the player return is deferred.
-- If the host drops, the next human in seat order becomes host while the room is in the lobby. After Start the host has
-  no powers, so nothing needs to move.
+- **Who is who.** When a player takes a seat the server gives their browser a random token, and the browser keeps it.
+  The token, not the room code, is what proves a connection owns a seat. One connection holds one seat; hot-seat inside
+  an online room is not supported.
+- **A drop.** The table is told ("Sam dropped"), and the seat waits **60 seconds**. If it is that player's turn, the game
+  waits too. Coming back in the window, with the token, resumes the seat exactly as it was, including what the player
+  had already seen this turn, and the table is told ("Sam is back").
+- **A takeover.** When the window ends, a fresh generic normal bot takes the seat for the rest of the game, continuing
+  from the exact game state. The table is told ("a bot took Sam's seat"). The seat stays the bot's; letting the player
+  return after a takeover is deferred. A lost token (cleared browser data, another device) is simply a drop.
+- **Leaving on purpose.** "Leave game" gives the seat to a bot at once, with no window: the player has said they are gone.
+- **Two connections, one token.** The newest wins. The older one is sent `replaced` and closed, which is the friendly
+  outcome when a reload opens a new connection before the old one has closed.
+- **In the lobby** a drop works the same way, so a reload keeps your place; after the window the seat is freed. If the
+  host's window ends in the lobby, the next human, in join order, becomes host. After Start the host has no powers, so
+  nothing needs to move.
 - A player who is connected but idle stalls the table. That is accepted for now; players are in touch out of band.
 
 ## Protocol
@@ -145,6 +153,7 @@ Server to client:
 | `lobby` | `code`, `host`, `seats`, `players` | Names and open seats; the lobby also shows how many bots will fill the rest. |
 | `state` | `view`, `events` | After every accepted intent, each seat gets its own view and the public events. |
 | `error` | `code`, `message` | A rejected intent or request. The game state is unchanged. |
+| `replaced` | none | Sent to an older connection when a newer one resumes the same seat; it is then closed. |
 
 **Events** are the public log lines the table-talk list shows: who rearranged, rolled or peeked (never the result), who
 claimed what, who pulled and the revealed dice, who lost a life, who was eliminated, who dropped and who was replaced.
