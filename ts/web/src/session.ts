@@ -1,5 +1,6 @@
 import {
   Bot,
+  Core,
   Game,
   NUM_DICE,
   RuleError,
@@ -11,10 +12,14 @@ import {
   rollPhrase,
   randomBotLevel,
   seededRng,
+  view as seatViewOf,
   type BotLevel,
   type DiceSet,
+  type GameEvent,
+  type Intent,
   type PullResult,
   type Rank,
+  type SeatView,
 } from "@liars-dice/engine";
 import { useEffect, useState } from "react";
 import { personaFor } from "./personas/index.ts";
@@ -98,7 +103,7 @@ export type Tray = "visible" | "hidden";
  * counter to re-render. The UI only reads the engine and calls these actions.
  */
 export function useSession(config: Config) {
-  const [{ game, botAt, kinds, botLevels }] = useState(() => {
+  const [{ game, core, botAt, kinds, botLevels }] = useState(() => {
     const rules = config.advanced ? advancedRules(config.lives) : basicRules(config.lives);
     const seeded = config.seed !== undefined;
     const humans = [config.name, ...(config.otherHumans ?? [])].slice(0, MAX_SEATS);
@@ -132,13 +137,16 @@ export function useSession(config: Config) {
       ...bots.map((bot, i): Seat => ({ name: botNames[i]!, bot, level: levels[i]! })),
     ];
     const order = humans.length > 1 ? shuffled(seats, seeded ? seededRng(config.seed! + 300) : Math.random) : seats;
+    const game = new Game(
+      order.map((seat) => seat.name),
+      rules,
+      seeded ? seededRng(config.seed!) : undefined,
+      config.opener ?? "random",
+    );
     return {
-      game: new Game(
-        order.map((seat) => seat.name),
-        rules,
-        seeded ? seededRng(config.seed!) : undefined,
-        config.opener ?? "random",
-      ),
+      game,
+      // Every move, the player's and the bots', goes through the core, which is also what a server will run.
+      core: new Core(game),
       botAt: order.map((seat) => seat.bot),
       kinds: order.map((seat): SeatKind => (seat.bot === null ? "human" : "bot")),
       // The level each bot is playing at, bot by bot in seat order.
@@ -169,8 +177,15 @@ export function useSession(config: Config) {
     refresh();
   };
 
+  /** Sends an intent as the seat whose turn it is. The core's refusal becomes the RuleError that `act` shows. */
+  const run = (intent: Intent): readonly GameEvent[] => {
+    const res = core.apply(game.current, intent);
+    if (!res.ok) throw new RuleError(res.error);
+    return res.events;
+  };
+
   const commitDraft = () => {
-    if (draft !== null && game.available().includes("rearrange")) game.rearrange(draft);
+    if (draft !== null && game.available().includes("rearrange")) run({ action: "rearrange", visible: [...draft] });
     setDraft(null);
   };
 
@@ -210,8 +225,8 @@ export function useSession(config: Config) {
   const botStep = () => {
     if (botSeat === null) return;
     const name = game.names[botSeat]!;
-    const outcome = botAt[botSeat]!.step(game, (text) => say(`${name} ${text}`));
-    if (outcome.kind === "pulled") setPulled(outcome.result);
+    const res = core.stepBot(botSeat, botAt[botSeat]!, (text) => say(`${name} ${text}`));
+    if (res.ok && res.step.kind === "pulled") setPulled(res.step.result);
     refresh();
   };
 
@@ -255,33 +270,34 @@ export function useSession(config: Config) {
     pullCup: () =>
       act(() => {
         say(`${game.names[game.current]} pulls the cup`);
-        setPulled(game.pull());
+        const pull = run({ action: "pull" }).find((e) => e.type === "pulled");
+        setPulled(pull as PullResult);
         setDraft(null);
       }),
     peer: () =>
       act(() => {
-        game.peer();
+        run({ action: "peer" });
         say(`${game.names[game.current]} peers at the hidden dice`);
       }),
     roll: (which: DiceSet) =>
       act(() => {
         commitDraft();
-        game.roll(which);
+        run({ action: "roll", set: which });
         say(`${game.names[game.current]} rolls ${rollPhrase(game.rules, which)}`);
         // Under basic rules the peek is compulsory straight after the roll, so there is nothing to choose and the roll
         // takes it. Advanced rules make it optional, so it stays a separate action.
-        if (!game.rules.peekOptional) game.peek();
+        if (!game.rules.peekOptional) run({ action: "peek" });
       }),
     peek: () =>
       act(() => {
         commitDraft();
-        game.peek();
+        run({ action: "peek" });
       }),
     claim: (rank: Rank) =>
       act(() => {
         commitDraft();
         const who = game.names[game.current]; // the turn passes on as soon as the claim is made
-        game.makeClaim(rank);
+        run({ action: "claim", rank });
         say(`${who} claims ${formatRank(rank)}`);
       }),
     moveDie: (index: number, to: Tray) => {
