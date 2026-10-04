@@ -99,10 +99,56 @@ function shuffled<T>(items: readonly T[], rng: () => number): T[] {
 export type Tray = "visible" | "hidden";
 
 /**
- * One human against one or more bots. The engine is mutable, so each action ends by bumping a
- * counter to re-render. The UI only reads the engine and calls these actions.
+ * Everything the table draws from and asks of a game, with no `Game` in it: what the viewer may see (`view`) and the
+ * things they can do. A local game implements it over the engine (`useSession`); an online one will implement it over
+ * a connection, so the table never needs to know which it is talking to.
  */
-export function useSession(config: Config) {
+export interface Session {
+  /** What the viewer may see of the game, redacted as a server would send it. The table draws from this alone. */
+  readonly view: SeatView;
+  /** Who sits where: a seat is a human or a bot. */
+  readonly seatKinds: readonly SeatKind[];
+  isHuman(seat: number): boolean;
+  readonly humanCount: number;
+  /** The human whose screen this is. */
+  readonly viewer: number;
+  /** The seat the device must be handed to before the table shows, or null. */
+  readonly handoff: number | null;
+  acceptHandoff(): void;
+  readonly log: readonly string[];
+  readonly pulled: PullResult | null;
+  readonly error: string | null;
+  /** The visible tray as the player has arranged it, including dice dragged but not yet committed. */
+  readonly visibleSet: ReadonlySet<number>;
+  /** The seat of the bot about to move, or null. */
+  readonly botSeat: number | null;
+  readonly botTurn: boolean;
+  /** When bots played at random levels: who played at which, to reveal at the end. Otherwise undefined. */
+  readonly levelReveal: readonly { readonly name: string; readonly level: BotLevel }[] | undefined;
+  readonly pace: Pace;
+  setPace(pace: Pace): void;
+  setPaused(paused: boolean): void;
+  nextBotStep(): void;
+  pullCup(): void;
+  peer(): void;
+  roll(which: DiceSet): void;
+  peek(): void;
+  claim(rank: Rank): void;
+  moveDie(index: number, to: Tray): void;
+  dismissPull(): void;
+}
+
+/**
+ * The local session: a Session, plus the engine itself and each bot's level, for tests. The table is given only the
+ * Session, so it cannot reach `game`.
+ */
+export type LocalSession = Session & { readonly game: Game; readonly botLevels: readonly BotLevel[] };
+
+/**
+ * One or more humans against bots, on this device. The engine is mutable, so each action ends by bumping a counter
+ * to re-render. The UI reads the `view` and calls these actions.
+ */
+export function useSession(config: Config): LocalSession {
   const [{ game, core, botAt, kinds, botLevels }] = useState(() => {
     const rules = config.advanced ? advancedRules(config.lives) : basicRules(config.lives);
     const seeded = config.seed !== undefined;
@@ -244,9 +290,18 @@ export function useSession(config: Config) {
     game.rules.rollOptional ||
     game.rules.rollable.some((which) => (which === "hidden" ? NUM_DICE - visible.size : visible.size) > 0);
 
+  const levelReveal =
+    config.level === "random"
+      ? game.names.flatMap((name, i) => (kinds[i] === "bot" ? [name] : [])).map((name, i) => ({ name, level: botLevels[i]! }))
+      : undefined;
+
   return {
     game,
-    /** Who sits where: a seat is a human or a bot. */
+    /** What the viewer may see; the table draws from this alone. */
+    view: seatViewOf(game, viewer),
+    levelReveal,
+    /** The level each bot is actually playing at, bot by bot in seat order. */
+    botLevels,
     seatKinds: kinds,
     isHuman,
     humanCount,
@@ -260,8 +315,6 @@ export function useSession(config: Config) {
     visibleSet,
     botSeat,
     botTurn: botSeat !== null,
-    /** The level each bot is actually playing at, bot by bot in seat order. */
-    botLevels,
     pace,
     setPace,
     setPaused,
