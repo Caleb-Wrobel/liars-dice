@@ -1,11 +1,8 @@
-import type { Rng } from "@liars-dice/engine";
+import { MAX_SEATS, MIN_SEATS, type Rng } from "@liars-dice/engine";
 import { generateCode, normalizeCode } from "./codes.ts";
 import { cleanName } from "./names.ts";
 import { secureRng } from "./random.ts";
 
-/** A table seats 2 to 6, humans and bots together. */
-export const MIN_SEATS = 2;
-export const MAX_SEATS = 6;
 export const DEFAULT_MAX_ROOMS = 500;
 
 /** Who is in a room, as far as the lobby is concerned. Not a seat: seats are dealt when the game starts. */

@@ -1,12 +1,14 @@
 import {
   Bot,
+  BOT_NAMES,
   Core,
   Game,
+  MAX_SEATS,
   NUM_DICE,
   RuleError,
-  Step,
   advancedRules,
   basicRules,
+  botDelayMs,
   drawArchetypes,
   formatRank,
   rollPhrase,
@@ -27,21 +29,12 @@ import { DEFAULT_THEME, type ThemeId } from "./theme.ts";
 
 /** The player's seat when playing alone against bots. With several humans, seats are shuffled; ask `isHuman`. */
 export const HUMAN = 0;
-/** A table seats 2 to 6, humans and bots together. */
-export const MAX_SEATS = 6;
 
 /** How fast the bots move. "step" waits for you to press Next move after each action. */
 export type Pace = "fast" | "normal" | "slow" | "step";
 export const PACES: readonly Pace[] = ["fast", "normal", "slow", "step"];
-/** Pause before each bot action, in milliseconds. Tuned by watching hot-seat games: a human player is slower. */
-export const PACE_MS = { fast: 250, normal: 1600, slow: 3200 } as const;
-/**
- * The pause is this many times longer before a bot's decisions, pulling or peering at the start of its turn and
- * claiming at the end of it, so the moments that matter get a beat, as they would from a person.
- */
-export const DECISION_BEAT = 1.5;
-/** Opponents are seated after the human, in this order. */
-export const BOT_NAMES = ["Bob", "Carol", "Dave", "Eve", "Frank"] as const;
+// The pace, the seat limits and the plain bots' names are shared with the server, so a table is the same everywhere.
+export { BOT_NAMES, BOT_PACE_MS as PACE_MS, DECISION_BEAT, MAX_SEATS } from "@liars-dice/engine";
 
 /** A fixed level for every bot, or "random" to give each bot its own, drawn when the game starts. */
 export type LevelChoice = BotLevel | "random";
@@ -278,8 +271,7 @@ export function useSession(config: Config): LocalSession {
 
   useEffect(() => {
     if (botSeat === null || pace === "step" || paused) return;
-    const deciding = game.step === Step.Decide || game.step === Step.Claim;
-    const timer = setTimeout(botStep, PACE_MS[pace] * (deciding ? DECISION_BEAT : 1));
+    const timer = setTimeout(botStep, botDelayMs(pace, game.step));
     return () => clearTimeout(timer);
   }, [botSeat, tick, pace, paused]); // eslint-disable-line react-hooks/exhaustive-deps
 
