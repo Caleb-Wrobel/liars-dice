@@ -1,10 +1,11 @@
-import { Step, parseRank } from "@liars-dice/engine";
+import { Step, formatRank, parseRank } from "@liars-dice/engine";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PERSONAS } from "./personas/index.ts";
 import { HUMAN, PACE_MS, useSession, type Config } from "./session.ts";
 
-const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1 };
+// Alice opens, so these tests can start from her turn. The opener is random otherwise.
+const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1, opener: 0 };
 const advanced: Config = { ...basic, advanced: true };
 
 afterEach(() => vi.useRealTimers());
@@ -30,6 +31,161 @@ function afterBotsAnswer(config: Config) {
   letBotsPlay(hook);
   return hook;
 }
+
+describe("seats with a kind", () => {
+  const solo: Config = { name: "Alice", lives: 3, advanced: false, opponents: 2 };
+  const hotSeat: Config = { ...solo, otherHumans: ["Blake", "Casey"], opponents: 2 };
+  const seated = (config: Config) => renderHook(() => useSession(config)).result.current;
+  const kindsOf = (config: Config) => seated(config).seatKinds;
+
+  it("keeps a lone human in seat 0, ahead of the bots", () => {
+    const s = seated({ ...solo, seed: 5 });
+    expect(s.seatKinds).toEqual(["human", "bot", "bot"]);
+    expect(s.game.names[0]).toBe("Alice");
+    expect(s.isHuman(0)).toBe(true);
+    expect(s.isHuman(1)).toBe(false);
+  });
+
+  it("seats every human and every bot, and shuffles them when there are several humans", () => {
+    const tables = Array.from({ length: 40 }, (_, seed) => seated({ ...hotSeat, seed }));
+    for (const t of tables) {
+      expect([...t.game.names].sort()).toEqual(["Alice", "Blake", "Bob", "Carol", "Casey"]);
+      expect(t.seatKinds.filter((k) => k === "human")).toHaveLength(3);
+    }
+    expect(new Set(tables.map((t) => t.game.names.join())).size).toBeGreaterThan(10);
+    expect(new Set(tables.map((t) => t.seatKinds.join())).size).toBeGreaterThan(3);
+    expect(seated({ ...hotSeat, seed: 7 }).game.names).toEqual(seated({ ...hotSeat, seed: 7 }).game.names);
+  });
+
+  it("trims the bots to fit: at most 6 seats, at least 1 bot for a lone human, none needed for two humans", () => {
+    expect(kindsOf({ ...solo, opponents: 9 })).toHaveLength(6);
+    expect(kindsOf({ ...solo, opponents: 0 })).toEqual(["human", "bot"]);
+    expect(kindsOf({ ...hotSeat, opponents: 9 })).toHaveLength(6);
+    expect(kindsOf({ ...solo, otherHumans: ["Blake"], opponents: 0 })).toEqual(["human", "human"]);
+    expect(kindsOf({ ...solo, otherHumans: ["B", "C", "D", "E", "F", "G"], opponents: 3 })).toEqual(
+      Array(6).fill("human"),
+    );
+  });
+
+  it("lets bots move only on bot seats", () => {
+    vi.useFakeTimers();
+    const kinds = kindsOf({ ...hotSeat, seed: 4 });
+    for (let opener = 0; opener < kinds.length; opener++) {
+      const { result } = renderHook(() => useSession({ ...hotSeat, seed: 4, opener }));
+      expect(result.current.botSeat).toBe(kinds[opener] === "bot" ? opener : null);
+      expect(result.current.botTurn).toBe(kinds[opener] === "bot");
+    }
+  });
+
+  it("names the human who acts in the table talk, whichever human it is", () => {
+    const kinds = kindsOf({ ...hotSeat, seed: 2 });
+    const second = kinds.findIndex((k, i) => k === "human" && i > kinds.indexOf("human"));
+    const { result } = renderHook(() => useSession({ ...hotSeat, seed: 2, opener: second }));
+    const who = result.current.game.names[second]!;
+    act(() => result.current.roll("hidden"));
+    act(() => result.current.claim(parseRank("none 1")));
+    expect(result.current.log).toContain(`${who} rolls the cup`);
+    expect(result.current.log).toContain(`${who} claims ${formatRank(parseRank("none 1"))}`);
+  });
+
+  it("shows the screen to whoever's turn it is, and to the last human while the bots play", () => {
+    let found = false;
+    for (let seed = 0; seed < 40 && !found; seed++) {
+      const kinds = kindsOf({ ...hotSeat, seed });
+      const human = kinds.findIndex((k, i) => k === "human" && kinds[(i + 1) % kinds.length] === "bot");
+      if (human < 0) continue;
+      found = true;
+      const { result } = renderHook(() => useSession({ ...hotSeat, seed, opener: human }));
+      expect(result.current.viewer).toBe(human);
+      act(() => result.current.roll("hidden"));
+      act(() => result.current.claim(parseRank("none 1")));
+      expect(result.current.botSeat).toBe((human + 1) % kinds.length);
+      expect(result.current.viewer).toBe(human);
+    }
+    expect(found).toBe(true);
+  });
+
+  it("lists each bot's level in seat order, whichever seats they got", () => {
+    const config: Config = { ...hotSeat, level: "random", opponents: 3 };
+    for (let seed = 0; seed < 10; seed++) {
+      const s = seated({ ...config, seed });
+      expect(s.botLevels).toHaveLength(s.seatKinds.filter((k) => k === "bot").length);
+      // The same table again gives the same levels in the same seats.
+      expect(seated({ ...config, seed }).botLevels).toEqual(s.botLevels);
+    }
+  });
+});
+
+describe("passing the device", () => {
+  const hot: Config = { name: "Alice", otherHumans: ["Blake"], lives: 3, advanced: false, opponents: 1, seed: 3 };
+  const kinds = renderHook(() => useSession(hot)).result.current.seatKinds;
+  const humanSeats = kinds.flatMap((k, i) => (k === "human" ? [i] : []));
+
+  it("is needed only when the turn reaches a human who is not holding the device", () => {
+    const { result } = renderHook(() => useSession({ ...hot, opener: humanSeats[0]! }));
+    expect(result.current.handoff).toBe(humanSeats[0]);
+    act(() => result.current.acceptHandoff());
+    expect(result.current.handoff).toBeNull();
+    act(() => result.current.roll("hidden"));
+    expect(result.current.handoff).toBeNull(); // still their own turn
+  });
+
+  it("covers a human's turn but never a bot's, and the next human's turn after the bots", () => {
+    vi.useFakeTimers();
+    const first = humanSeats.find((h) => kinds[(h + 1) % kinds.length] === "bot")!;
+    const second = humanSeats.find((h) => h !== first)!;
+    const hook = renderHook(() => useSession({ ...hot, opener: first }));
+    act(() => hook.result.current.acceptHandoff());
+    act(() => hook.result.current.roll("hidden"));
+    act(() => hook.result.current.claim(parseRank("none 1")));
+    expect(hook.result.current.botSeat).not.toBeNull();
+    expect(hook.result.current.handoff).toBeNull(); // the bot plays in the open
+    letBotsPlay(hook);
+    expect(hook.result.current.game.current).toBe(second);
+    expect(hook.result.current.handoff).toBe(second);
+    act(() => hook.result.current.acceptHandoff());
+    expect(hook.result.current.handoff).toBeNull();
+  });
+
+  it("never covers a bot's opening turn, or a lone player", () => {
+    expect(renderHook(() => useSession({ ...hot, opener: kinds.indexOf("bot") })).result.current.handoff).toBeNull();
+    const solo: Config = { name: "Alice", lives: 3, advanced: false, seed: 1, opener: 0 };
+    expect(renderHook(() => useSession(solo)).result.current.handoff).toBeNull();
+    expect(renderHook(() => useSession(solo)).result.current.humanCount).toBe(1);
+  });
+});
+
+describe("who opens", () => {
+  const unpinned: Config = { name: "Alice", lives: 3, advanced: false, opponents: 3 };
+  const openers = (config: Config) =>
+    Array.from({ length: 40 }, (_, seed) => renderHook(() => useSession({ ...config, seed })).result.current.game.current);
+
+  it("is a random seat unless one is pinned, and the same seat again for the same seed", () => {
+    const seats = openers(unpinned);
+    expect(new Set(seats)).toEqual(new Set([0, 1, 2, 3]));
+    expect(openers(unpinned)).toEqual(seats);
+  });
+
+  it("can be pinned to a seat", () => {
+    expect(new Set(openers({ ...unpinned, opener: 2 }))).toEqual(new Set([2]));
+  });
+
+  it("is announced in the table talk, by name", () => {
+    const { result } = renderHook(() => useSession({ ...unpinned, seed: 3 }));
+    const { game, log } = result.current;
+    expect(log).toEqual([`${game.names[game.current]} opens the game`]);
+  });
+
+  it("lets a bot open: it moves by itself and the player waits their turn", () => {
+    vi.useFakeTimers();
+    const hook = renderHook(() => useSession({ ...unpinned, opener: 1, seed: 1 }));
+    expect(hook.result.current.botSeat).toBe(1);
+    letBotsPlay(hook);
+    expect(hook.result.current.game.current).toBe(HUMAN);
+    expect(hook.result.current.log[0]).toBe("Bob opens the game");
+    expect(hook.result.current.log.length).toBeGreaterThan(1);
+  });
+});
 
 describe("useSession", () => {
   it("opens at the roll step, and basic rules lock claiming until you roll", () => {

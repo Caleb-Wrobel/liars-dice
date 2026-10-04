@@ -1,12 +1,13 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, renderHook, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PLAYER_NAMES } from "./playerNames.ts";
 import { Setup } from "./Setup.tsx";
 import { Table } from "./Table.tsx";
-import type { Config } from "./session.ts";
+import { useSession, type Config } from "./session.ts";
 
-const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1 };
+// Alice opens, so these tests can start from her turn. The opener is random otherwise.
+const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1, opener: 0 };
 
 describe("Table", () => {
   it("opens a new round with five unseen dice and nothing to claim yet", () => {
@@ -326,5 +327,64 @@ describe("Setup", () => {
       personas: true,
       theme: "saloon",
     });
+  });
+});
+
+describe("Table with several humans", () => {
+  const hotSeat: Config = { ...basic, otherHumans: ["Blake"], opponents: 1, seed: 3 };
+  const kinds = renderHook(() => useSession(hotSeat)).result.current.seatKinds;
+  const humanSeats = kinds.flatMap((k, i) => (k === "human" ? [i] : []));
+  const names = renderHook(() => useSession(hotSeat)).result.current.game.names;
+  const mount = (config: Config) => render(<Table config={config} onQuit={() => {}} onRematch={() => {}} />);
+
+  it("lists everyone on the scoreboard, humans and bots", () => {
+    mount({ ...hotSeat, opener: kinds.indexOf("bot") }); // a bot opens, so no handoff hides the scoreboard
+    expect(screen.getAllByText(/^(Alice|Blake|Bob)$/).map((n) => n.textContent).sort()).toEqual(["Alice", "Blake", "Bob"]);
+  });
+
+  it("hides the whole table behind a handoff when a human's turn comes, and shows it to whoever taps", async () => {
+    for (const seat of humanSeats) {
+      const { unmount } = mount({ ...hotSeat, opener: seat });
+      const who = names[seat]!;
+      expect(screen.getByRole("heading", { name: `Pass the device to ${who}` })).toBeInTheDocument();
+      // Nothing of the table is there to read, in the page or in the accessibility tree.
+      expect(screen.queryAllByLabelText(/unseen/)).toHaveLength(0);
+      expect(screen.queryByRole("button", { name: "Roll dice" })).toBeNull();
+      expect(screen.queryByRole("region", { name: "Visible" })).toBeNull();
+      expect(screen.queryByText(/Standing claim|Open with any claim/)).toBeNull();
+      expect(screen.getByRole("button", { name: `I'm ${who}. Show the table` })).toHaveFocus();
+      await userEvent.click(screen.getByRole("button", { name: `I'm ${who}. Show the table` }));
+      expect(screen.queryByRole("heading", { name: /Pass the device/ })).toBeNull();
+      expect(screen.getByRole("button", { name: "Roll dice" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: `${who}'s turn` })).toHaveFocus();
+      unmount();
+    }
+  });
+
+  it("lets everyone watch a bot play: no handoff on a bot's turn", () => {
+    mount({ ...hotSeat, opener: kinds.indexOf("bot") });
+    expect(screen.queryByRole("heading", { name: /Pass the device/ })).toBeNull();
+    expect(screen.getByText(/is thinking/)).toBeInTheDocument();
+  });
+
+  it("hands over again when the turn reaches the other human after the bot has played", async () => {
+    const first = humanSeats.find((h) => kinds[(h + 1) % kinds.length] === "bot")!;
+    const other = names[humanSeats.find((h) => h !== first)!]!;
+    mount({ ...hotSeat, opener: first, pace: "fast" });
+    await userEvent.click(screen.getByRole("button", { name: /^I'm .*\. Show the table$/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Roll dice" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Smallest raise/ }));
+    expect(screen.queryByRole("heading", { name: /Pass the device/ })).toBeNull(); // the bot plays in the open
+    expect(
+      await screen.findByRole("heading", { name: `Pass the device to ${other}` }, { timeout: 5000 }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Smallest raise/ })).toBeNull();
+  }, 15_000); // the bot takes a few paused steps
+
+  it("never interrupts a lone player", () => {
+    mount({ ...basic });
+    expect(screen.queryByRole("heading", { name: /Pass the device/ })).toBeNull();
+    expect(screen.queryByRole("heading", { name: /'s turn/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Roll dice" })).toBeInTheDocument();
   });
 });
