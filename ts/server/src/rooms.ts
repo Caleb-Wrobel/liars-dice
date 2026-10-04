@@ -4,6 +4,9 @@ import { cleanName } from "./names.ts";
 import { secureRng } from "./random.ts";
 
 export const DEFAULT_MAX_ROOMS = 500;
+export const MIN_LIVES = 1;
+export const MAX_LIVES = 5;
+export const DEFAULT_LIVES = 3;
 
 /** Who is in a room, as far as the lobby is concerned. Not a seat: seats are dealt when the game starts. */
 export type PlayerId = number;
@@ -24,9 +27,33 @@ export interface LobbyView {
   readonly players: readonly LobbyPlayer[];
   /** How many seats a bot will fill if the game started now. */
   readonly bots: number;
+  /** Lives each player starts with. */
+  readonly lives: number;
+  /** Advanced rules rather than basic. */
+  readonly advanced: boolean;
 }
 
-export type RoomErrorCode = "bad_name" | "bad_seats" | "bad_code" | "no_room" | "room_full" | "name_taken" | "busy";
+/** Everything a match needs from a lobby when the host starts the game. */
+export interface MatchSetup {
+  readonly code: string;
+  readonly capacity: number;
+  readonly lives: number;
+  readonly advanced: boolean;
+  /** In the order they joined; the first is the host. */
+  readonly players: readonly LobbyPlayer[];
+}
+
+export type RoomErrorCode =
+  | "bad_name"
+  | "bad_seats"
+  | "bad_rules"
+  | "bad_code"
+  | "no_room"
+  | "room_full"
+  | "name_taken"
+  | "busy"
+  | "started"
+  | "not_host";
 export interface RoomFailure {
   readonly ok: false;
   readonly code: RoomErrorCode;
@@ -38,6 +65,9 @@ export interface Entered {
   readonly player: PlayerId;
   readonly lobby: LobbyView;
 }
+export type Started =
+  | { readonly ok: true; readonly setup: MatchSetup }
+  | RoomFailure;
 export type LeaveResult =
   | { readonly ok: false }
   | { readonly ok: true; readonly closed: true }
@@ -46,6 +76,10 @@ export type LeaveResult =
 interface Room {
   readonly code: string;
   readonly capacity: number;
+  readonly lives: number;
+  readonly advanced: boolean;
+  /** Once the host starts the game the lobby is closed: nobody joins, and leaving is the match's business. */
+  phase: "lobby" | "playing";
   readonly players: LobbyPlayer[];
 }
 
@@ -70,16 +104,22 @@ export class RoomRegistry {
     return this.rooms.size;
   }
 
-  create(name: unknown, seats: unknown): Entered | RoomFailure {
+  create(name: unknown, seats: unknown, rules: { lives?: unknown; advanced?: unknown } = {}): Entered | RoomFailure {
     const clean = cleanName(name);
     if (clean === null) return fail("bad_name", "choose a name of 1 to 16 characters");
     if (typeof seats !== "number" || !Number.isInteger(seats) || seats < MIN_SEATS || seats > MAX_SEATS) {
       return fail("bad_seats", `a table seats ${MIN_SEATS} to ${MAX_SEATS}`);
     }
+    const lives = rules.lives === undefined ? DEFAULT_LIVES : rules.lives; // only "not given" means the default
+    if (typeof lives !== "number" || !Number.isInteger(lives) || lives < MIN_LIVES || lives > MAX_LIVES) {
+      return fail("bad_rules", `players start with ${MIN_LIVES} to ${MAX_LIVES} lives`);
+    }
+    const advanced = rules.advanced === undefined ? false : rules.advanced;
+    if (typeof advanced !== "boolean") return fail("bad_rules", "the rules are basic or advanced");
     if (this.rooms.size >= (this.options.maxRooms ?? DEFAULT_MAX_ROOMS)) return fail("busy", "the server is busy; try again soon");
     const code = this.freshCode();
     if (code === null) return fail("busy", "the server is busy; try again soon");
-    const room: Room = { code, capacity: seats, players: [] };
+    const room: Room = { code, capacity: seats, lives, advanced, phase: "lobby", players: [] };
     this.rooms.set(code, room);
     return this.admit(room, clean);
   }
@@ -89,6 +129,7 @@ export class RoomRegistry {
     if (normal === null) return fail("bad_code", "a room code is four letters");
     const room = this.rooms.get(normal);
     if (room === undefined) return fail("no_room", "there is no room with that code");
+    if (room.phase !== "lobby") return fail("started", "that game has already started");
     if (room.players.length >= room.capacity) return fail("room_full", "that room is full");
     const clean = cleanName(name);
     if (clean === null) return fail("bad_name", "choose a name of 1 to 16 characters");
@@ -96,11 +137,38 @@ export class RoomRegistry {
     return this.admit(room, clean);
   }
 
-  /** Takes a player out of the lobby. The room closes when the last one goes. */
+  /**
+   * The host closes the lobby and the game begins. Only the host may, and only once: from then on nobody can join. The
+   * setup it returns is what a match is made from.
+   */
+  start(code: string, player: PlayerId): Started {
+    const room = this.rooms.get(code);
+    if (room === undefined) return fail("no_room", "there is no room with that code");
+    if (room.phase !== "lobby") return fail("started", "that game has already started");
+    if (room.players[0]!.id !== player) return fail("not_host", "only the host can start the game");
+    room.phase = "playing";
+    return {
+      ok: true,
+      setup: {
+        code: room.code,
+        capacity: room.capacity,
+        lives: room.lives,
+        advanced: room.advanced,
+        players: room.players.map((p) => ({ ...p })),
+      },
+    };
+  }
+
+  /** Forgets a room, for instance when its game is over and everyone has gone. */
+  close(code: string): boolean {
+    return this.rooms.delete(code);
+  }
+
+  /** Takes a player out of the lobby. The room closes when the last one goes. Once the game has started, no. */
   leave(code: string, player: PlayerId): LeaveResult {
     const room = this.rooms.get(code);
     const index = room?.players.findIndex((p) => p.id === player) ?? -1;
-    if (room === undefined || index < 0) return { ok: false };
+    if (room === undefined || room.phase !== "lobby" || index < 0) return { ok: false };
     room.players.splice(index, 1);
     if (room.players.length === 0) {
       this.rooms.delete(code);
@@ -127,6 +195,8 @@ export class RoomRegistry {
       host: room.players[0]!.id,
       players: room.players.map((p) => ({ ...p })),
       bots: room.capacity - room.players.length,
+      lives: room.lives,
+      advanced: room.advanced,
     };
   }
 

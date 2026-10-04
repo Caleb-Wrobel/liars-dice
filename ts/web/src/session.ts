@@ -14,6 +14,7 @@ import {
   rollPhrase,
   randomBotLevel,
   seededRng,
+  shuffled,
   view as seatViewOf,
   type BotLevel,
   type DiceSet,
@@ -76,16 +77,6 @@ interface Seat {
   readonly name: string;
   readonly bot: Bot | null;
   readonly level: BotLevel | null;
-}
-
-/** A shuffled copy (Fisher-Yates). */
-function shuffled<T>(items: readonly T[], rng: () => number): T[] {
-  const out = [...items];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
 }
 
 /** The two trays the dice move between. */

@@ -22,6 +22,20 @@ describe("parseClientMessage", () => {
     });
   });
 
+  it("accepts the optional lives and rules on create, and refuses them when they are the wrong type", () => {
+    expect(parseClientMessage(msg({ type: "create", name: "Sam", seats: 4, lives: 5, advanced: true }))).toEqual({
+      ok: true,
+      message: { type: "create", name: "Sam", seats: 4, lives: 5, advanced: true },
+    });
+    expect(parseClientMessage(msg({ type: "create", name: "Sam", seats: 4, lives: 2 }))).toEqual({
+      ok: true,
+      message: { type: "create", name: "Sam", seats: 4, lives: 2 },
+    });
+    for (const extra of [{ lives: "3" }, { lives: 2.5 }, { advanced: "yes" }, { advanced: 1 }, { lives: null }, { advanced: null }]) {
+      expect(parseClientMessage(msg({ type: "create", name: "Sam", seats: 4, ...extra }))).toMatchObject({ ok: false, code: "malformed" });
+    }
+  });
+
   it("passes an intent on untouched, even a bad one: the engine's core judges it", () => {
     for (const intent of [null, 5, "pull", { action: "hack" }, []]) {
       expect(parseClientMessage(msg({ type: "intent", intent }))).toEqual({ ok: true, message: { type: "intent", intent } });

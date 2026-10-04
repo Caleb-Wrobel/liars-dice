@@ -8,7 +8,15 @@
 export const PROTOCOL_VERSION = 1;
 
 export type ClientMessage =
-  | { readonly type: "create"; readonly name: string; readonly seats: number }
+  | {
+      readonly type: "create";
+      readonly name: string;
+      readonly seats: number;
+      /** Lives each player starts with; the room logic decides what is acceptable. */
+      readonly lives?: number;
+      /** Advanced rules rather than basic. */
+      readonly advanced?: boolean;
+    }
   | { readonly type: "join"; readonly code: string; readonly name: string }
   | { readonly type: "resume"; readonly token: string }
   | { readonly type: "start" }
@@ -31,10 +39,25 @@ export function parseClientMessage(raw: unknown): ParsedMessage {
   const msg = raw as Record<string, unknown>;
   if (msg.v !== PROTOCOL_VERSION) return refuse("version", "this server speaks a different version; reload the page");
   switch (msg.type) {
-    case "create":
-      return text(msg.name) && typeof msg.seats === "number" && Number.isInteger(msg.seats)
-        ? { ok: true, message: { type: "create", name: msg.name, seats: msg.seats } }
-        : refuse("malformed", "create needs a name and a number of seats");
+    case "create": {
+      const { lives, advanced } = msg;
+      const optionsOk =
+        (lives === undefined || (typeof lives === "number" && Number.isInteger(lives))) &&
+        (advanced === undefined || typeof advanced === "boolean");
+      if (!text(msg.name) || typeof msg.seats !== "number" || !Number.isInteger(msg.seats) || !optionsOk) {
+        return refuse("malformed", "create needs a name, a number of seats and, if given, lives and rules");
+      }
+      return {
+        ok: true,
+        message: {
+          type: "create",
+          name: msg.name,
+          seats: msg.seats,
+          ...(lives === undefined ? {} : { lives: lives as number }),
+          ...(advanced === undefined ? {} : { advanced: advanced as boolean }),
+        },
+      };
+    }
     case "join":
       return text(msg.code) && text(msg.name)
         ? { ok: true, message: { type: "join", code: msg.code, name: msg.name } }
