@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PERSONAS } from "./personas/index.ts";
 import { HUMAN, PACE_MS, useSession, type Config } from "./session.ts";
 
-const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1 };
+// Alice opens, so these tests can start from her turn. The opener is random otherwise.
+const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1, opener: 0 };
 const advanced: Config = { ...basic, advanced: true };
 
 afterEach(() => vi.useRealTimers());
@@ -30,6 +31,38 @@ function afterBotsAnswer(config: Config) {
   letBotsPlay(hook);
   return hook;
 }
+
+describe("who opens", () => {
+  const unpinned: Config = { name: "Alice", lives: 3, advanced: false, opponents: 3 };
+  const openers = (config: Config) =>
+    Array.from({ length: 40 }, (_, seed) => renderHook(() => useSession({ ...config, seed })).result.current.game.current);
+
+  it("is a random seat unless one is pinned, and the same seat again for the same seed", () => {
+    const seats = openers(unpinned);
+    expect(new Set(seats)).toEqual(new Set([0, 1, 2, 3]));
+    expect(openers(unpinned)).toEqual(seats);
+  });
+
+  it("can be pinned to a seat", () => {
+    expect(new Set(openers({ ...unpinned, opener: 2 }))).toEqual(new Set([2]));
+  });
+
+  it("is announced in the table talk, by name", () => {
+    const { result } = renderHook(() => useSession({ ...unpinned, seed: 3 }));
+    const { game, log } = result.current;
+    expect(log).toEqual([`${game.names[game.current]} opens the game`]);
+  });
+
+  it("lets a bot open: it moves by itself and the player waits their turn", () => {
+    vi.useFakeTimers();
+    const hook = renderHook(() => useSession({ ...unpinned, opener: 1, seed: 1 }));
+    expect(hook.result.current.botSeat).toBe(1);
+    letBotsPlay(hook);
+    expect(hook.result.current.game.current).toBe(HUMAN);
+    expect(hook.result.current.log[0]).toBe("Bob opens the game");
+    expect(hook.result.current.log.length).toBeGreaterThan(1);
+  });
+});
 
 describe("useSession", () => {
   it("opens at the roll step, and basic rules lock claiming until you roll", () => {

@@ -104,13 +104,22 @@ export class Game {
   peeked!: boolean;
   step!: Step;
 
-  constructor(names: readonly string[], rules: Rules = basicRules(), rng: Rng = Math.random, first = 0) {
+  /**
+   * `first` is the seat that opens the game, or "random" to draw one from `rng` (so a seeded game always opens
+   * the same way). It defaults to seat 0.
+   */
+  constructor(
+    names: readonly string[],
+    rules: Rules = basicRules(),
+    rng: Rng = Math.random,
+    first: number | "random" = 0,
+  ) {
     if (names.length < 2) throw new Error("need at least two players");
     this.names = [...names];
     this.rules = rules;
     this.rng = rng;
     this.lives = names.map(() => rules.lives);
-    this.startRound(first);
+    this.startRound(first === "random" ? Math.floor(this.rng() * names.length) : first);
   }
 
   // --- queries -------------------------------------------------------------

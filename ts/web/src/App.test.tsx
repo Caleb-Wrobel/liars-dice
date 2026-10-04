@@ -1,5 +1,5 @@
 import { Category } from "@liars-dice/engine";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App.tsx";
@@ -39,7 +39,9 @@ describe("App", () => {
     expect(screen.getByText("Sam")).toBeInTheDocument();
     expect(screen.getAllByLabelText("1 lives")).toHaveLength(2); // Sam and Bob, back to full lives
     expect(screen.getByLabelText("Bot pace")).toHaveValue("normal");
-    expect(screen.getByRole("list", { name: "Table talk" })).toBeEmptyDOMElement();
+    // The talk starts over, with only the line saying who opens (seat 0, with the dice mocked to 0).
+    expect(within(screen.getByRole("list", { name: "Table talk" })).getAllByRole("listitem")).toHaveLength(1);
+    expect(screen.getByText("Sam opens the game")).toBeInTheDocument();
   });
 
   it("reveals which level each bot played once a random game ends", async () => {

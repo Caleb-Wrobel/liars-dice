@@ -6,7 +6,8 @@ import { Setup } from "./Setup.tsx";
 import { Table } from "./Table.tsx";
 import type { Config } from "./session.ts";
 
-const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1 };
+// Alice opens, so these tests can start from her turn. The opener is random otherwise.
+const basic: Config = { name: "Alice", lives: 3, advanced: false, seed: 1, opener: 0 };
 
 describe("Table", () => {
   it("opens a new round with five unseen dice and nothing to claim yet", () => {
