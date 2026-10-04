@@ -116,6 +116,45 @@ describe("seats with a kind", () => {
   });
 });
 
+describe("passing the device", () => {
+  const hot: Config = { name: "Alice", otherHumans: ["Blake"], lives: 3, advanced: false, opponents: 1, seed: 3 };
+  const kinds = renderHook(() => useSession(hot)).result.current.seatKinds;
+  const humanSeats = kinds.flatMap((k, i) => (k === "human" ? [i] : []));
+
+  it("is needed only when the turn reaches a human who is not holding the device", () => {
+    const { result } = renderHook(() => useSession({ ...hot, opener: humanSeats[0]! }));
+    expect(result.current.handoff).toBe(humanSeats[0]);
+    act(() => result.current.acceptHandoff());
+    expect(result.current.handoff).toBeNull();
+    act(() => result.current.roll("hidden"));
+    expect(result.current.handoff).toBeNull(); // still their own turn
+  });
+
+  it("covers a human's turn but never a bot's, and the next human's turn after the bots", () => {
+    vi.useFakeTimers();
+    const first = humanSeats.find((h) => kinds[(h + 1) % kinds.length] === "bot")!;
+    const second = humanSeats.find((h) => h !== first)!;
+    const hook = renderHook(() => useSession({ ...hot, opener: first }));
+    act(() => hook.result.current.acceptHandoff());
+    act(() => hook.result.current.roll("hidden"));
+    act(() => hook.result.current.claim(parseRank("none 1")));
+    expect(hook.result.current.botSeat).not.toBeNull();
+    expect(hook.result.current.handoff).toBeNull(); // the bot plays in the open
+    letBotsPlay(hook);
+    expect(hook.result.current.game.current).toBe(second);
+    expect(hook.result.current.handoff).toBe(second);
+    act(() => hook.result.current.acceptHandoff());
+    expect(hook.result.current.handoff).toBeNull();
+  });
+
+  it("never covers a bot's opening turn, or a lone player", () => {
+    expect(renderHook(() => useSession({ ...hot, opener: kinds.indexOf("bot") })).result.current.handoff).toBeNull();
+    const solo: Config = { name: "Alice", lives: 3, advanced: false, seed: 1, opener: 0 };
+    expect(renderHook(() => useSession(solo)).result.current.handoff).toBeNull();
+    expect(renderHook(() => useSession(solo)).result.current.humanCount).toBe(1);
+  });
+});
+
 describe("who opens", () => {
   const unpinned: Config = { name: "Alice", lives: 3, advanced: false, opponents: 3 };
   const openers = (config: Config) =>
