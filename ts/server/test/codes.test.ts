@@ -1,7 +1,7 @@
 import { seededRng } from "@liars-dice/engine";
 import { describe, expect, it } from "vitest";
 import { BLOCKED_CODES, CODE_ALPHABET, CODE_LENGTH, generateCode, isBlocked, normalizeCode } from "../src/codes.ts";
-import { secureRng } from "../src/random.ts";
+import { newToken, secureRng } from "../src/random.ts";
 
 describe("room codes", () => {
   it("are four letters, all from the alphabet, with no vowels or look-alikes", () => {
@@ -56,5 +56,21 @@ describe("secure randomness", () => {
     const values = Array.from({ length: 500 }, () => secureRng());
     expect(values.every((v) => v >= 0 && v < 1)).toBe(true);
     expect(new Set(values).size).toBeGreaterThan(490);
+  });
+});
+
+describe("tokens", () => {
+  it("are 32 lowercase hex digits, and different every time with real randomness", () => {
+    const tokens = Array.from({ length: 300 }, () => newToken(secureRng));
+    for (const t of tokens) expect(t).toMatch(/^[0-9a-f]{32}$/);
+    expect(new Set(tokens).size).toBe(300);
+  });
+
+  it("repeat for a seeded generator, and use every hex digit", () => {
+    expect(newToken(seededRng(4))).toBe(newToken(seededRng(4)));
+    const seen = new Set<string>();
+    const rng = seededRng(9);
+    for (let i = 0; i < 40; i++) for (const d of newToken(rng)) seen.add(d);
+    expect(seen.size).toBe(16);
   });
 });

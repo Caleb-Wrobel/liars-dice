@@ -1,8 +1,11 @@
 /**
- * The messages a client may send. Everything arriving from the network is untrusted, so this turns raw JSON into a
- * typed message or a reason it was refused, and checks shapes and sizes only. Whether a name is acceptable, a room
- * exists or a move is legal is decided later, by the room logic and the engine. See docs/multiplayer.md ("Protocol").
+ * The messages that cross the wire. What a client may send is untrusted, so this turns raw JSON into a typed message or
+ * a reason it was refused, and checks shapes and sizes only; whether a name is acceptable, a room exists or a move is
+ * legal is decided later, by the room logic and the engine. And what the server sends back. See docs/multiplayer.md
+ * ("Protocol").
  */
+import type { GameEvent, SeatView } from "@liars-dice/engine";
+import type { LobbyView } from "./rooms.ts";
 
 /** Bumped when the messages change in a way an old client could not follow. */
 export const PROTOCOL_VERSION = 1;
@@ -76,3 +79,28 @@ export function parseClientMessage(raw: unknown): ParsedMessage {
       return refuse("malformed", "unknown message type");
   }
 }
+
+/**
+ * What the server sends. Every message carries the protocol version. Each player is sent only their own view: the
+ * state of the game as one seat may see it, never the whole game. See docs/multiplayer.md.
+ */
+export type ServerMessage =
+  | {
+      readonly v: typeof PROTOCOL_VERSION;
+      readonly type: "joined";
+      readonly code: string;
+      /** The secret that proves this browser owns its place; the client keeps it to resume after a drop. */
+      readonly token: string;
+      /** This player's id in the lobby, to tell which entry is theirs and whether they are the host. */
+      readonly you: number;
+      readonly lobby: LobbyView;
+    }
+  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "lobby"; readonly lobby: LobbyView }
+  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "started"; readonly view: SeatView; readonly events: readonly GameEvent[] }
+  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "state"; readonly view: SeatView; readonly events: readonly GameEvent[] }
+  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "left" }
+  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "error"; readonly code: string; readonly error: string };
+
+/** Distributes the version tag, so a message is written once without it. */
+export type ServerBody = ServerMessage extends infer M ? (M extends ServerMessage ? Omit<M, "v"> : never) : never;
+export const serverMessage = (body: ServerBody): ServerMessage => ({ v: PROTOCOL_VERSION, ...body }) as ServerMessage;
