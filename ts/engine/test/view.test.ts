@@ -36,7 +36,11 @@ function playGame(rules: Rules, players: number, seed: number, onState: (g: Game
   throw new Error("the game did not finish");
 }
 
-/** How many seeds each table shape gets. A bigger net (VIEW_SEEDS=2000 npx vitest run test/view.test.ts) is cheap on a big machine. */
+/**
+ * How many seeds each table shape gets. A bigger net is cheap on a big machine, but the engine's 30 s test timeout
+ * would cut it short, so lift that too: VIEW_SEEDS=1000 npx vitest run test/view.test.ts --testTimeout=0
+ * (1000 seeds takes a few minutes).
+ */
 const SEEDS = Number((globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.VIEW_SEEDS) || 12;
 
 /** Every table shape and rule set, over many seeds. */
