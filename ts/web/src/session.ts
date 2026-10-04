@@ -1,5 +1,6 @@
 import {
   Bot,
+  Core,
   Game,
   NUM_DICE,
   RuleError,
@@ -11,10 +12,14 @@ import {
   rollPhrase,
   randomBotLevel,
   seededRng,
+  view as seatViewOf,
   type BotLevel,
   type DiceSet,
+  type GameEvent,
+  type Intent,
   type PullResult,
   type Rank,
+  type SeatView,
 } from "@liars-dice/engine";
 import { useEffect, useState } from "react";
 import { personaFor } from "./personas/index.ts";
@@ -94,11 +99,57 @@ function shuffled<T>(items: readonly T[], rng: () => number): T[] {
 export type Tray = "visible" | "hidden";
 
 /**
- * One human against one or more bots. The engine is mutable, so each action ends by bumping a
- * counter to re-render. The UI only reads the engine and calls these actions.
+ * Everything the table draws from and asks of a game, with no `Game` in it: what the viewer may see (`view`) and the
+ * things they can do. A local game implements it over the engine (`useSession`); an online one will implement it over
+ * a connection, so the table never needs to know which it is talking to.
  */
-export function useSession(config: Config) {
-  const [{ game, botAt, kinds, botLevels }] = useState(() => {
+export interface Session {
+  /** What the viewer may see of the game, redacted as a server would send it. The table draws from this alone. */
+  readonly view: SeatView;
+  /** Who sits where: a seat is a human or a bot. */
+  readonly seatKinds: readonly SeatKind[];
+  isHuman(seat: number): boolean;
+  readonly humanCount: number;
+  /** The human whose screen this is. */
+  readonly viewer: number;
+  /** The seat the device must be handed to before the table shows, or null. */
+  readonly handoff: number | null;
+  acceptHandoff(): void;
+  readonly log: readonly string[];
+  readonly pulled: PullResult | null;
+  readonly error: string | null;
+  /** The visible tray as the player has arranged it, including dice dragged but not yet committed. */
+  readonly visibleSet: ReadonlySet<number>;
+  /** The seat of the bot about to move, or null. */
+  readonly botSeat: number | null;
+  readonly botTurn: boolean;
+  /** When bots played at random levels: who played at which, to reveal at the end. Otherwise undefined. */
+  readonly levelReveal: readonly { readonly name: string; readonly level: BotLevel }[] | undefined;
+  readonly pace: Pace;
+  setPace(pace: Pace): void;
+  setPaused(paused: boolean): void;
+  nextBotStep(): void;
+  pullCup(): void;
+  peer(): void;
+  roll(which: DiceSet): void;
+  peek(): void;
+  claim(rank: Rank): void;
+  moveDie(index: number, to: Tray): void;
+  dismissPull(): void;
+}
+
+/**
+ * The local session: a Session, plus the engine itself and each bot's level, for tests. The table is given only the
+ * Session, so it cannot reach `game`.
+ */
+export type LocalSession = Session & { readonly game: Game; readonly botLevels: readonly BotLevel[] };
+
+/**
+ * One or more humans against bots, on this device. The engine is mutable, so each action ends by bumping a counter
+ * to re-render. The UI reads the `view` and calls these actions.
+ */
+export function useSession(config: Config): LocalSession {
+  const [{ game, core, botAt, kinds, botLevels }] = useState(() => {
     const rules = config.advanced ? advancedRules(config.lives) : basicRules(config.lives);
     const seeded = config.seed !== undefined;
     const humans = [config.name, ...(config.otherHumans ?? [])].slice(0, MAX_SEATS);
@@ -132,13 +183,16 @@ export function useSession(config: Config) {
       ...bots.map((bot, i): Seat => ({ name: botNames[i]!, bot, level: levels[i]! })),
     ];
     const order = humans.length > 1 ? shuffled(seats, seeded ? seededRng(config.seed! + 300) : Math.random) : seats;
+    const game = new Game(
+      order.map((seat) => seat.name),
+      rules,
+      seeded ? seededRng(config.seed!) : undefined,
+      config.opener ?? "random",
+    );
     return {
-      game: new Game(
-        order.map((seat) => seat.name),
-        rules,
-        seeded ? seededRng(config.seed!) : undefined,
-        config.opener ?? "random",
-      ),
+      game,
+      // Every move, the player's and the bots', goes through the core, which is also what a server will run.
+      core: new Core(game),
       botAt: order.map((seat) => seat.bot),
       kinds: order.map((seat): SeatKind => (seat.bot === null ? "human" : "bot")),
       // The level each bot is playing at, bot by bot in seat order.
@@ -169,8 +223,15 @@ export function useSession(config: Config) {
     refresh();
   };
 
+  /** Sends an intent as the seat whose turn it is. The core's refusal becomes the RuleError that `act` shows. */
+  const run = (intent: Intent): readonly GameEvent[] => {
+    const res = core.apply(game.current, intent);
+    if (!res.ok) throw new RuleError(res.error);
+    return res.events;
+  };
+
   const commitDraft = () => {
-    if (draft !== null && game.available().includes("rearrange")) game.rearrange(draft);
+    if (draft !== null && game.available().includes("rearrange")) run({ action: "rearrange", visible: [...draft] });
     setDraft(null);
   };
 
@@ -210,8 +271,8 @@ export function useSession(config: Config) {
   const botStep = () => {
     if (botSeat === null) return;
     const name = game.names[botSeat]!;
-    const outcome = botAt[botSeat]!.step(game, (text) => say(`${name} ${text}`));
-    if (outcome.kind === "pulled") setPulled(outcome.result);
+    const res = core.stepBot(botSeat, botAt[botSeat]!, (text) => say(`${name} ${text}`));
+    if (res.ok && res.step.kind === "pulled") setPulled(res.step.result);
     refresh();
   };
 
@@ -229,9 +290,18 @@ export function useSession(config: Config) {
     game.rules.rollOptional ||
     game.rules.rollable.some((which) => (which === "hidden" ? NUM_DICE - visible.size : visible.size) > 0);
 
+  const levelReveal =
+    config.level === "random"
+      ? game.names.flatMap((name, i) => (kinds[i] === "bot" ? [name] : [])).map((name, i) => ({ name, level: botLevels[i]! }))
+      : undefined;
+
   return {
     game,
-    /** Who sits where: a seat is a human or a bot. */
+    /** What the viewer may see; the table draws from this alone. */
+    view: seatViewOf(game, viewer),
+    levelReveal,
+    /** The level each bot is actually playing at, bot by bot in seat order. */
+    botLevels,
     seatKinds: kinds,
     isHuman,
     humanCount,
@@ -245,8 +315,6 @@ export function useSession(config: Config) {
     visibleSet,
     botSeat,
     botTurn: botSeat !== null,
-    /** The level each bot is actually playing at, bot by bot in seat order. */
-    botLevels,
     pace,
     setPace,
     setPaused,
@@ -255,33 +323,34 @@ export function useSession(config: Config) {
     pullCup: () =>
       act(() => {
         say(`${game.names[game.current]} pulls the cup`);
-        setPulled(game.pull());
+        const pull = run({ action: "pull" }).find((e) => e.type === "pulled");
+        setPulled(pull as PullResult);
         setDraft(null);
       }),
     peer: () =>
       act(() => {
-        game.peer();
+        run({ action: "peer" });
         say(`${game.names[game.current]} peers at the hidden dice`);
       }),
     roll: (which: DiceSet) =>
       act(() => {
         commitDraft();
-        game.roll(which);
+        run({ action: "roll", set: which });
         say(`${game.names[game.current]} rolls ${rollPhrase(game.rules, which)}`);
         // Under basic rules the peek is compulsory straight after the roll, so there is nothing to choose and the roll
         // takes it. Advanced rules make it optional, so it stays a separate action.
-        if (!game.rules.peekOptional) game.peek();
+        if (!game.rules.peekOptional) run({ action: "peek" });
       }),
     peek: () =>
       act(() => {
         commitDraft();
-        game.peek();
+        run({ action: "peek" });
       }),
     claim: (rank: Rank) =>
       act(() => {
         commitDraft();
         const who = game.names[game.current]; // the turn passes on as soon as the claim is made
-        game.makeClaim(rank);
+        run({ action: "claim", rank });
         say(`${who} claims ${formatRank(rank)}`);
       }),
     moveDie: (index: number, to: Tray) => {

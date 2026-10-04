@@ -1,4 +1,4 @@
-import { Step, formatRank, parseRank } from "@liars-dice/engine";
+import { Core, NUM_DICE, Step, formatRank, parseRank, view as viewOf } from "@liars-dice/engine";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PERSONAS } from "./personas/index.ts";
@@ -113,6 +113,87 @@ describe("seats with a kind", () => {
       // The same table again gives the same levels in the same seats.
       expect(seated({ ...config, seed }).botLevels).toEqual(s.botLevels);
     }
+  });
+});
+
+describe("the session's view", () => {
+  const hot: Config = { name: "Alice", otherHumans: ["Blake"], lives: 3, advanced: true, opponents: 1, seed: 3, opener: 1 };
+
+  it("sends the player's moves and the bots' moves through the core", () => {
+    vi.useFakeTimers();
+    const apply = vi.spyOn(Core.prototype, "apply");
+    const stepBot = vi.spyOn(Core.prototype, "stepBot");
+    try {
+      const hook = renderHook(() => useSession({ name: "Alice", lives: 3, advanced: true, opponents: 1, seed: 1, opener: 0 }));
+      act(() => hook.result.current.roll("hidden"));
+      act(() => hook.result.current.peek());
+      act(() => hook.result.current.claim(parseRank("none 1")));
+      letBotsPlay(hook);
+      expect(apply.mock.calls.map(([, intent]) => (intent as { action: string }).action)).toEqual(["roll", "peek", "claim"]);
+      expect(stepBot).toHaveBeenCalled();
+    } finally {
+      apply.mockRestore();
+      stepBot.mockRestore();
+    }
+  });
+
+  it("is what the viewer may see of the game, after every action", () => {
+    const { result } = renderHook(() => useSession(hot));
+    const same = () => expect(result.current.view).toEqual(viewOf(result.current.game, result.current.viewer));
+    same();
+    act(() => result.current.acceptHandoff());
+    same();
+    act(() => result.current.roll("hidden"));
+    same();
+    act(() => result.current.peek());
+    same();
+    expect(result.current.view.dice.every((d) => d !== null)).toBe(true); // the viewer has peeked at all five
+    act(() => result.current.claim(parseRank("none 1")));
+    same();
+  });
+
+  it("never carries a die the viewer has not seen, whoever is playing", () => {
+    for (let opener = 0; opener < 3; opener++) {
+      const { result } = renderHook(() => useSession({ ...hot, opener }));
+      const { game } = result.current;
+      const real = [...game.dice];
+      for (let i = 0; i < NUM_DICE; i++) {
+        const seen = game.visible.has(i) || (game.current === result.current.viewer && game.known.has(i));
+        if (!seen) game.dice[i] = 777;
+      }
+      expect(JSON.stringify(result.current.view)).not.toContain("777");
+      game.dice.splice(0, NUM_DICE, ...real);
+    }
+  });
+
+  it("follows the viewer: while a bot plays, the view is the human's who handed over, with only the public dice", () => {
+    vi.useFakeTimers();
+    let checked = false;
+    for (let seed = 0; seed < 30 && !checked; seed++) {
+      const cfg: Config = { ...hot, opponents: 2, seed };
+      const kinds = renderHook(() => useSession(cfg)).result.current.seatKinds;
+      const human = kinds.findIndex((k, i) => k === "human" && kinds[(i + 1) % kinds.length] === "bot");
+      if (human < 0) continue;
+      const hook = renderHook(() => useSession({ ...cfg, opener: human }));
+      act(() => hook.result.current.acceptHandoff());
+      act(() => hook.result.current.roll("hidden"));
+      act(() => hook.result.current.peek());
+      act(() => hook.result.current.claim(parseRank("none 1")));
+      const s = hook.result.current;
+      expect(s.botSeat).toBe((human + 1) % kinds.length);
+      expect(s.viewer).toBe(human);
+      expect(s.view.you).toBe(human);
+      expect(s.view.available).toEqual([]); // nothing to do while a bot plays
+      expect(s.view.dice.filter((d) => d !== null)).toHaveLength(s.view.visible.length); // only the public dice
+      checked = true;
+    }
+    expect(checked).toBe(true);
+  });
+
+  it("lists which bot played at which level once the levels were random, and nothing otherwise", () => {
+    const random = renderHook(() => useSession({ name: "Alice", lives: 3, advanced: false, opponents: 3, level: "random", seed: 2 })).result.current;
+    expect(random.levelReveal).toEqual(random.game.names.slice(1).map((name, i) => ({ name, level: random.botLevels[i] })));
+    expect(renderHook(() => useSession({ name: "Alice", lives: 3, advanced: false, opponents: 2, seed: 2 })).result.current.levelReveal).toBeUndefined();
   });
 });
 
