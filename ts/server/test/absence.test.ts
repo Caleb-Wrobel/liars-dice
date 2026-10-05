@@ -107,6 +107,35 @@ describe("resuming", () => {
   });
 });
 
+describe("who holds each seat", () => {
+  it("changes to a bot for everyone when a bot takes a seat", () => {
+    const { clients, clock } = lobbyOf(["Ann", "Bo"], 4, {}, 8);
+    const [ann, bo] = clients as [TestClient, TestClient];
+    ann.send({ type: "start" });
+    const before = ann.all("started")[0]!.kinds;
+    const seat = bo.view!.you;
+    expect(before[seat]).toBe("human");
+    bo.disconnect();
+    clock.advance(GRACE_MS);
+    const told = ann.all("state").filter((m) => m.events.some((e) => e.type === "botTook")).at(-1)!;
+    expect(told.kinds[seat]).toBe("bot");
+    expect(told.kinds).toEqual(before.map((k, i) => (i === seat ? "bot" : k)));
+  });
+
+  it("is given again to a player who resumes, with their own seat still a person", () => {
+    const { clients, client } = lobbyOf(["Ann", "Bo"], 4, {}, 9);
+    const [ann, bo] = clients as [TestClient, TestClient];
+    ann.send({ type: "start" });
+    const token = ann.token;
+    ann.disconnect();
+    const back = client();
+    back.send({ type: "resume", token });
+    const joined = back.all("joined")[0]!;
+    expect(joined.kinds).toEqual(bo.all("started")[0]!.kinds);
+    expect(joined.kinds![joined.view!.you]).toBe("human");
+  });
+});
+
 describe("a drop in a game", () => {
   it("tells the others, and only the others, and then holds the seat", () => {
     const { ann, bo, clock } = game();

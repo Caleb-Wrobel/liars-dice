@@ -1,7 +1,6 @@
-import { nextRank, seededRng, type SeatView } from "@liars-dice/engine";
+import { PROTOCOL_VERSION, nextRank, seededRng, type SeatView, type ServerMessage } from "@liars-dice/engine";
 import { WebSocket, type ClientOptions } from "ws";
 import { Hub } from "../src/hub.ts";
-import { PROTOCOL_VERSION, type ServerMessage } from "../src/protocol.ts";
 import { listen, type SocketServer } from "../src/socket.ts";
 import { FakeClock } from "./clock.ts";
 

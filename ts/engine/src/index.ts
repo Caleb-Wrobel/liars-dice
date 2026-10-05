@@ -8,3 +8,4 @@ export * from "./view.ts";
 export * from "./core.ts";
 export * from "./pace.ts";
 export * from "./table.ts";
+export * from "./protocol.ts";

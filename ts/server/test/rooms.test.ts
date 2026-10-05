@@ -1,7 +1,8 @@
 import { seededRng } from "@liars-dice/engine";
 import { describe, expect, it } from "vitest";
 import { CODE_ALPHABET } from "../src/codes.ts";
-import { RoomRegistry, type Entered, type LobbyView, type RoomFailure } from "../src/rooms.ts";
+import type { LobbyView } from "@liars-dice/engine";
+import { RoomRegistry, type Entered, type RoomFailure } from "../src/rooms.ts";
 
 const fresh = (seed = 1, maxRooms?: number) =>
   new RoomRegistry({ rng: seededRng(seed), ...(maxRooms === undefined ? {} : { maxRooms }) });

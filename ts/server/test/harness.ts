@@ -1,6 +1,5 @@
-import { nextRank, seededRng, type SeatView } from "@liars-dice/engine";
+import { PROTOCOL_VERSION, nextRank, seededRng, type SeatView, type ServerMessage } from "@liars-dice/engine";
 import { Hub, type ConnId } from "../src/hub.ts";
-import { PROTOCOL_VERSION, type ServerMessage } from "../src/protocol.ts";
 import { FakeClock } from "./clock.ts";
 
 /** A pretend browser: everything the server sends it is kept, in order. */

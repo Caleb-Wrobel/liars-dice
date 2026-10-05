@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { PROTOCOL_VERSION, parseClientMessage } from "../src/protocol.ts";
+import { PROTOCOL_VERSION } from "@liars-dice/engine";
+import { parseClientMessage } from "../src/protocol.ts";
 
 const msg = (extra: Record<string, unknown>) => ({ v: PROTOCOL_VERSION, ...extra });
 

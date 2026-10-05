@@ -1,38 +1,10 @@
 /**
  * The messages that cross the wire. What a client may send is untrusted, so this turns raw JSON into a typed message or
  * a reason it was refused, and checks shapes and sizes only; whether a name is acceptable, a room exists or a move is
- * legal is decided later, by the room logic and the engine. And what the server sends back. See docs/multiplayer.md
- * ("Protocol").
+ * legal is decided later, by the room logic and the engine. The message types themselves live in the engine, shared with
+ * the client. See docs/multiplayer.md ("Protocol").
  */
-import type { GameEvent, SeatView } from "@liars-dice/engine";
-import type { LobbyView } from "./rooms.ts";
-
-/**
- * What the table is told about absence, beside the game's own events: a seat's player dropped, came back, or was
- * replaced by a bot (they left, or the window ran out). Public, like every event.
- */
-export type PresenceEvent = { readonly type: "dropped" | "back" | "botTook"; readonly seat: number };
-export type RoomEvent = GameEvent | PresenceEvent;
-
-/** Bumped when the messages change in a way an old client could not follow. */
-export const PROTOCOL_VERSION = 1;
-
-export type ClientMessage =
-  | {
-      readonly type: "create";
-      readonly name: string;
-      readonly seats: number;
-      /** Lives each player starts with; the room logic decides what is acceptable. */
-      readonly lives?: number;
-      /** Advanced rules rather than basic. */
-      readonly advanced?: boolean;
-    }
-  | { readonly type: "join"; readonly code: string; readonly name: string }
-  | { readonly type: "resume"; readonly token: string }
-  | { readonly type: "start" }
-  /** The intent is passed on untouched: the engine's core checks its shape and its legality. */
-  | { readonly type: "intent"; readonly intent: unknown }
-  | { readonly type: "leave" };
+import { PROTOCOL_VERSION, type ClientMessage, type ServerBody, type ServerMessage } from "@liars-dice/engine";
 
 export type ParsedMessage =
   | { readonly ok: true; readonly message: ClientMessage }
@@ -87,31 +59,5 @@ export function parseClientMessage(raw: unknown): ParsedMessage {
   }
 }
 
-/**
- * What the server sends. Every message carries the protocol version. Each player is sent only their own view: the
- * state of the game as one seat may see it, never the whole game. See docs/multiplayer.md.
- */
-export type ServerMessage =
-  | {
-      readonly v: typeof PROTOCOL_VERSION;
-      readonly type: "joined";
-      readonly code: string;
-      /** The secret that proves this browser owns its place; the client keeps it to resume after a drop. */
-      readonly token: string;
-      /** This player's id in the lobby, to tell which entry is theirs and whether they are the host. */
-      readonly you: number;
-      readonly lobby: LobbyView;
-      /** Only when resuming into a game that has started: this seat's view of it, as it stands. */
-      readonly view?: SeatView;
-    }
-  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "lobby"; readonly lobby: LobbyView }
-  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "started"; readonly view: SeatView; readonly events: readonly RoomEvent[] }
-  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "state"; readonly view: SeatView; readonly events: readonly RoomEvent[] }
-  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "left" }
-  /** To an older connection when a newer one resumes the same place. The socket layer closes it after sending this. */
-  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "replaced" }
-  | { readonly v: typeof PROTOCOL_VERSION; readonly type: "error"; readonly code: string; readonly error: string };
-
-/** Distributes the version tag, so a message is written once without it. */
-export type ServerBody = ServerMessage extends infer M ? (M extends ServerMessage ? Omit<M, "v"> : never) : never;
+/** Builds a message to send: the body with the version tag in front. */
 export const serverMessage = (body: ServerBody): ServerMessage => ({ v: PROTOCOL_VERSION, ...body }) as ServerMessage;

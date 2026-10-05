@@ -250,6 +250,24 @@ describe("a bot taking over a seat", () => {
     expect(updates.length).toBeGreaterThan(0);
   });
 
+  it("shows in the seat kinds, and in every update after", () => {
+    const { match, clock, updates } = humanOnTurn(["Ann", "Bo"], 3);
+    expect(match.initial.kinds).toEqual(match.seats.map((s) => s.kind));
+    const first = match.view(1)!.available.length > 0 ? 1 : 2;
+    expect(humanMove(match, first)).toEqual({ ok: true }); // a person's move reports the kinds too
+    expect(updates.at(-1)!.kinds).toEqual(match.kinds);
+    expect(updates.at(-1)!.kinds.filter((k) => k === "human")).toHaveLength(2);
+    expect(match.kinds.filter((k) => k === "human")).toHaveLength(2);
+    const moves = updates.length;
+    const mover = match.view(1)!.available.length > 0 ? 1 : 2; // the one on turn, so the bot has a move to make
+    const seat = match.takeOver(mover)!;
+    expect(match.kinds[seat]).toBe("bot");
+    expect(match.kinds.filter((k) => k === "human")).toHaveLength(1);
+    clock.advance(120_000);
+    expect(updates.length).toBeGreaterThan(moves);
+    for (const u of updates.slice(moves)) expect(u.kinds).toEqual(match.kinds); // all after the takeover
+  });
+
   it("does nothing for someone who holds no seat, or has already given it up", () => {
     const { match } = humanOnTurn(["Ann", "Bo"], 3);
     expect(match.takeOver(99)).toBeUndefined();

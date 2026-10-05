@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PROTOCOL_VERSION } from "../src/protocol.ts";
+import { PROTOCOL_VERSION } from "@liars-dice/engine";
 import { lobbyOf, newHub, playIfOnTurn, playToEnd } from "./harness.ts";
 
 describe("creating and joining", () => {
@@ -135,6 +135,20 @@ describe("starting a game", () => {
     const late = client();
     late.send({ type: "join", code, name: "Late" });
     expect(late.last).toMatchObject({ type: "error", code: "started" });
+  });
+
+  it("tells every seat who holds each seat, and the viewer's own is a person", () => {
+    const { clients } = lobbyOf(["Ann", "Bo"], 5);
+    clients[0]!.send({ type: "start" });
+    for (const c of clients) {
+      const { kinds, view } = c.all("started")[0]!;
+      expect(kinds).toHaveLength(5);
+      expect(kinds.filter((k) => k === "human")).toHaveLength(2);
+      expect(kinds.filter((k) => k === "bot")).toHaveLength(3);
+      expect(kinds[view.you]).toBe("human");
+    }
+    const [a, b] = clients as [(typeof clients)[0], (typeof clients)[0]];
+    expect(a.all("started")[0]!.kinds).toEqual(b.all("started")[0]!.kinds);
   });
 
   it("starts with the host alone: the bots fill every other seat", () => {

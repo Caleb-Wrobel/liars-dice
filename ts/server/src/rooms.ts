@@ -1,4 +1,4 @@
-import { MAX_SEATS, MIN_SEATS, type Rng } from "@liars-dice/engine";
+import { MAX_SEATS, MIN_SEATS, type LobbyPlayer, type LobbyView, type PlayerId, type Rng } from "@liars-dice/engine";
 import { generateCode, normalizeCode } from "./codes.ts";
 import { cleanName } from "./names.ts";
 import { secureRng } from "./random.ts";
@@ -7,31 +7,6 @@ export const DEFAULT_MAX_ROOMS = 500;
 export const MIN_LIVES = 1;
 export const MAX_LIVES = 5;
 export const DEFAULT_LIVES = 3;
-
-/** Who is in a room, as far as the lobby is concerned. Not a seat: seats are dealt when the game starts. */
-export type PlayerId = number;
-
-export interface LobbyPlayer {
-  readonly id: PlayerId;
-  readonly name: string;
-}
-
-/** What everyone in a lobby is shown. */
-export interface LobbyView {
-  readonly code: string;
-  /** How many seats the host chose, humans and bots together. */
-  readonly capacity: number;
-  /** Whoever has been here longest. The host passes to the next person if they leave. */
-  readonly host: PlayerId;
-  /** In the order they joined. */
-  readonly players: readonly LobbyPlayer[];
-  /** How many seats a bot will fill if the game started now. */
-  readonly bots: number;
-  /** Lives each player starts with. */
-  readonly lives: number;
-  /** Advanced rules rather than basic. */
-  readonly advanced: boolean;
-}
 
 /** Everything a match needs from a lobby when the host starts the game. */
 export interface MatchSetup {
