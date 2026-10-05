@@ -1,5 +1,5 @@
 import { nextRank, seededRng, type SeatView } from "@liars-dice/engine";
-import { WebSocket } from "ws";
+import { WebSocket, type ClientOptions } from "ws";
 import { Hub } from "../src/hub.ts";
 import { PROTOCOL_VERSION, type ServerMessage } from "../src/protocol.ts";
 import { listen, type SocketServer } from "../src/socket.ts";
@@ -9,7 +9,13 @@ import { FakeClock } from "./clock.ts";
 export async function liveServer(seed = 1, hub?: Hub) {
   const clock = new FakeClock();
   const theHub = hub ?? new Hub({ rng: seededRng(seed), clock });
-  const server: SocketServer = await listen(theHub, { port: 0, host: "127.0.0.1" });
+  const server: SocketServer = await listen(theHub, {
+    port: 0,
+    host: "127.0.0.1",
+    // The harness sends a barrier at every step, far faster than any person would; the limit has tests of its own.
+    rateBurst: 1_000_000,
+    ratePerSecond: 1_000_000,
+  });
   return {
     hub: theHub,
     clock,
@@ -44,9 +50,9 @@ export class LiveClient {
     });
   }
 
-  static open(url: string): Promise<LiveClient> {
+  static open(url: string, options: ClientOptions = {}): Promise<LiveClient> {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(url);
+      const ws = new WebSocket(url, options);
       ws.once("open", () => resolve(new LiveClient(ws)));
       ws.once("error", reject);
     });
