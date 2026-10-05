@@ -132,7 +132,14 @@ Lobby --(host presses Start)--> Playing --(one player has lives left)--> Finishe
 
 JSON messages over a WebSocket. Every message has a `v` (protocol version, starting at 1) and a `type`. The server
 validates every incoming message against a schema (type, field types, string lengths, array sizes, integer ranges) and
-drops the connection on garbage or on anything oversized. Text that is not JSON closes it with code 1007, and a binary frame with 1003. Unknown versions are refused with an `error`.
+drops the connection on garbage or on anything oversized. Text that is not JSON closes it with code 1007, and a binary frame with 1003.
+
+**Limits at the socket**, so one bad client costs one connection: a message over 4 KiB closes it (1009); more than 20
+messages at once, or more than 5 a second on average, closes it (1008); a connection that has not answered the last
+ping, sent every 20 seconds, is cut, and the usual absence window then runs; and a browser whose `Origin` is not on the
+server's allowlist is refused with a 403 before the connection exists. A connection with no `Origin` is not a browser
+and is let in. The allowlist comes from the deployment and is empty by default, which refuses every browser. Behind a
+reverse proxy the `Origin` header is the browser's own, passed through, so the check does not depend on the source address. Unknown versions are refused with an `error`.
 
 Client to server:
 

@@ -6,3 +6,5 @@ export * from "./rooms.ts";
 export * from "./match.ts";
 export * from "./hub.ts";
 export * from "./socket.ts";
+export * from "./ratelimit.ts";
+export * from "./origin.ts";
