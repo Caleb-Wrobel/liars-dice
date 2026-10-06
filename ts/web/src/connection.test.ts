@@ -91,7 +91,19 @@ describe("Connection: opening", () => {
     r.now().open();
     expect(r.conn.status).toBe("open");
     expect(r.conn.send({ type: "join", code: "ABCD", name: "Sam" })).toBe(true);
-    expect(r.now().sent).toEqual([{ type: "join", code: "ABCD", name: "Sam" }]);
+    expect(r.now().sent).toEqual([{ v: PROTOCOL_VERSION, type: "join", code: "ABCD", name: "Sam" }]);
+  });
+
+  it("puts the protocol version on every message, which the server refuses to read without", () => {
+    const r = joinedRig();
+    r.conn.send({ type: "start" });
+    r.conn.send({ type: "intent", intent: { action: "pull" } });
+    r.now().drop();
+    vi.advanceTimersByTime(RETRY_FIRST_MS);
+    r.now().open(); // the resume goes out by itself
+    const all = [...r.sockets.flatMap((socket) => socket.sent)] as { v?: unknown; type: string }[];
+    expect(all.map((m) => m.type)).toEqual(["start", "intent", "resume"]);
+    for (const message of all) expect(message.v).toBe(PROTOCOL_VERSION);
   });
 
   it("refuses to send before the line is open", () => {
@@ -193,7 +205,7 @@ describe("Connection: reconnecting", () => {
     vi.advanceTimersByTime(1);
     expect(r.sockets).toHaveLength(2);
     r.now().open();
-    expect(r.now().sent).toEqual([{ type: "resume", token: "tok-1" }]);
+    expect(r.now().sent).toEqual([{ v: PROTOCOL_VERSION, type: "resume", token: "tok-1" }]);
     expect(r.conn.status).toBe("reconnecting"); // not ours again until the server says so
     r.now().say(joined());
     expect(r.conn.status).toBe("open");
@@ -208,7 +220,7 @@ describe("Connection: reconnecting", () => {
     expect(r.conn.send({ type: "start" })).toBe(false);
     r.now().open();
     expect(r.conn.send({ type: "start" })).toBe(false);
-    expect(r.now().sent).toEqual([{ type: "resume", token: "tok-1" }]); // only the resume
+    expect(r.now().sent).toEqual([{ v: PROTOCOL_VERSION, type: "resume", token: "tok-1" }]); // only the resume
     r.now().say(joined());
     expect(r.conn.send({ type: "start" })).toBe(true);
   });
@@ -381,7 +393,7 @@ describe("Connection: resuming with a token from before", () => {
     expect(r.conn.status).toBe("connecting");
     expect(r.conn.token).toBe("saved");
     r.now().open();
-    expect(r.now().sent).toEqual([{ type: "resume", token: "saved" }]);
+    expect(r.now().sent).toEqual([{ v: PROTOCOL_VERSION, type: "resume", token: "saved" }]);
     expect(r.conn.status).toBe("connecting");
     r.now().say(joined("fresh"));
     expect(r.conn.status).toBe("open");
