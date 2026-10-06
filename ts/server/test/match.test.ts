@@ -1,6 +1,6 @@
-import { BOT_PACE_MS, DECISION_BEAT, nextRank, seededRng, type SeatView } from "@liars-dice/engine";
+import { BOT_PACE_MS, DECISION_BEAT, nextRank, seededRng, type BotPace, type SeatView } from "@liars-dice/engine";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Match, botNames, realClock, type MatchUpdate } from "../src/match.ts";
+import { DEFAULT_PACE, Match, botNames, realClock, type MatchUpdate } from "../src/match.ts";
 import type { MatchSetup } from "../src/rooms.ts";
 import { FakeClock } from "./clock.ts";
 
@@ -16,10 +16,15 @@ const setupOf = (
   players: names.map((name, i) => ({ id: i + 1, name })),
 });
 
-function start(setup: MatchSetup, seed = 1) {
+function start(setup: MatchSetup, seed = 1, pace?: BotPace) {
   const clock = new FakeClock();
   const updates: MatchUpdate[] = [];
-  const match = new Match(setup, { rng: seededRng(seed), clock, onUpdate: (u) => updates.push(u) });
+  const match = new Match(setup, {
+    rng: seededRng(seed),
+    clock,
+    ...(pace === undefined ? {} : { pace }),
+    onUpdate: (u) => updates.push(u),
+  });
   return { match, clock, updates };
 }
 
@@ -124,13 +129,32 @@ describe("bots on the clock", () => {
     const { match, clock, updates } = botOpens();
     expect(clock.pending).toBe(1);
     expect(updates).toHaveLength(0);
-    clock.advance(BOT_PACE_MS.normal - 1); // the opener begins at the roll, which is not a decision
+    clock.advance(BOT_PACE_MS.slow - 1); // the opener begins at the roll, which is not a decision
     expect(updates).toHaveLength(0);
     clock.advance(1);
     expect(updates.length).toBeGreaterThan(0);
     clock.advance(60_000);
     expect(match.view(1)!.available.length).toBeGreaterThan(0); // it is Ann's turn
     expect(clock.pending).toBe(0); // nothing is waiting: a human is
+  });
+
+  it("are slow unless the match is given another pace", () => {
+    expect(DEFAULT_PACE).toBe("slow");
+    let checked = 0;
+    for (const pace of ["fast", "normal"] as const) {
+      for (let seed = 0; seed < 100; seed++) {
+        const { match, clock, updates } = start(setupOf(["Ann"], 3), seed, pace);
+        const opener = (match.initial.events[0] as { opener: number }).opener;
+        if (match.seats[opener]!.kind !== "bot") continue;
+        clock.advance(BOT_PACE_MS[pace] - 1);
+        expect(updates).toHaveLength(0);
+        clock.advance(1);
+        expect(updates.length).toBeGreaterThan(0); // an explicit pace wins, and is faster than the default
+        checked++;
+        break;
+      }
+    }
+    expect(checked).toBe(2); // a seed with a bot opening was found for each pace, so nothing was skipped
   });
 
   it("wait one and a half times as long before a decision as before a plain move", () => {
@@ -142,7 +166,7 @@ describe("bots on the clock", () => {
         for (const action of ["roll", "peek"]) expect(match.submit(1, { action })).toEqual({ ok: true });
         expect(match.submit(1, { action: "claim", rank: nextRank(match.view(1)!.claim)! })).toEqual({ ok: true });
         const count = updates.length;
-        clock.advance(BOT_PACE_MS.normal * DECISION_BEAT - 1);
+        clock.advance(BOT_PACE_MS.slow * DECISION_BEAT - 1);
         expect(updates.length).toBe(count);
         clock.advance(1);
         expect(updates.length).toBeGreaterThan(count);
