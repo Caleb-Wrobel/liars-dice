@@ -12,6 +12,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev": "npm run dev -w @liars-dice/web",
     "dev:lan": "npm run dev:lan -w @liars-dice/web",
+    "dev:server": "npm run build -w @liars-dice/server && ALLOWED_ORIGINS=\"${ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}\" npm run start -w @liars-dice/server",
     "build": "npm run build -w @liars-dice/web",
     "test:coverage": "npm run test:coverage --workspaces --if-present",
     "badges": "npm run test:coverage && node scripts/coverage-badges.mjs",
