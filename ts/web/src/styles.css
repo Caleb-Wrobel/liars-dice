@@ -260,3 +260,5 @@ legend { color: var(--muted); padding: 0 6px; }
 /* A line that says the connection is being won back; it sits above whichever screen is showing. */
 .banner { margin: 0; padding: 8px 16px; text-align: center; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
 .notice { align-content: start; }
+/* These headings take focus only so a screen reader starts at the top of a new screen. Nothing can be done at a heading, so a ring round it would be noise; every control keeps its ring. */
+.lobby h1:focus, .notice h1:focus { outline: none; }
