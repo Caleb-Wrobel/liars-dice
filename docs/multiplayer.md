@@ -18,6 +18,7 @@ built yet.** The work is tracked in the "Multiplayer (epic)" issue; each milesto
 | Host | Whoever creates a room. They set the table size and press Start. Nobody can join after Start. |
 | Seating | At Start everyone is shuffled into random seats, and the opener is random. |
 | Bots | Empty seats at Start are filled with bots. For now these are generic bots at normal difficulty. |
+| Bot pace | Slow: 3.2 s before a move and 1.5 times that before a decision. Nobody shares a screen, and a bot can take a seat in a game that began with only people. A room cannot choose a pace yet (#85). |
 | Dropped players | A player who stays disconnected for 60 seconds is replaced by a bot for the rest of the game. |
 | Authority | The server is authoritative. Clients send intents; each seat is sent only its own view. |
 | Chat, timers, rematch | None, for now. |

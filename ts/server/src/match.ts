@@ -35,11 +35,18 @@ export interface MatchUpdate {
   readonly kinds: readonly SeatKind[];
 }
 
+/**
+ * Bots online are slow by default. Nobody shares a screen, so each player follows the table in their own log, and a bot
+ * can take a seat in a game that began with only people (when someone drops), so a quick bot would read as a jolt
+ * whoever it replaced. Hot-seat keeps its own, faster default. A room cannot choose yet; see the pace issue on the tracker.
+ */
+export const DEFAULT_PACE: BotPace = "slow";
+
 export interface MatchOptions {
   /** Shuffles the seats and rolls the dice. The server uses secure randomness so dice cannot be predicted. */
   readonly rng: Rng;
   readonly clock: Clock;
-  /** How fast the bots move. Defaults to normal. */
+  /** How fast the bots move. Defaults to `DEFAULT_PACE`. */
   readonly pace?: BotPace;
   /** Called whenever the game moves on: a player's move, or a bot's. */
   readonly onUpdate: (update: MatchUpdate) => void;
@@ -176,7 +183,7 @@ export class Match {
     this.cancel();
     const game = this.core.game;
     if (this.stopped || game.winner !== null || !this.bots.has(game.current)) return;
-    const delay = botDelayMs(this.options.pace ?? "normal", game.step);
+    const delay = botDelayMs(this.options.pace ?? DEFAULT_PACE, game.step);
     this.timer = this.options.clock.setTimeout(() => this.botMove(), delay);
   }
 
