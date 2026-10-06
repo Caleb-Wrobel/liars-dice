@@ -1,6 +1,7 @@
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { PROTOCOL_VERSION } from "@liars-dice/engine";
+import { createServer, type AddressInfo } from "node:net";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import WebSocket from "ws";
 
@@ -86,7 +87,25 @@ function connect(
   });
 }
 
+/** A port nothing is using right now, found by asking the system for one and giving it back. */
+function freePort(): Promise<number> {
+  return new Promise((resolve) => {
+    const probe = createServer();
+    probe.listen(0, "127.0.0.1", () => {
+      const { port } = probe.address() as AddressInfo;
+      probe.close(() => resolve(port));
+    });
+  });
+}
+
 describe("the server, as started", () => {
+  it("listens on the port it was given", async () => {
+    const port = await freePort(); // every other test lets the system choose, which would hide a port that is ignored
+    const server = await start({ PORT: String(port) });
+    expect(server.port).toBe(port);
+    expect((await connect(port)).first).toMatchObject({ type: "joined" });
+  }, 30_000);
+
   it("serves the game to a client that is not a browser, and stops cleanly when told to", async () => {
     const server = await start({});
     const { first } = await connect(server.port);
