@@ -27,6 +27,7 @@ const baseView = (over: Partial<SeatView> = {}): SeatView => ({
 
 function fakeSession(view: SeatView, over: Partial<Session> = {}) {
   const session = {
+    local: true,
     view,
     seatKinds: ["human", "bot", "bot"],
     isHuman: (seat: number) => seat === 0,
@@ -59,6 +60,60 @@ function fakeSession(view: SeatView, over: Partial<Session> = {}) {
 
 const show = (session: Session) =>
   render(<TableView session={session} theme="saloon" onQuit={() => {}} onRematch={() => {}} />);
+
+describe("TableView, local or not", () => {
+  it("offers the bot pace and a new game for a local game", () => {
+    show(fakeSession(baseView()));
+    expect(screen.getByLabelText("Bot pace")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New game" })).toBeInTheDocument();
+  });
+
+  it("offers neither the pace nor a new game for a game that is not local, but a way to leave", () => {
+    show(fakeSession(baseView(), { local: false }));
+    expect(screen.queryByLabelText("Bot pace")).toBeNull();
+    expect(screen.queryByRole("button", { name: "New game" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Leave game" })).toBeInTheDocument();
+  });
+
+  it("offers no rematch for a game that is not local, even if the caller has one", () => {
+    const pulled = {
+      puller: 1,
+      claimer: 0,
+      claim: { category: Category.Pair, faces: [4], kicker: 0 },
+      dice: [1, 2, 3, 4, 5],
+      revealed: { category: Category.Pair, faces: [2], kicker: 0 },
+      claimTrue: false,
+      loser: 0,
+      eliminated: true,
+    };
+    const session = fakeSession(baseView({ winner: 1, available: [] }), { local: false, pulled });
+    render(<TableView session={session} theme="saloon" onQuit={() => {}} onRematch={() => {}} />);
+    expect(screen.queryByRole("button", { name: "Play again" })).toBeNull();
+    expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Leave game" })).toBeInTheDocument();
+  });
+
+  it("offers the rematch for a local game", () => {
+    const pulled = {
+      puller: 1,
+      claimer: 0,
+      claim: { category: Category.Pair, faces: [4], kicker: 0 },
+      dice: [1, 2, 3, 4, 5],
+      revealed: { category: Category.Pair, faces: [2], kicker: 0 },
+      claimTrue: false,
+      loser: 0,
+      eliminated: true,
+    };
+    show(fakeSession(baseView({ winner: 1, available: [] }), { pulled }));
+    expect(screen.getByRole("button", { name: "Play again" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change settings" })).toBeInTheDocument();
+  });
+
+  it("says it is the viewer's turn by the seat to move being the viewer's, not by it being a person's", () => {
+    // Bo is a person too, but the screen is Ann's, so nothing is offered while Bo is to move.
+    show(fakeSession(baseView({ current: 1, available: [] }), { isHuman: () => true, humanCount: 2 }));
+    expect(screen.queryByRole("button", { name: "Pull the cup" })).toBeNull();
+  });
+});
 
 describe("TableView over a Session", () => {
   it("never holds a game: the Session has no way to reach one", () => {
