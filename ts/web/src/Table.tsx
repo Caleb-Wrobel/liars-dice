@@ -104,8 +104,8 @@ export function TableView({
   theme: ThemeId;
   /** Back to the setup screen. */
   onQuit: () => void;
-  /** Start a fresh game with the same settings, keeping the bot pace as it is now. */
-  onRematch: (pace: Pace) => void;
+  /** Start a fresh game with the same settings, keeping the bot pace as it is now. Only a local game has one. */
+  onRematch?: (pace: Pace) => void;
 }) {
   const [showRules, setShowRules] = useState(false);
   const openRules = () => {
@@ -119,7 +119,9 @@ export function TableView({
   const { view } = s;
   // Only the viewer's own turn has any actions, so these are empty at other times.
   const available = view.available;
-  const myTurn = s.isHuman(view.current) && view.winner === null && s.pulled === null;
+  // The turn is mine when the seat to move is the one this screen is for. "A human is to move" would also hold when it
+  // is another person's turn at an online table; for a local game the two come to the same thing.
+  const myTurn = view.current === s.viewer && view.winner === null && s.pulled === null;
   const canArrange = myTurn && available.includes("rearrange");
 
   // The view already shows a face only where the viewer may see it, and null otherwise.
@@ -188,21 +190,23 @@ export function TableView({
           </div>
         ))}
         <div className="table-controls">
-          <label className="pace">
-            Bot pace
-            <select value={s.pace} onChange={(e) => s.setPace(e.target.value as Pace)}>
-              {PACES.map((p) => (
-                <option key={p} value={p}>
-                  {PACE_LABELS[p]}
-                </option>
-              ))}
-            </select>
-          </label>
+          {s.local && (
+            <label className="pace">
+              Bot pace
+              <select value={s.pace} onChange={(e) => s.setPace(e.target.value as Pace)}>
+                {PACES.map((p) => (
+                  <option key={p} value={p}>
+                    {PACE_LABELS[p]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <button type="button" className="link" onClick={openRules}>
             Rules
           </button>
           <button type="button" className="link" onClick={onQuit}>
-            New game
+            {s.local ? "New game" : "Leave game"}
           </button>
           <MotionToggle theme={theme} />
         </div>
@@ -342,7 +346,7 @@ export function TableView({
           final={view.winner !== null}
           reveal={s.levelReveal}
           onContinue={s.dismissPull}
-          onRematch={() => onRematch(s.pace)}
+          onRematch={s.local && onRematch ? () => onRematch(s.pace) : undefined}
           onQuit={onQuit}
         />
       )}

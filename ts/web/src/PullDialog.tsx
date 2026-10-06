@@ -18,7 +18,8 @@ export function PullDialog({
   /** At the end of a game with random bot levels: who was playing at which level. */
   reveal?: readonly { name: string; level: BotLevel }[];
   onContinue: () => void;
-  onRematch: () => void;
+  /** Absent when there is no rematch to offer, as at an online table; the way out is then the only button. */
+  onRematch?: (() => void) | undefined;
   onQuit: () => void;
 }) {
   const name = (i: number) => names[i]!;
@@ -48,11 +49,13 @@ export function PullDialog({
         )}
         {final ? (
           <div className="dialog-buttons">
-            <button type="button" className="primary" autoFocus onClick={onRematch}>
-              Play again
-            </button>
-            <button type="button" onClick={onQuit}>
-              Change settings
+            {onRematch && (
+              <button type="button" className="primary" autoFocus onClick={onRematch}>
+                Play again
+              </button>
+            )}
+            <button type="button" className={onRematch ? undefined : "primary"} autoFocus={!onRematch} onClick={onQuit}>
+              {onRematch ? "Change settings" : "Leave game"}
             </button>
           </div>
         ) : (

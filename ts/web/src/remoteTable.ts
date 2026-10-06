@@ -132,6 +132,11 @@ export class RemoteTable {
     this.set({ ...this.state, error: text });
   }
 
+  /** The player has moved on from the last error, as a local game does at the start of each action. */
+  clearError(): void {
+    if (this.state.error !== null) this.set({ ...this.state, error: null });
+  }
+
   private absorbed(events: readonly RoomEvent[], view: SeatView, firstRound: boolean, from: TableState): TableState {
     const lines = events.flatMap((event) => eventLines(event, view, firstRound));
     const pulls = events.flatMap((event): PullResult[] =>
