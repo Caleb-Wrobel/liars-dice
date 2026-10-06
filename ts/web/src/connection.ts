@@ -91,7 +91,7 @@ export class Connection {
    */
   send(message: ClientMessage): boolean {
     if (this.current !== "open" || this.socket === null) return false;
-    this.socket.send(JSON.stringify(message));
+    this.socket.send(onTheWire(message));
     return true;
   }
 
@@ -136,7 +136,7 @@ export class Connection {
   private opened(socket: SocketLike): void {
     if (this.saved === undefined) return this.set("open"); // a first visit: the owner sends create or join
     this.resuming = true;
-    socket.send(JSON.stringify({ type: "resume", token: this.saved } satisfies ClientMessage));
+    socket.send(onTheWire({ type: "resume", token: this.saved }));
   }
 
   private received(data: unknown): void {
@@ -173,6 +173,14 @@ export class Connection {
     const wait = Math.min(RETRY_MAX_MS, RETRY_FIRST_MS * 2 ** this.attempts++);
     this.retryTimer = setTimeout(() => this.connect(), wait * (0.5 + 0.5 * (this.options.rng ?? Math.random)()));
   }
+}
+
+/**
+ * A message as it goes to the server. Every message carries the protocol version, which the server checks first and
+ * refuses the rest without, so it is put on here, in the one place that writes to the socket.
+ */
+function onTheWire(message: ClientMessage): string {
+  return JSON.stringify({ v: PROTOCOL_VERSION, ...message });
 }
 
 /** What arrived, as a server message; or why not. The server is ours, so only the envelope is checked. */
