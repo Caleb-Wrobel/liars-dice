@@ -156,12 +156,19 @@ Server to client:
 
 | `type` | Fields | Notes |
 |---|---|---|
-| `joined` | `code`, `token`, `you`, `lobby`, `view`? | The token is a random secret the client keeps to resume. Resuming is answered with the same message; `view` is present when a game is on, and is that seat's view exactly as it stands. |
+| `joined` | `code`, `token`, `you`, `lobby`, `view`?, `kinds`? | The token is a random secret the client keeps to resume. Resuming is answered with the same message; `view` and `kinds` are present when a game is on: that seat's view exactly as it stands, and who holds each seat. |
 | `lobby` | `code`, `host`, `seats`, `players` | Names and open seats; the lobby also shows how many bots will fill the rest. |
-| `state` | `view`, `events` | After every accepted intent, each seat gets its own view and the public events. |
+| `started` | `view`, `kinds`, `events` | The host pressed Start: each seat's first view. |
+| `state` | `view`, `kinds`, `events` | After every accepted intent, each seat gets its own view and the public events. |
 | `error` | `code`, `message` | A rejected intent or request. The game state is unchanged. |
 | `replaced` | none | Sent to an older connection when a newer one resumes the same seat; the socket layer then closes it. |
 | `left` | none | Answers `leave`. |
+
+**`kinds`** says, in seat order, whether each seat is held by a `human` or a `bot`. It is public, like names, and changes
+when a bot takes a seat, so the table can mark bots the way its theme prefers.
+
+The message types are defined once, in the engine package (`ts/engine/src/protocol.ts`), and shared by the server and
+the browser; the server keeps the code that checks what a client sends.
 
 **Events** are the public log lines the table-talk list shows: who rearranged, rolled or peeked (never the result), who
 claimed what, who pulled and the revealed dice, who lost a life, who was eliminated, who dropped and who was replaced.

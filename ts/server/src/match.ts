@@ -9,10 +9,12 @@ import {
   shuffled,
   type BotPace,
   type GameEvent,
+  type PlayerId,
   type Rng,
+  type SeatKind,
   type SeatView,
 } from "@liars-dice/engine";
-import type { MatchSetup, PlayerId } from "./rooms.ts";
+import type { MatchSetup } from "./rooms.ts";
 
 /** Timers, so a test can run a whole game without waiting. The server uses the real one. */
 export interface Clock {
@@ -29,6 +31,8 @@ export const realClock: Clock = {
 export interface MatchUpdate {
   readonly events: readonly GameEvent[];
   readonly views: readonly SeatView[];
+  /** Who holds each seat at this moment. */
+  readonly kinds: readonly SeatKind[];
 }
 
 export interface MatchOptions {
@@ -100,7 +104,7 @@ export class Match {
       "random",
     );
     this.core = new Core(game);
-    this.initial = { events: [{ type: "round", opener: game.current }], views: this.core.views() };
+    this.initial = { events: [{ type: "round", opener: game.current }], views: this.core.views(), kinds: this.kinds };
     this.schedule();
   }
 
@@ -112,6 +116,11 @@ export class Match {
   /** The seat that has won, or null while the game is on. */
   get winner(): number | null {
     return this.core.game.winner;
+  }
+
+  /** Who holds each seat, in seat order. */
+  get kinds(): readonly SeatKind[] {
+    return this.seatList.map((s) => s.kind);
   }
 
   seatOf(player: PlayerId): number | undefined {
@@ -130,7 +139,7 @@ export class Match {
     if (seat === undefined) return { ok: false, error: "you are not in this game" };
     const res = this.core.apply(seat, intent);
     if (!res.ok) return res;
-    this.options.onUpdate({ events: res.events, views: res.views });
+    this.options.onUpdate({ events: res.events, views: res.views, kinds: this.kinds });
     this.schedule();
     return { ok: true };
   }
@@ -178,7 +187,7 @@ export class Match {
     if (this.stopped || bot === undefined) return;
     const res = this.core.stepBot(seat, bot);
     // A bot's quiet moves, like keeping its dice, change nothing anyone can see, so there is nothing to report.
-    if (res.ok && res.events.length > 0) this.options.onUpdate({ events: res.events, views: res.views });
+    if (res.ok && res.events.length > 0) this.options.onUpdate({ events: res.events, views: res.views, kinds: this.kinds });
     this.schedule();
   }
 }

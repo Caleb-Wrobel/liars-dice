@@ -1,15 +1,17 @@
-import type { BotPace, Rng } from "@liars-dice/engine";
+import type {
+  BotPace,
+  ClientMessage,
+  LobbyView,
+  PlayerId,
+  Rng,
+  RoomEvent,
+  ServerBody,
+  ServerMessage,
+} from "@liars-dice/engine";
 import { Match, type Clock, type MatchUpdate } from "./match.ts";
-import {
-  parseClientMessage,
-  serverMessage,
-  type ClientMessage,
-  type ServerBody,
-  type RoomEvent,
-  type ServerMessage,
-} from "./protocol.ts";
+import { parseClientMessage, serverMessage } from "./protocol.ts";
 import { newToken } from "./random.ts";
-import { RoomRegistry, type Entered, type LobbyView, type PlayerId } from "./rooms.ts";
+import { RoomRegistry, type Entered } from "./rooms.ts";
 
 export type ConnId = number;
 export type Send = (message: ServerMessage) => void;
@@ -179,7 +181,7 @@ export class Hub {
           token: member.token,
           you: member.player,
           lobby: this.registry.lobby(room.code)!,
-          ...(view === undefined ? {} : { view }),
+          ...(view === undefined ? {} : { view, kinds: room.match!.kinds }),
         });
         const seat = room.match?.seatOf(member.player);
         if (seat !== undefined) this.announce(room, [{ type: "back", seat }], member);
@@ -221,7 +223,7 @@ export class Hub {
     if (match === null) return;
     for (const m of room.members) {
       const view = match.view(m.player);
-      if (m !== except && view !== undefined) this.toMember(m, { type: "state", view, events });
+      if (m !== except && view !== undefined) this.toMember(m, { type: "state", view, kinds: match.kinds, events });
     }
   }
 
@@ -250,7 +252,7 @@ export class Hub {
     for (const m of room.members) {
       const seat = match.seatOf(m.player);
       if (seat === undefined) continue;
-      this.toMember(m, { type, view: update.views[seat]!, events: update.events });
+      this.toMember(m, { type, view: update.views[seat]!, kinds: update.kinds, events: update.events });
     }
   }
 
