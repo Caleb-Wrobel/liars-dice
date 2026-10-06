@@ -1,39 +1,7 @@
 import { PROTOCOL_VERSION, type ServerMessage } from "@liars-dice/engine";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Connection, GIVE_UP_MS, RETRY_FIRST_MS, RETRY_MAX_MS, type SocketLike, type Status } from "./connection.ts";
-
-class FakeSocket implements SocketLike {
-  onopen: ((event: Event) => unknown) | null = null;
-  onmessage: ((event: MessageEvent) => unknown) | null = null;
-  onclose: ((event: CloseEvent) => unknown) | null = null;
-  onerror: ((event: Event) => unknown) | null = null;
-  sent: unknown[] = [];
-  closedWith: number | null = null;
-  constructor(readonly url: string) {}
-  send(data: string) {
-    this.sent.push(JSON.parse(data));
-  }
-  close(code?: number) {
-    this.closedWith = code ?? 1005;
-    this.drop(code ?? 1005); // a real socket reports the close it was asked for, which the client must ignore
-  }
-  /** The line opens. */
-  open() {
-    this.onopen?.(new Event("open"));
-  }
-  /** The server says something. */
-  say(message: object) {
-    this.raw(JSON.stringify({ v: PROTOCOL_VERSION, ...message }));
-  }
-  /** The server sends exactly this, whatever it is. */
-  raw(data: unknown) {
-    this.onmessage?.(new MessageEvent("message", { data }));
-  }
-  /** The line drops, or the server closes it. */
-  drop(code = 1006) {
-    this.onclose?.(new CloseEvent("close", { code }));
-  }
-}
+import { Connection, GIVE_UP_MS, RETRY_FIRST_MS, RETRY_MAX_MS, type Status } from "./connection.ts";
+import { FakeSocket } from "./test-socket.ts";
 
 const joined = (token = "tok-1") => ({ type: "joined", code: "ABCD", token, you: 0, lobby: {} });
 

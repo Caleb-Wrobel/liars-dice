@@ -32,12 +32,45 @@ describe("OnlineTable", () => {
     expect(screen.getByRole("button", { name: "Leave game" })).toBeInTheDocument();
   });
 
-  it("gives up the seat before it goes back to the start", async () => {
+  it("asks before giving up the seat, with Stay as the way in", async () => {
+    const { sent, onQuit } = show(1);
+    await userEvent.click(screen.getByRole("button", { name: "Leave game" }));
+    const dialog = screen.getByRole("dialog", { name: "Leave this game?" });
+    expect(within(dialog).getByText(/A bot takes your seat, and you cannot take it back/)).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Stay" })).toHaveFocus();
+    expect(sent).toEqual([]);
+    expect(onQuit).not.toHaveBeenCalled();
+  });
+
+  it("stays, and sends nothing, when told to stay or when Escape is pressed", async () => {
+    const { sent, onQuit } = show(1);
+    await userEvent.click(screen.getByRole("button", { name: "Leave game" }));
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Stay" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Leave game" }));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(sent).toEqual([]);
+    expect(onQuit).not.toHaveBeenCalled();
+  });
+
+  it("gives up the seat before it goes back to the start, once the player has said so", async () => {
     const { sent, send, onQuit } = show(1);
     await userEvent.click(screen.getByRole("button", { name: "Leave game" }));
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Leave game" }));
     expect(sent).toEqual([{ type: "leave" }]);
     expect(onQuit).toHaveBeenCalledTimes(1);
     expect(send.mock.invocationCallOrder[0]!).toBeLessThan(onQuit.mock.invocationCallOrder[0]!);
+  });
+
+  it("leaves a finished game from the header without asking, since there is no seat left to give up", async () => {
+    const { s, tell, sent, onQuit } = show(2);
+    const res = s.ok(1, { action: "pull" });
+    tell({ v: PROTOCOL_VERSION, type: "state", view: { ...res.views[2]!, winner: 2 }, kinds: s.seatKinds, events: [] });
+    await userEvent.click(screen.getAllByRole("button", { name: "Leave game" })[0]!);
+    expect(screen.queryByRole("dialog", { name: "Leave this game?" })).toBeNull();
+    expect(sent).toEqual([{ type: "leave" }]);
+    expect(onQuit).toHaveBeenCalledTimes(1);
   });
 
   it("offers the actions on the viewer's own turn, and sends them to the server", async () => {

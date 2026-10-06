@@ -256,3 +256,7 @@ legend { color: var(--muted); padding: 0 6px; }
 .room-code-buttons { display: flex; flex-wrap: wrap; gap: var(--gap); justify-content: center; }
 .lobby-players { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
 .lobby-players li { padding: 8px 12px; border: 2px solid var(--control-edge); border-radius: var(--radius); background: var(--control-bg); color: var(--control-ink); }
+
+/* A line that says the connection is being won back; it sits above whichever screen is showing. */
+.banner { margin: 0; padding: 8px 16px; text-align: center; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.notice { align-content: start; }

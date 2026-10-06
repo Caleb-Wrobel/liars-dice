@@ -14,7 +14,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.test.{ts,tsx}", "src/test-setup.ts", "src/test-server.ts", "src/main.tsx", "src/vite-env.d.ts", "src/_preview*"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test-setup.ts", "src/test-server.ts", "src/test-socket.ts", "src/main.tsx", "src/vite-env.d.ts", "src/_preview*"],
       reporter: ["text", "json-summary"],
       // A floor, a little under today's numbers, so coverage cannot quietly slide.
       thresholds: { statements: 90, branches: 80, functions: 90, lines: 90 },
