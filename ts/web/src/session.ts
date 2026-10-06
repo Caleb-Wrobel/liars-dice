@@ -83,11 +83,31 @@ interface Seat {
 export type Tray = "visible" | "hidden";
 
 /**
+ * Whether a split with this many dice in the visible tray leaves something the rules let the player roll. It only
+ * spares the player a move that would be refused; the engine is still the judge. One copy, so a local game and an
+ * online one cannot disagree about it.
+ */
+export function arrangementAllowed(rules: Pick<SeatView["rules"], "rollOptional" | "rollable">, visibleCount: number): boolean {
+  return (
+    rules.rollOptional ||
+    rules.rollable.some((which) => (which === "hidden" ? NUM_DICE - visibleCount : visibleCount) > 0)
+  );
+}
+
+/** What to tell a player whose split was turned away by `arrangementAllowed`. */
+export const NO_HIDDEN_DIE = "Basic rules: leave at least one hidden die to roll.";
+
+/**
  * Everything the table draws from and asks of a game, with no `Game` in it: what the viewer may see (`view`) and the
  * things they can do. A local game implements it over the engine (`useSession`); an online one will implement it over
  * a connection, so the table never needs to know which it is talking to.
  */
 export interface Session {
+  /**
+   * Whether the game runs on this device. Only then is the bot pace the player's to set and a rematch theirs to start;
+   * online, the server sets the pace and a new game begins from the start screen.
+   */
+  readonly local: boolean;
   /** What the viewer may see of the game, redacted as a server would send it. The table draws from this alone. */
   readonly view: SeatView;
   /** Who sits where: a seat is a human or a bot. */
@@ -268,17 +288,13 @@ export function useSession(config: Config): LocalSession {
 
   const visibleSet: ReadonlySet<number> = draft ?? game.visible;
 
-  /** Whether this split leaves something the rules let the player roll. */
-  const arrangementAllowed = (visible: ReadonlySet<number>) =>
-    game.rules.rollOptional ||
-    game.rules.rollable.some((which) => (which === "hidden" ? NUM_DICE - visible.size : visible.size) > 0);
-
   const levelReveal =
     config.level === "random"
       ? game.names.flatMap((name, i) => (kinds[i] === "bot" ? [name] : [])).map((name, i) => ({ name, level: botLevels[i]! }))
       : undefined;
 
   return {
+    local: true,
     game,
     /** What the viewer may see; the table draws from this alone. */
     view: seatViewOf(game, viewer),
@@ -341,8 +357,8 @@ export function useSession(config: Config): LocalSession {
       const next = new Set(draft ?? game.visible);
       if (to === "visible") next.add(index);
       else next.delete(index);
-      if (!arrangementAllowed(next)) {
-        setError("Basic rules: leave at least one hidden die to roll.");
+      if (!arrangementAllowed(game.rules, next.size)) {
+        setError(NO_HIDDEN_DIE);
         return;
       }
       setError(null);
