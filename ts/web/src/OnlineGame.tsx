@@ -22,10 +22,7 @@ const ENDINGS: Partial<Record<Phase, (error: string | null) => { title: string; 
     title: "The game has been updated",
     text: "Reload the page to carry on. The server and this page no longer speak the same version.",
   }),
-  failed: (error) => ({
-    title: "Could not reach the game server",
-    text: error ? `${error} Check your connection and try again.` : "Check your connection and try again.",
-  }),
+  failed: () => ({ title: "Could not reach the game server", text: "Check your connection and try again." }),
   left: () => ({ title: "You left the room", text: "Go back to the start to play again." }),
 };
 

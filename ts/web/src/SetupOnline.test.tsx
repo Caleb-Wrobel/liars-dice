@@ -35,6 +35,7 @@ describe("Setup with a server", () => {
     expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
     expect(asks("Room code")).toBeNull();
     expect(asks("Seats")).toBeNull();
+    expect(screen.queryByText(/Empty seats are filled with bots/)).toBeNull();
   });
 
   it("still starts a local game from Solo", async () => {
@@ -95,6 +96,7 @@ describe("Setup with a server", () => {
       expect(screen.queryByRole("group", { name: "Rules" })).toBeNull();
       expect(screen.getByRole("button", { name: "Join room" })).toBeInTheDocument();
       expect(screen.getByText(/Four letters, like KTMR/)).toBeInTheDocument();
+      expect(screen.queryByText(/Empty seats are filled with bots/)).toBeNull();
     });
 
     it("joins with the code, in capitals, and the name", async () => {
@@ -123,6 +125,18 @@ describe("Setup with a server", () => {
       await user.click(screen.getByRole("button", { name: "Join room" }));
       expect(join.mock.calls[0]![0].code).toBe("BCDF");
     });
+  });
+
+  it("leaves the people who share this device behind when you switch to a room", async () => {
+    const { user } = show();
+    await user.selectOptions(screen.getByLabelText("Players"), "3");
+    expect(screen.getByRole("group", { name: "Other players" })).toBeInTheDocument();
+    for (const way of [/^Create a room/, /^Join a room/]) {
+      await user.click(mode(way));
+      expect(screen.queryByRole("group", { name: "Other players" })).toBeNull();
+    }
+    await user.click(mode(/^Solo/));
+    expect(screen.getByRole("group", { name: "Other players" })).toBeInTheDocument(); // and they are still there
   });
 
   it("opens on Join with the code in place when a link brought one, and does not join by itself", () => {

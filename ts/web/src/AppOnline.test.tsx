@@ -1,8 +1,9 @@
 import { PROTOCOL_VERSION } from "@liars-dice/engine";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App.tsx";
+import { server } from "./test-server.ts";
 import { FakeSocket } from "./test-socket.ts";
 
 const created: FakeSocket[] = [];
@@ -50,13 +51,15 @@ describe("App and the game server", () => {
     await user.clear(screen.getByLabelText("Your name"));
     await user.type(screen.getByLabelText("Your name"), "Sam");
     await user.selectOptions(screen.getByLabelText("Seats"), "5");
+    await user.selectOptions(screen.getByLabelText("Lives"), "2");
+    await user.click(screen.getByRole("radio", { name: /Advanced/ }));
     await user.click(screen.getByRole("button", { name: "Create room" }));
     expect(screen.getByRole("heading", { name: "Connecting…" })).toBeInTheDocument();
     expect(created.at(-1)!.url).toBe("ws://localhost:8787/ws");
     created.at(-1)!.open();
     await vi.waitFor(() =>
       expect(created.at(-1)!.sent).toEqual([
-        { v: PROTOCOL_VERSION, type: "create", name: "Sam", seats: 5, lives: 3, advanced: false },
+        { v: PROTOCOL_VERSION, type: "create", name: "Sam", seats: 5, lives: 2, advanced: true },
       ]),
     );
     await user.click(screen.getByRole("button", { name: "Cancel" }));
@@ -65,10 +68,10 @@ describe("App and the game server", () => {
 
   it("opens on Join with the code from a share link, and joins only when asked", async () => {
     vi.stubEnv("VITE_SERVER_URL", "ws://localhost:8787/ws");
-    window.history.replaceState(null, "", "/?join=ktmr");
+    window.history.replaceState(null, "", "/?join=bcdf");
     render(<App />);
     expect(screen.getByRole("radio", { name: /^Join a room/ })).toBeChecked();
-    expect(screen.getByLabelText("Room code")).toHaveValue("KTMR");
+    expect(screen.getByLabelText("Room code")).toHaveValue("BCDF");
     expect(created).toHaveLength(0); // nothing is opened by the link itself
     const user = userEvent.setup();
     await user.clear(screen.getByLabelText("Your name"));
@@ -77,9 +80,36 @@ describe("App and the game server", () => {
     expect(created).toHaveLength(1);
     created[0]!.open();
     await vi.waitFor(() =>
-      expect(created[0]!.sent).toEqual([{ v: PROTOCOL_VERSION, type: "join", code: "KTMR", name: "Alex" }]),
+      expect(created[0]!.sent).toEqual([{ v: PROTOCOL_VERSION, type: "join", code: "BCDF", name: "Alex" }]),
     );
     expect(window.location.search).toBe(""); // the link has done its work
+  });
+
+  it.each([
+    ["spooky", true],
+    ["saloon", false],
+  ])("carries the table style chosen on the setup page to the online table: %s", async (style, animated) => {
+    vi.stubEnv("VITE_SERVER_URL", "ws://localhost:8787/ws");
+    render(<App />);
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByLabelText("Table style"), style);
+    await user.click(screen.getByRole("radio", { name: /^Create a room/ }));
+    await user.click(screen.getByRole("button", { name: "Create room" }));
+    const socket = created.at(-1)!;
+    const s = server(1, ["Sam", "Bo", "Cy"]);
+    act(() => {
+      socket.open();
+      socket.say({
+        type: "joined",
+        code: "KTMR",
+        token: "t",
+        you: 1,
+        lobby: { code: "KTMR", capacity: 3, host: 1, players: [{ id: 1, name: "Sam" }], bots: 2, lives: 3, advanced: false },
+      });
+      socket.say(s.started(0) as object);
+    });
+    // Only some table styles move, and only those offer the control that stills the scenery.
+    expect(!!screen.queryByLabelText("Still scenery")).toBe(animated);
   });
 
   it("still plays a local game from Solo, with no connection made", async () => {
