@@ -26,8 +26,13 @@ npm run build            # the web client
 npm run test:slow        # engine strength sweeps; only when touching bot strength
 ```
 
-Typecheck and the tests must pass before you commit. When you add a test, break the thing it guards on purpose and
-check that the test fails, then restore it.
+Typecheck and the tests your change can reach must pass before you commit. When you add a test, break the thing it
+guards on purpose and check that the test fails, then restore it.
+
+Run only the tests your change can reach. `ts/server` and `ts/web` each depend on `ts/engine` and never on each other,
+so a server-only change needs `npm test -w @liars-dice/server`, and a web-only change needs
+`npm test -w @liars-dice/web`. A change to `ts/engine`, the shared protocol types included, can reach all three, so run
+them all. CI runs everything on every push. `test:coverage` runs the tests as well, so use it or `npm test`, not both.
 
 ## Git
 
