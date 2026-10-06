@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "rolldown src/main.ts --format esm --platform node --external ws --file dist/server.mjs",
+    "start": "node dist/server.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "test:coverage": "vitest run --coverage"
