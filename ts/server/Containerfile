@@ -1,0 +1,26 @@
+# The game server as a container: one JavaScript file on Node, for any architecture. Build it from the repository root:
+#
+#   podman build -f ts/server/Containerfile -t liars-dice-server .
+#
+# Nothing here names a machine. Where it listens and which websites may connect come from the environment when it runs
+# (PORT, HOST, WS_PATH, ALLOWED_ORIGINS; see ts/server/src/config.ts and docs/deploy.md).
+
+# The bundle is plain JavaScript, so it is built once, on the machine doing the build, whatever the architecture of
+# the image: the final stage below only copies it in, and there is nothing to compile for a second architecture.
+FROM --platform=$BUILDPLATFORM docker.io/library/node:22-slim AS build
+WORKDIR /src/ts
+COPY ts/ ./
+RUN npm ci --ignore-scripts && npm run build -w @liars-dice/server
+
+FROM docker.io/library/node:22-slim
+# Inside a container the server listens on every interface so that a proxy beside it can reach it. Who can reach the
+# container is the deployment's to decide, by what it publishes.
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=8787
+WORKDIR /app
+COPY --from=build /src/ts/server/dist/server.mjs ./server.mjs
+# ws is built into server.mjs, and its licence asks for its notice to travel with it.
+COPY LICENSE ./
+COPY ts/server/THIRD-PARTY-NOTICES.md ./
+USER node
+EXPOSE 8787
+CMD ["node", "server.mjs"]
