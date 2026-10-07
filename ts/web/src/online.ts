@@ -24,14 +24,25 @@ export interface JoinRequest {
 }
 
 /**
- * The address of the game server, from the build's `VITE_SERVER_URL`, or null when there is none or it is not a
- * WebSocket address. Without one the page offers only play on this device, which is also what a copy of the site
+ * The address of the game server, from the build's `VITE_SERVER_URL`, or null when there is none or it is neither of
+ * the two forms below. Without one the page offers only play on this device, which is also what a copy of the site
  * with no server behind it should do.
+ *
+ * - A WebSocket address, such as `ws://localhost:8787/ws`, for a server on a host of its own, as in development.
+ * - A path, such as `/ws`, for a server on the same host as the page: the page connects to its own origin, whatever
+ *   that is. A deployment that serves the site and the socket together needs no hostname in its build or in the
+ *   repository, and the same build works wherever it is served. A path that starts with two slashes is refused: it
+ *   would name another host.
  */
-export function serverUrl(raw: unknown = import.meta.env.VITE_SERVER_URL): string | null {
+export function serverUrl(
+  raw: unknown = import.meta.env.VITE_SERVER_URL,
+  here: Pick<Location, "protocol" | "host"> = window.location,
+): string | null {
   if (typeof raw !== "string") return null;
   const text = raw.trim();
-  return /^wss?:\/\/[^\s/]+(\/\S*)?$/.test(text) ? text : null;
+  if (/^wss?:\/\/[^\s/]+(\/\S*)?$/.test(text)) return text;
+  if (/^\/(?!\/)\S*$/.test(text)) return `${here.protocol === "https:" ? "wss:" : "ws:"}//${here.host}${text}`;
+  return null;
 }
 
 /**
