@@ -243,9 +243,13 @@ describe("OnlineGame: keeping the place across a reload", () => {
     expect(loadSeat()).toBeNull();
   });
 
-  it("does not let go of a place while it is still being asked for", () => {
+  it("does not let go of a place while it is still being asked for, whether the line is opening or the answer is awaited", () => {
     saveSeat({ token: "old", code: "AAAA" });
-    mount();
+    const m = mount();
+    expect(loadSeat()).toEqual({ token: "old", code: "AAAA" }); // the line is opening
+    m.open();
+    expect(screen.getByRole("heading", { name: "Connecting…" })).toBeInTheDocument();
+    expect(m.live().sent).toHaveLength(1); // the request is sent, and the answer is awaited
     expect(loadSeat()).toEqual({ token: "old", code: "AAAA" });
   });
 

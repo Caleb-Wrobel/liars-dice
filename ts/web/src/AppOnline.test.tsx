@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App.tsx";
 import { loadSeat, saveSeat } from "./roomStore.ts";
+import { saveTheme } from "./theme.ts";
 import { server } from "./test-server.ts";
 import { FakeSocket } from "./test-socket.ts";
 
@@ -137,6 +138,24 @@ describe("App and the game server", () => {
       expect(socket.sent).toEqual([{ v: PROTOCOL_VERSION, type: "resume", token: "tok" }]);
       act(() => socket.say({ type: "joined", code: "KTMR", token: "tok", you: 2, lobby }));
       expect(screen.getByRole("heading", { name: "Your room" })).toBeInTheDocument();
+    });
+
+    it.each([
+      ["spooky", true],
+      ["saloon", false],
+    ] as const)("keeps the table style it had: %s", (style, animated) => {
+      vi.stubEnv("VITE_SERVER_URL", "ws://localhost:8787/ws");
+      saveTheme(style);
+      saveSeat({ token: "tok", code: "KTMR" });
+      render(<App />);
+      const s = server(1, ["Ann", "Bo", "Cy"]);
+      const socket = created.at(-1)!;
+      act(() => {
+        socket.open();
+        socket.say({ type: "joined", code: "KTMR", token: "tok", you: 2, lobby, view: s.core.views()[1], kinds: s.seatKinds });
+      });
+      // Only some table styles move, and only those offer the control that stills the scenery.
+      expect(!!screen.queryByLabelText("Still scenery")).toBe(animated);
     });
 
     it("does not go back when the page was opened from a link to a room", () => {
