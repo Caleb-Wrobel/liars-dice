@@ -7,7 +7,7 @@ import { ConfigError, readConfig, type ServerConfig } from "./config.ts";
 import { Hub } from "./hub.ts";
 import { realClock } from "./match.ts";
 import { secureRng } from "./random.ts";
-import { listen } from "./socket.ts";
+import { listen, type SocketServer } from "./socket.ts";
 
 let config: ServerConfig;
 try {
@@ -19,7 +19,19 @@ try {
 }
 
 const hub = new Hub({ rng: secureRng, clock: realClock });
-const server = await listen(hub, {
+
+// Stopping is set up before the server starts listening, and so before the line that says it is: that line is what a
+// supervisor, or a test, waits for before it sends a stop signal, and a signal that came before this was in place
+// would kill the process outright instead of closing it cleanly. One that comes while it is still starting finds no
+// server yet and just exits.
+let server: SocketServer | undefined;
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, () => {
+    void (server?.close() ?? Promise.resolve()).then(() => process.exit(0));
+  });
+}
+
+server = await listen(hub, {
   port: config.port,
   host: config.host,
   path: config.path,
@@ -29,10 +41,4 @@ const server = await listen(hub, {
 console.log(`liars-dice server listening on ${config.host}:${server.port}${config.path}`);
 if (config.allowedOrigins.length === 0) {
   console.warn("ALLOWED_ORIGINS is empty, so no browser can connect. Set it to the website's origin, such as https://example.org.");
-}
-
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.on(signal, () => {
-    void server.close().then(() => process.exit(0));
-  });
 }

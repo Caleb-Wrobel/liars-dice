@@ -1,6 +1,7 @@
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { PROTOCOL_VERSION } from "@liars-dice/engine";
+import { readFileSync } from "node:fs";
 import { createServer, type AddressInfo } from "node:net";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import WebSocket from "ws";
@@ -97,6 +98,19 @@ function freePort(): Promise<number> {
     });
   });
 }
+
+describe("the server's start-up order", () => {
+  // A stop signal that arrives between the server saying it is listening and the handlers being set up kills the
+  // process outright. That window is a few microseconds wide, so it cannot be hit on purpose; the order that closes it
+  // is checked here instead, in the source.
+  it("sets up stopping before it listens, and so before it says it is listening", () => {
+    const source = readFileSync(fileURLToPath(new URL("../src/main.ts", import.meta.url)), "utf8");
+    const handlers = source.indexOf('process.on(signal');
+    expect(handlers).toBeGreaterThan(-1);
+    expect(handlers).toBeLessThan(source.indexOf("await listen("));
+    expect(handlers).toBeLessThan(source.indexOf("listening on"));
+  });
+});
 
 describe("the server, as started", () => {
   it("listens on the port it was given", async () => {
