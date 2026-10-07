@@ -3,6 +3,7 @@ import { BOT_LEVEL_NAMES } from "@liars-dice/engine";
 import { ExternalLink } from "./ExternalLink.tsx";
 import { COPYRIGHT, FEEDBACK_URL, LICENSE_URL, NOTICES_URL, REPO_URL } from "./links.ts";
 import { MeetDialog } from "./MeetDialog.tsx";
+import type { OnlineEntry } from "./online.ts";
 import { pickPlayerName } from "./playerNames.ts";
 import { RulesDialog } from "./RulesDialog.tsx";
 import { BOT_NAMES, MAX_SEATS, type Config, type LevelChoice, type Pace } from "./session.ts";
@@ -18,7 +19,9 @@ const LEVEL_BLURBS: Record<LevelChoice, string> = {
 
 const LEVEL_CHOICES: readonly LevelChoice[] = [...BOT_LEVEL_NAMES, "random"];
 
-export function Setup({ onStart }: { onStart: (config: Config) => void }) {
+type Mode = "solo" | "create" | "join";
+
+export function Setup({ onStart, online }: { onStart: (config: Config) => void; online?: OnlineEntry }) {
   const [theme, setTheme] = useState<ThemeId>(() => loadTheme());
   // A random name from the table style's pool, until the player types their own.
   const [name, setName] = useState(() => pickPlayerName(theme));
@@ -37,6 +40,11 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
   const [paceChosen, setPaceChosen] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [showMeet, setShowMeet] = useState(false);
+  // Online play is offered only when there is a server to play on. A share link starts the page on Join.
+  const [mode, setMode] = useState<Mode>(online?.initialCode ? "join" : "solo");
+  const [seats, setSeats] = useState(4);
+  const [code, setCode] = useState(online?.initialCode ?? "");
+  const solo = mode === "solo";
 
   // A lone human needs a bot to play against, and a table seats at most MAX_SEATS, humans and bots together.
   const minBots = humans === 1 ? 1 : 0;
@@ -63,6 +71,12 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          if (online && mode === "create") {
+            return online.create({ name: name.trim() || pickPlayerName(theme), seats, lives, advanced, theme });
+          }
+          if (online && mode === "join") {
+            return online.join({ name: name.trim() || pickPlayerName(theme), code: code.trim(), theme });
+          }
           onStart({
             name: name.trim() || pickPlayerName(theme),
             lives,
@@ -76,6 +90,29 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
           });
         }}
       >
+        {online && (
+          <fieldset className="mode">
+            <legend>How do you want to play?</legend>
+            <label className="choice">
+              <input type="radio" name="mode" checked={solo} onChange={() => setMode("solo")} />
+              <span>
+                <strong>Solo</strong>: against bots, or share this device.
+              </span>
+            </label>
+            <label className="choice">
+              <input type="radio" name="mode" checked={mode === "create"} onChange={() => setMode("create")} />
+              <span>
+                <strong>Create a room</strong>: play with people online. You get a code to share.
+              </span>
+            </label>
+            <label className="choice">
+              <input type="radio" name="mode" checked={mode === "join"} onChange={() => setMode("join")} />
+              <span>
+                <strong>Join a room</strong>: you have a code from someone.
+              </span>
+            </label>
+          </fieldset>
+        )}
         <div className="who-row">
           <label>
             Your name
@@ -89,51 +126,92 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
             />
           </label>
           <div className="field-row compact">
-            <label>
-              Lives
-              <select className="digit" value={lives} onChange={(e) => setLives(Number(e.target.value))}>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Players
-              <select className="digit" value={humans} onChange={(e) => setHumans(Number(e.target.value))}>
-                {Array.from({ length: MAX_SEATS }, (_, i) => (
-                  <option key={i} value={i + 1}>
-                    {i + 1}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Bots
-              <select className="digit" value={bots} onChange={(e) => setOpponents(Number(e.target.value))}>
-                {botChoices.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="choice characters">
-              <input
-                type="checkbox"
-                checked={characters}
-                aria-describedby="characters-hint"
-                onChange={(e) => {
-                  setCharacters(e.target.checked);
-                  if (!paceChosen) setPace(e.target.checked ? "slow" : "normal");
-                }}
-              />
-              <span>Use Characters</span>
-            </label>
+            {mode !== "join" && (
+              <label>
+                Lives
+                <select className="digit" value={lives} onChange={(e) => setLives(Number(e.target.value))}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {mode === "create" && (
+              <label>
+                Seats
+                <select className="digit" value={seats} onChange={(e) => setSeats(Number(e.target.value))}>
+                  {Array.from({ length: MAX_SEATS - 1 }, (_, i) => (
+                    <option key={i} value={i + 2}>
+                      {i + 2}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {solo && (
+              <>
+                <label>
+                  Players
+                  <select className="digit" value={humans} onChange={(e) => setHumans(Number(e.target.value))}>
+                    {Array.from({ length: MAX_SEATS }, (_, i) => (
+                      <option key={i} value={i + 1}>
+                        {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Bots
+                  <select className="digit" value={bots} onChange={(e) => setOpponents(Number(e.target.value))}>
+                    {botChoices.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="choice characters">
+                  <input
+                    type="checkbox"
+                    checked={characters}
+                    aria-describedby="characters-hint"
+                    onChange={(e) => {
+                      setCharacters(e.target.checked);
+                      if (!paceChosen) setPace(e.target.checked ? "slow" : "normal");
+                    }}
+                  />
+                  <span>Use Characters</span>
+                </label>
+              </>
+            )}
           </div>
         </div>
-        {humans > 1 && (
+        {mode === "create" && (
+          <p className="hint">Seats count people and bots together. Empty seats are filled with bots when you start.</p>
+        )}
+        {mode === "join" && (
+          <>
+            <label>
+              Room code
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                maxLength={8}
+                required
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
+                aria-describedby="code-hint"
+              />
+            </label>
+            <p id="code-hint" className="hint">
+              Four letters, like KTMR. Spaces and small letters are fine.
+            </p>
+          </>
+        )}
+        {solo && humans > 1 && (
           <fieldset className="other-players">
             <legend>Other players</legend>
             {others.map((other, i) => (
@@ -153,61 +231,67 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
             </p>
           </fieldset>
         )}
-        <p id="characters-hint" className="hint">
-          {characters
-            ? "Your opponents are characters from this table, each with habits of their own."
-            : "Your opponents are plain bots at the level you pick."}
-        </p>
-        <div className="field-row">
-          <label>
-            Bot level
-            <select
-              value={level}
-              aria-describedby="level-hint"
-              onChange={(e) => setLevel(e.target.value as LevelChoice)}
-            >
-              {LEVEL_CHOICES.map((name) => (
-                <option key={name} value={name}>
-                  {name[0]!.toUpperCase() + name.slice(1)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Bot pace
-            <select
-              value={pace}
-              onChange={(e) => {
-                setPace(e.target.value as Pace);
-                setPaceChosen(true);
-              }}
-            >
-              <option value="fast">Fast</option>
-              <option value="normal">Normal</option>
-              <option value="slow">Slow, so you can watch</option>
-              <option value="step">Step by step, you press Next move</option>
-            </select>
-          </label>
-          <p id="level-hint" className="hint">
-            {LEVEL_BLURBS[level]}
-          </p>
-        </div>
-        <fieldset>
-          <legend>Rules</legend>
-          <label className="choice">
-            <input type="radio" name="rules" checked={!advanced} onChange={() => setAdvanced(false)} />
-            <span>
-              <strong>Basic</strong>: you always roll the hidden dice, then peek at the result.
-            </span>
-          </label>
-          <label className="choice">
-            <input type="radio" name="rules" checked={advanced} onChange={() => setAdvanced(true)} />
-            <span>
-              <strong>Advanced</strong>: roll either set, or skip the roll, or skip the peek. Fewer rules, more
-              mischief.
-            </span>
-          </label>
-        </fieldset>
+        {solo && (
+          <>
+            <p id="characters-hint" className="hint">
+              {characters
+                ? "Your opponents are characters from this table, each with habits of their own."
+                : "Your opponents are plain bots at the level you pick."}
+            </p>
+            <div className="field-row">
+              <label>
+                Bot level
+                <select
+                  value={level}
+                  aria-describedby="level-hint"
+                  onChange={(e) => setLevel(e.target.value as LevelChoice)}
+                >
+                  {LEVEL_CHOICES.map((name) => (
+                    <option key={name} value={name}>
+                      {name[0]!.toUpperCase() + name.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Bot pace
+                <select
+                  value={pace}
+                  onChange={(e) => {
+                    setPace(e.target.value as Pace);
+                    setPaceChosen(true);
+                  }}
+                >
+                  <option value="fast">Fast</option>
+                  <option value="normal">Normal</option>
+                  <option value="slow">Slow, so you can watch</option>
+                  <option value="step">Step by step, you press Next move</option>
+                </select>
+              </label>
+              <p id="level-hint" className="hint">
+                {LEVEL_BLURBS[level]}
+              </p>
+            </div>
+          </>
+        )}
+        {mode !== "join" && (
+          <fieldset>
+            <legend>Rules</legend>
+            <label className="choice">
+              <input type="radio" name="rules" checked={!advanced} onChange={() => setAdvanced(false)} />
+              <span>
+                <strong>Basic</strong>: you always roll the hidden dice, then peek at the result.
+              </span>
+            </label>
+            <label className="choice">
+              <input type="radio" name="rules" checked={advanced} onChange={() => setAdvanced(true)} />
+              <span>
+                <strong>Advanced</strong>: roll either set, or skip the roll, or skip the peek. Fewer rules, more
+                mischief.
+              </span>
+            </label>
+          </fieldset>
+        )}
         <div className="field-row">
           <label>
             Table style
@@ -235,7 +319,7 @@ export function Setup({ onStart }: { onStart: (config: Config) => void }) {
         </div>
         <MotionToggle theme={theme} />
         <button type="submit" className="primary">
-          Play
+          {mode === "create" ? "Create room" : mode === "join" ? "Join room" : "Play"}
         </button>
       </form>
       <footer className="setup-footer">
