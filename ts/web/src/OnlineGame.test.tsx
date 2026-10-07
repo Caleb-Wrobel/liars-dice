@@ -2,9 +2,10 @@ import { PROTOCOL_VERSION, type ClientMessage, type LobbyView } from "@liars-dic
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { RETRY_FIRST_MS } from "./connection.ts";
 import { OnlineGame } from "./OnlineGame.tsx";
+import { loadSeat, saveSeat } from "./roomStore.ts";
 import { server } from "./test-server.ts";
 import { FakeSocket } from "./test-socket.ts";
 
@@ -28,8 +29,10 @@ const joined = (you: number, lobby: LobbyView, more: object = {}) => ({
   ...more,
 });
 
+afterEach(() => window.sessionStorage.clear());
+
 /** The whole visit, through the real hook and the real connection, over a socket the test works by hand. */
-function mount(options: { request?: ClientMessage; strict?: boolean } = {}) {
+function mount(options: { request?: ClientMessage | null; token?: string; strict?: boolean } = {}) {
   const sockets: FakeSocket[] = [];
   const open = (url: string) => {
     const socket = new FakeSocket(url);
@@ -38,7 +41,14 @@ function mount(options: { request?: ClientMessage; strict?: boolean } = {}) {
   };
   const onQuit = vi.fn();
   const game = (
-    <OnlineGame url="ws://test/ws" request={options.request ?? JOIN} theme="saloon" onQuit={onQuit} open={open} />
+    <OnlineGame
+      url="ws://test/ws"
+      request={options.request === undefined ? JOIN : options.request}
+      {...(options.token === undefined ? {} : { token: options.token })}
+      theme="saloon"
+      onQuit={onQuit}
+      open={open}
+    />
   );
   const view = render(options.strict ? <StrictMode>{game}</StrictMode> : game);
   const live = () => sockets[sockets.length - 1]!;
@@ -190,6 +200,84 @@ describe("OnlineGame: a dropped line", () => {
     m.tell({ type: "error", code: "unknown_token", error: "that place is no longer yours" });
     expect(screen.getByRole("heading", { name: "Disconnected" })).toBeInTheDocument();
     expect(screen.getByText(/A bot has taken it/)).toBeInTheDocument();
+  });
+});
+
+describe("OnlineGame: keeping the place across a reload", () => {
+  it("keeps the place in the tab once the server has confirmed it, and not before", () => {
+    const m = mount();
+    m.open();
+    expect(loadSeat()).toBeNull();
+    m.tell(joined(2, lobbyOf([[1, "Sam"], [2, "Alex"]])));
+    expect(loadSeat()).toEqual({ token: "tok", code: "KTMR" });
+  });
+
+  it("keeps it through the game too", () => {
+    const s = server(1, ["Ann", "Bo", "Cy"]);
+    const m = inLobby();
+    m.tell(s.started(1));
+    expect(loadSeat()).toEqual({ token: "tok", code: "KTMR" });
+  });
+
+  it.each([
+    ["the server says it was replaced", (m: ReturnType<typeof inLobby>) => m.tell({ type: "replaced" })],
+    ["the server says the player left", (m: ReturnType<typeof inLobby>) => m.tell({ type: "left" })],
+    ["the versions no longer match", (m: ReturnType<typeof inLobby>) => act(() => m.live().raw(JSON.stringify({ v: 99, type: "state" })))],
+  ])("lets go of the place when %s", (_how, end) => {
+    const m = inLobby();
+    expect(loadSeat()).not.toBeNull();
+    end(m);
+    expect(loadSeat()).toBeNull();
+  });
+
+  it("lets go of a place from before when the visit it began is refused or cannot start", () => {
+    saveSeat({ token: "old", code: "AAAA" });
+    const refused = mount();
+    refused.open();
+    refused.tell({ type: "error", code: "no_room", error: "there is no room with that code" });
+    expect(loadSeat()).toBeNull();
+
+    saveSeat({ token: "old", code: "AAAA" });
+    const failed = mount();
+    failed.drop();
+    expect(loadSeat()).toBeNull();
+  });
+
+  it("does not let go of a place while it is still being asked for, whether the line is opening or the answer is awaited", () => {
+    saveSeat({ token: "old", code: "AAAA" });
+    const m = mount();
+    expect(loadSeat()).toEqual({ token: "old", code: "AAAA" }); // the line is opening
+    m.open();
+    expect(screen.getByRole("heading", { name: "Connecting…" })).toBeInTheDocument();
+    expect(m.live().sent).toHaveLength(1); // the request is sent, and the answer is awaited
+    expect(loadSeat()).toEqual({ token: "old", code: "AAAA" });
+  });
+
+  it("claims a place back: sends only the resume, says it is getting back in, and arrives in the lobby", () => {
+    const m = mount({ request: null, token: "tok" });
+    expect(screen.getByRole("heading", { name: "Connecting…" })).toBeInTheDocument();
+    expect(screen.getByText("Getting back into your room.")).toBeInTheDocument();
+    m.open();
+    expect(m.live().sent).toEqual([{ v: PROTOCOL_VERSION, type: "resume", token: "tok" }]);
+    m.tell(joined(2, lobbyOf([[1, "Sam"], [2, "Alex"]])));
+    expect(screen.getByRole("heading", { name: "Your room" })).toBeInTheDocument();
+  });
+
+  it("claims a place back into a game that is on", () => {
+    const s = server(1, ["Ann", "Bo", "Cy"]);
+    const m = mount({ request: null, token: "tok" });
+    m.open();
+    m.tell(joined(2, lobbyOf([[1, "Sam"], [2, "Alex"]]), { view: s.core.views()[1], kinds: s.seatKinds }));
+    for (const name of ["Ann", "Bo", "Cy"]) expect(screen.getByText(name)).toBeInTheDocument();
+  });
+
+  it("says so, and lets the place go, when the server no longer knows it", () => {
+    saveSeat({ token: "tok", code: "KTMR" });
+    const m = mount({ request: null, token: "tok" });
+    m.open();
+    m.tell({ type: "error", code: "unknown_token", error: "that place is no longer yours" });
+    expect(screen.getByRole("heading", { name: "Disconnected" })).toBeInTheDocument();
+    expect(loadSeat()).toBeNull();
   });
 });
 

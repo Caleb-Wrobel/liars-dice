@@ -51,15 +51,18 @@ export function OnlineGame({
   theme,
   onQuit,
   open,
+  token,
 }: {
   url: string;
-  request: ClientMessage;
+  /** The create or join to send, or null when `token` is a place from before a reload to claim back. */
+  request: ClientMessage | null;
   theme: ThemeId;
   /** Back to the start screen. */
   onQuit: () => void;
   open?: (url: string) => SocketLike;
+  token?: string;
 }) {
-  const { client, state, send } = useRoom(url, request, open);
+  const { client, state, send } = useRoom(url, request, { ...(open ? { open } : {}), ...(token === undefined ? {} : { token }) });
   const banner = state.reconnecting ? (
     <p role="status" className="banner">
       Connection lost. Trying to get back…
@@ -71,7 +74,7 @@ export function OnlineGame({
     case "joining":
       return (
         <Notice title="Connecting…">
-          <p role="status">Reaching the game server.</p>
+          <p role="status">{request === null ? "Getting back into your room." : "Reaching the game server."}</p>
           <button type="button" onClick={onQuit}>
             Cancel
           </button>
