@@ -47,7 +47,12 @@ jobs:
       # default github.io address and at the root of a custom domain, so changing the address never needs a rebuild
       # with a different base. The flag must be passed to the web workspace directly: through the root build script it
       # is silently dropped and the page comes out blank.
+      # Where the game server is, if there is one. It is set as the repository variable GAME_SERVER_URL on the repository
+      # that serves the public site, so the address is a setting and not a file. Unset, as on a copy with no server, the
+      # build offers only play on this device. The address is public by nature: it ends up in the page.
       - name: Build the web app
+        env:
+          VITE_SERVER_URL: ${{ vars.GAME_SERVER_URL }}
         run: npm run build -w @liars-dice/web -- --base=./
 
       # Fail here, not on the live site, if the links came out absolute and so would break at one of those addresses.
