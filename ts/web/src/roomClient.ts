@@ -5,7 +5,8 @@ import { RemoteTable } from "./remoteTable.ts";
 /**
  * Where a player is, from asking for a room to the end of the game, kept as the server's messages and the connection's
  * status come in. It sends the first request itself, once, when the line first opens; after that the connection
- * resumes by token, so nothing is sent twice. It has no React in it, and `getState` and `subscribe` have the shape
+ * resumes by token, so nothing is sent twice. With no request at all it is resuming a place from before a reload: the
+ * connection sends the resume, and this only waits to be told where the player is. It has no React in it, and `getState` and `subscribe` have the shape
  * `useSyncExternalStore` wants, as `RemoteTable` does. Once a game starts, what happens in it belongs to the
  * `RemoteTable` this makes, and this only passes the messages on.
  */
@@ -80,10 +81,10 @@ export class RoomClient {
   private requested = false;
   private readonly listeners = new Set<() => void>();
 
-  /** `request` is the create or join message to send when the line first opens. */
+  /** `request` is the create or join message to send when the line first opens, or null when resuming. */
   constructor(
     private readonly send: (message: ClientMessage) => boolean,
-    private readonly request: ClientMessage,
+    private readonly request: ClientMessage | null,
   ) {}
 
   getState = (): RoomState => this.state;
@@ -103,7 +104,7 @@ export class RoomClient {
         if (!this.requested) {
           this.requested = true;
           this.update({ phase: "joining" });
-          if (!this.send(this.request)) this.update({ phase: "failed", error: "Not connected." });
+          if (this.request !== null && !this.send(this.request)) this.update({ phase: "failed", error: "Not connected." });
         } else if (this.state.reconnecting) {
           this.update({ reconnecting: false });
         }
@@ -180,7 +181,8 @@ export class RoomClient {
       case "error":
         if (this.state.table !== null) this.state.table.receive(message);
         else if (this.state.phase === "connecting" || this.state.phase === "joining") {
-          this.update({ phase: "refused", error: message.error });
+          // A refusal of a resume is not a room turning someone away: the place is gone.
+          this.update({ phase: this.request === null ? "lost" : "refused", error: message.error });
         } else this.update({ error: message.error });
         return;
       case "replaced":

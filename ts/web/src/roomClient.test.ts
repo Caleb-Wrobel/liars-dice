@@ -100,6 +100,51 @@ describe("RoomClient: asking for a room", () => {
   });
 });
 
+describe("RoomClient: resuming a place from before a reload", () => {
+  const resumed = () => {
+    const sent: ClientMessage[] = [];
+    const client = new RoomClient((m) => (sent.push(m), true), null);
+    return { client, sent, state: () => client.getState() };
+  };
+
+  it("sends nothing of its own when the line opens: the connection sends the resume", () => {
+    const { client, sent, state } = resumed();
+    client.setStatus("open");
+    expect(sent).toEqual([]);
+    expect(state().phase).toBe("joining");
+  });
+
+  it("goes to the lobby when the place is a lobby, knowing who it is and whether it hosts", () => {
+    const { client, state } = resumed();
+    client.setStatus("open");
+    client.receive(joined(1, lobbyOf([[1, "Sam"], [2, "Alex"]])));
+    expect(state()).toMatchObject({ phase: "lobby", code: "KTMR", you: 1, host: true });
+    expect(state().news).toEqual([]);
+  });
+
+  it("goes into the game when the place is in one", () => {
+    const s = server();
+    const { client, state } = resumed();
+    client.setStatus("open");
+    client.receive(joined(2, lobbyOf([[1, "Sam"], [2, "Alex"]]), { view: s.core.views()[1], kinds: s.seatKinds }));
+    expect(state().phase).toBe("playing");
+    expect(state().table!.getState().view).toEqual(s.core.views()[1]);
+  });
+
+  it("says the place is lost, not that a room turned it away, when the server no longer knows the token", () => {
+    const { client, state } = resumed();
+    client.setStatus("open");
+    client.receive(say({ type: "error", code: "unknown_token", error: "that place is no longer yours" }));
+    expect(state()).toMatchObject({ phase: "lost", error: "that place is no longer yours" });
+  });
+
+  it("says the same if the answer comes before the line has been reported open", () => {
+    const { client, state } = resumed();
+    client.receive(say({ type: "error", code: "unknown_token", error: "gone" }));
+    expect(state().phase).toBe("lost");
+  });
+});
+
 describe("RoomClient: the lobby", () => {
   it("follows the lobby, and says who came and went", () => {
     const { client, state } = inLobby();

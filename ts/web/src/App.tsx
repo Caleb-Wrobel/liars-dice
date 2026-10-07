@@ -2,16 +2,18 @@ import type { ClientMessage } from "@liars-dice/engine";
 import { useState } from "react";
 import { OnlineGame } from "./OnlineGame.tsx";
 import { joinCodeFromSearch, serverUrl, type OnlineEntry } from "./online.ts";
+import { clearSeat, loadSeat } from "./roomStore.ts";
 import { Setup } from "./Setup.tsx";
 import { Table } from "./Table.tsx";
 import type { Config } from "./session.ts";
-import type { ThemeId } from "./theme.ts";
+import { loadTheme, type ThemeId } from "./theme.ts";
 
 type Screen =
   | { kind: "setup" }
   // `id` changes on every rematch, which gives the table a fresh game with the same settings.
   | { kind: "local"; config: Config; id: number }
-  | { kind: "online"; request: ClientMessage; theme: ThemeId; id: number };
+  // With no request there is a token instead: a place kept before a reload, to claim back.
+  | { kind: "online"; request: ClientMessage | null; token?: string; theme: ThemeId; id: number };
 
 /** The share link has done its work once it has been used; leaving it would fill the form again next time. */
 function forgetShareLink() {
@@ -19,8 +21,19 @@ function forgetShareLink() {
 }
 
 export function App() {
-  const [screen, setScreen] = useState<Screen>({ kind: "setup" });
   const url = serverUrl();
+  const [screen, setScreen] = useState<Screen>(() => {
+    // A reload in the middle of a room goes back into it, unless the page was opened from a link to a different one.
+    const seat = url !== null && joinCodeFromSearch(window.location.search) === null ? loadSeat() : null;
+    return seat === null
+      ? { kind: "setup" }
+      : { kind: "online", request: null, token: seat.token, theme: loadTheme(), id: 0 };
+  });
+  /** Back to the start, and the place in the room is let go: it was given up, or it is no longer wanted. */
+  const leave = () => {
+    clearSeat();
+    setScreen({ kind: "setup" });
+  };
 
   if (screen.kind === "local") {
     return (
@@ -38,13 +51,15 @@ export function App() {
         key={screen.id}
         url={url}
         request={screen.request}
+        {...(screen.token === undefined ? {} : { token: screen.token })}
         theme={screen.theme}
-        onQuit={() => setScreen({ kind: "setup" })}
+        onQuit={leave}
       />
     );
   }
 
   const go = (request: ClientMessage, theme: ThemeId) => {
+    clearSeat(); // a new request is a new visit, and an old place must not come back if it fails
     forgetShareLink();
     setScreen({ kind: "online", request, theme, id: Date.now() });
   };
