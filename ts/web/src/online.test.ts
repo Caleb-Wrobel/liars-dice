@@ -8,11 +8,34 @@ describe("serverUrl", () => {
     "accepts %j",
     (text) => expect(serverUrl(text)).toBe(text.trim()),
   );
-  it.each(["", "   ", "http://example.org/ws", "https://example.org", "ws://", "ws:// no", "localhost:8787", "example.org/ws"])(
+  it.each(["", "   ", "http://example.org/ws", "https://example.org", "ws://", "ws:// no", "localhost:8787", "example.org/ws", "//evil.example/ws", "/ws path", "ws"])(
     "refuses %j, so that online play stays hidden",
     (text) => expect(serverUrl(text)).toBeNull(),
   );
   it.each([undefined, null, 8787, {}])("refuses %j, which is not text", (value) => expect(serverUrl(value)).toBeNull());
+
+  describe("a path on the page's own host", () => {
+    const secure = { protocol: "https:", host: "game.example.org" };
+    const plain = { protocol: "http:", host: "localhost:5173" };
+    it("connects to its own origin, securely when the page is", () => {
+      expect(serverUrl("/ws", secure)).toBe("wss://game.example.org/ws");
+      expect(serverUrl("/ws", plain)).toBe("ws://localhost:5173/ws");
+    });
+    it("keeps the whole path, and accepts the bare root", () => {
+      expect(serverUrl("/play/socket", secure)).toBe("wss://game.example.org/play/socket");
+      expect(serverUrl("/", secure)).toBe("wss://game.example.org/");
+    });
+    it("is trimmed like any other setting", () => {
+      expect(serverUrl("  /ws  ", secure)).toBe("wss://game.example.org/ws");
+    });
+    it("refuses a path that would name another host, or that has spaces in it", () => {
+      expect(serverUrl("//evil.example/ws", secure)).toBeNull();
+      expect(serverUrl("/ws path", secure)).toBeNull();
+    });
+    it("is read from the page it is on when no page is given", () => {
+      expect(serverUrl("/ws")).toBe(`${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws`);
+    });
+  });
 
   it("reads the build's VITE_SERVER_URL when it is given nothing", () => {
     vi.stubEnv("VITE_SERVER_URL", "wss://example.org/ws");
