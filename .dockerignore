@@ -1,0 +1,8 @@
+# Only what the images are built from goes into the build context: the TypeScript workspace and the licence files.
+*
+!ts
+!LICENSE
+!THIRD-PARTY-NOTICES.md
+**/node_modules
+**/dist
+**/coverage
