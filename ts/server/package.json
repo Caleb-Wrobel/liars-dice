@@ -6,6 +6,8 @@
   "scripts": {
     "build": "rolldown src/main.ts --format esm --platform node --file dist/server.mjs",
     "start": "node dist/server.mjs",
+    "build:playtest": "rolldown playtest/main.ts --format esm --platform node --file dist/playtest.mjs",
+    "playtest": "npm run build && npm run build:playtest && node dist/playtest.mjs --spawn",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "test:coverage": "vitest run --coverage"
