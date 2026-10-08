@@ -46,6 +46,9 @@ const LATE_MS = 3000;
  * turn, so without a limit a big room can feed on itself for a very long time. */
 const MAX_DROPS = 8;
 
+/** The most a table seats. The server owns this number and refuses more; the playtest only has to stay inside it. */
+const MAX_SEATS = 6;
+
 /** One simulated person: a connection, the secret that is theirs, and only the views the server sent them. */
 class Player {
   ws: WebSocket | null = null;
@@ -114,7 +117,8 @@ class Room {
     this.rng = seededRng(opts.seed * 1000 + index);
     const span = opts.maxHumans - opts.minHumans + 1;
     this.humans = opts.minHumans + Math.floor(this.rng() * span);
-    this.bots = Math.floor(this.rng() * (opts.maxBots + 1));
+    // A table seats at most six, people and bots together.
+    this.bots = Math.min(Math.floor(this.rng() * (opts.maxBots + 1)), MAX_SEATS - this.humans);
     this.lives = 1 + Math.floor(this.rng() * 3);
     this.advanced = this.rng() < 0.5;
     for (let i = 0; i < this.humans; i++) {
