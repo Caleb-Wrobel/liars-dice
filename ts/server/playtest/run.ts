@@ -60,12 +60,16 @@ class Player {
   awaiting = false;
   finished = false;
   left = false;
+  /** Has said it is leaving and is waiting to be told it has gone; until then it makes no moves and does not drop. */
+  leaving = false;
   updates = 0;
   leaveAt: number;
   moves = 0;
   drops = 0;
   /** When the server said this place was no longer theirs, and what it said. */
   refused: { at: number; text: string } | null = null;
+  /** The last few things that happened to this player and when, so a failure can say how it came about. */
+  trail: string[] = [];
 
   constructor(
     readonly name: string,
@@ -96,6 +100,7 @@ class Room {
   private sawWinner = false;
   private wonAt = 0;
   private lastProgress = Date.now();
+  private began = Date.now();
   private watchdog: ReturnType<typeof setInterval> | null = null;
   private finish!: () => void;
   private readonly done = new Promise<void>((resolve) => (this.finish = resolve));
@@ -120,7 +125,7 @@ class Room {
   }
 
   async play(): Promise<RoomResult> {
-    const began = Date.now();
+    const began = (this.began = Date.now());
     this.watchdog = setInterval(() => this.checkStall(), 1000);
     try {
       const host = this.players[0]!;
@@ -143,6 +148,11 @@ class Room {
       leaves: this.leaves,
       ms: Date.now() - began,
     };
+  }
+
+  private note(p: Player, what: string): void {
+    p.trail.push(`${((Date.now() - this.began) / 1000).toFixed(1)}s ${what}`);
+    if (p.trail.length > 14) p.trail.shift();
   }
 
   private fail(problem: string): void {
@@ -190,6 +200,7 @@ class Room {
     if (gen !== p.gen) return; // a connection that was replaced; its last words (`replaced`) are expected
     switch (m.type) {
       case "joined":
+        this.note(p, m.view === undefined ? "joined" : "resumed");
         p.token = m.token;
         p.code = m.code;
         if (m.view !== undefined) this.take(p, m.view, m.kinds ?? p.kinds);
@@ -201,6 +212,7 @@ class Room {
       case "state":
         return this.take(p, m.view, m.kinds);
       case "left":
+        this.note(p, "told it has left");
         p.left = true;
         return this.close(p), this.maybeFinish();
       case "replaced":
@@ -209,6 +221,7 @@ class Room {
         // A seat that drops as the game ends is let go at once, so its resume is refused. That is by design (nobody is
         // waiting on a finished game), but only if the game really did end then, which `finalChecks` weighs.
         if (m.code === "unknown_token") {
+          this.note(p, "refused: unknown token");
           p.refused = { at: Date.now(), text: `${m.code}: ${m.error}` };
           p.finished = true;
           return this.maybeFinish();
@@ -246,12 +259,16 @@ class Room {
     p.updates++;
     if (view.winner !== null) {
       p.finished = true;
+      this.note(p, "sees the winner");
       if (!this.sawWinner) this.wonAt = Date.now();
       this.sawWinner = true;
       return this.maybeFinish();
     }
+    if (p.leaving) return;
     if (p.updates >= p.leaveAt) {
       p.leaveAt = Infinity;
+      p.leaving = true;
+      this.note(p, "sends leave");
       this.leaves++;
       p.send({ type: "leave" });
       return;
@@ -276,6 +293,7 @@ class Room {
   private drop(p: Player): void {
     this.drops++;
     p.drops++;
+    this.note(p, "drops");
     if (p.timer !== null) clearTimeout(p.timer);
     p.timer = null;
     const ghost = p.rng() < this.opts.ghost;
@@ -289,6 +307,7 @@ class Room {
       this.open(p).then(
         () => {
           p.awaiting = false;
+          this.note(p, "sends resume");
           p.send({ type: "resume", token: p.token });
           if (ghost) setTimeout(() => old?.terminate(), 200);
         },
@@ -306,7 +325,7 @@ class Room {
     // A refused resume is fine only if the game ended within moments of it; a place lost mid-game is not.
     for (const p of this.players) {
       if (p.refused !== null && (!this.sawWinner || Math.abs(this.wonAt - p.refused.at) > LATE_MS)) {
-        this.problems.push(`${p.name} was refused (${p.refused.text}) with the game still on`);
+        this.problems.push(`${p.name} was refused (${p.refused.text}) with the game ${this.sawWinner ? `still on for ${((this.wonAt - p.refused.at) / 1000).toFixed(1)}s` : "never finished"}; ${p.trail.join(", ")}; others: ${this.players.filter((q) => q !== p).map((q) => `${q.name} ${q.left ? "left" : q.finished ? "finished" : "playing"}`).join(", ")}`);
       }
     }
     if (!this.sawWinner) return void (this.problems.length > 0 || this.problems.push("the game never finished"));
