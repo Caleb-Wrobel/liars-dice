@@ -28,10 +28,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The smoke script is plain Node and needs no install.
+      # The smoke script is plain Node and needs no install; the playtest further down does.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: ts/package-lock.json
 
       - uses: docker/setup-buildx-action@v3
 
@@ -48,6 +50,21 @@ jobs:
       # makes a room, stops cleanly, and refuses a setting it cannot use.
       - name: Smoke test the image
         run: ts/server/scripts/smoke-container.sh liars-dice-server:smoke
+
+      # Starting is not behaving. A few whole games are played against the image by simulated players, who drop, come
+      # back and leave, and each check that it was shown only its own view. The playtest is bundled here, so this
+      # installs the workspace; the smoke test above needs none of that.
+      - name: Install the workspace
+        run: npm ci
+        working-directory: ts
+
+      - name: Build the playtest
+        run: npm run build:playtest -w @liars-dice/server
+        working-directory: ts
+
+      - name: Play a few games against the image
+        timeout-minutes: 10
+        run: ts/server/scripts/playtest-container.sh liars-dice-server:smoke 8789
 
       # The arm64 image is the same file on a different base, so it is tried once, under emulation, just before it is
       # published rather than on every push.

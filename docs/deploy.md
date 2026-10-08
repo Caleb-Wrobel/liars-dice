@@ -77,6 +77,12 @@ Open it from two devices and play. `ts/server/scripts/smoke-container.sh <image>
 `ts/server/scripts/smoke.mjs ws://<this-machine>:8787/ws` asks any running server to make a room. On one machine,
 `npm run dev:server` in `ts/` builds and starts the server for the Vite dev server on `localhost`.
 
+To see how a server behaves once people are on it, `npm run playtest -w @liars-dice/server` in `ts/` starts a server of
+its own and plays whole games against it with simulated players who drop, come back and leave, checking that each was
+shown only its own view. Point it at one that is already running with `node ts/server/dist/playtest.mjs ws://<this-machine>:8787/ws`
+after `npm run build:playtest -w @liars-dice/server`, or run it against an image with
+`ts/server/scripts/playtest-container.sh <image>`, which CI does after the smoke test.
+
 ## What it does not do
 
 A restart ends the games in progress: a room lives in memory only, and there is no database. A player who drops has
