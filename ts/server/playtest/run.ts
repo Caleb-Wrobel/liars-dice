@@ -42,6 +42,10 @@ const LETTERS = "ABCDEFGHIJKL";
 /** How close to the end of the game a refused resume has to fall to be put down to the game ending. */
 const LATE_MS = 3000;
 
+/** Most times one player drops in a game. Each drop is announced to the table, which tempts everyone else to drop in
+ * turn, so without a limit a big room can feed on itself for a very long time. */
+const MAX_DROPS = 8;
+
 /** One simulated person: a connection, the secret that is theirs, and only the views the server sent them. */
 class Player {
   ws: WebSocket | null = null;
@@ -252,7 +256,7 @@ class Room {
       p.send({ type: "leave" });
       return;
     }
-    if (p.rng() < this.opts.drop) return this.drop(p);
+    if (p.drops < MAX_DROPS && p.rng() < this.opts.drop) return this.drop(p);
     this.schedule(p);
   }
 
@@ -277,7 +281,11 @@ class Room {
     const ghost = p.rng() < this.opts.ghost;
     const old = p.ws;
     if (!ghost) old?.terminate();
+    // The old connection is as good as gone to this player, even if it is still open: nothing it says is acted on.
+    p.gen++;
     setTimeout(() => {
+      // Someone who left, or who has seen the end, has nothing to come back to.
+      if (p.left || p.finished) return old?.terminate();
       this.open(p).then(
         () => {
           p.awaiting = false;
