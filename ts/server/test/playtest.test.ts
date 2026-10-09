@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { agreementProblems, leaked, livesProblems, viewProblems } from "../playtest/checks.ts";
 import { playtest, roomSeed } from "../playtest/run.ts";
 import { chooseIntent } from "../playtest/strategy.ts";
+import { Hub } from "../src/hub.ts";
+import { realClock } from "../src/match.ts";
 import { liveServer } from "./sockets.ts";
 
 /** A real view of a fresh three-seat game, as seat `seat` would be sent it. */
@@ -100,6 +102,21 @@ describe("chooseIntent", () => {
 });
 
 describe("playtest against a live server", () => {
+  it("plays one person against bots, and never asks for a table of one", async () => {
+    // Bots move on the server's clock, so this one runs on the real one, with the quick bots.
+    const live = await liveServer(14, new Hub({ rng: seededRng(14), clock: realClock, pace: "fast" }));
+    try {
+      const results = await playtest({
+        url: live.url, rooms: 3, minutes: 0, concurrency: 3, seed: 5, minHumans: 1, maxHumans: 1, maxBots: 0,
+        drop: 0.2, ghost: 0.5, leave: 0, thinkMs: 1, stallMs: 15_000, log: () => {},
+      });
+      expect(results.map((r) => r.players)).toEqual([1, 1, 1]);
+      expect(results.flatMap((r) => r.problems)).toEqual([]);
+    } finally {
+      await live.stop();
+    }
+  }, 120_000);
+
   it("stops starting rooms when its minutes are up, and finishes the ones under way", async () => {
     const live = await liveServer(12);
     const lines: string[] = [];
