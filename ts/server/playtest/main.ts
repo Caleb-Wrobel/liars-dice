@@ -5,6 +5,9 @@
  *
  *   node dist/playtest.mjs ws://127.0.0.1:8787/ws --rooms 20
  *   node dist/playtest.mjs --spawn --rooms 20          starts dist/server.mjs on a free port of its own
+ *   node dist/playtest.mjs --spawn --minutes 180       no new rooms after three hours; games under way are finished
+ *
+ * Runs with different --seed values play different rooms, so a long job can be split across machines or into chunks.
  *
  * Exits 0 when every room played clean, 1 when any did not, and 2 when it was not told where to look.
  */
@@ -25,7 +28,7 @@ const flag = (name: string, fallback: number): number => {
 const spawnServer = args.includes("--spawn");
 const given = args.find((a, i) => a.startsWith("ws") && args[i - 1]?.startsWith("--") !== true);
 if (!spawnServer && given === undefined) {
-  console.error("usage: node playtest.mjs <ws://host:port/path> | --spawn  [--rooms N] [--concurrency N] [--seed N]\n" +
+  console.error("usage: node playtest.mjs <ws://host:port/path> | --spawn  [--rooms N] [--minutes N] [--concurrency N] [--seed N]\n" +
     "       [--min-humans N] [--max-humans N] [--bots N] [--drop P] [--ghost P] [--leave P] [--think MS] [--stall SECONDS]");
   process.exit(2);
 }
@@ -48,7 +51,9 @@ function startServer(): Promise<{ url: string; stop: () => void }> {
 const server = spawnServer ? await startServer() : undefined;
 const opts: PlaytestOptions = {
   url: server?.url ?? given!,
-  rooms: flag("rooms", 12),
+  minutes: flag("minutes", 0),
+  // With a time limit and no room count, the time is the limit.
+  rooms: flag("rooms", flag("minutes", 0) > 0 ? Number.MAX_SAFE_INTEGER : 12),
   concurrency: flag("concurrency", 4),
   seed: flag("seed", Date.now() % 100000),
   minHumans: flag("min-humans", 2),
@@ -61,7 +66,8 @@ const opts: PlaytestOptions = {
   stallMs: flag("stall", 30) * 1000,
   log: (line) => console.log(line),
 };
-console.log(`playtest: ${opts.rooms} rooms, ${opts.concurrency} at a time, seed ${opts.seed}`);
+const budget = opts.minutes > 0 ? `${opts.minutes} minutes` : `${opts.rooms} rooms`;
+console.log(`playtest: ${budget}, ${opts.concurrency} at a time, seed ${opts.seed}`);
 const results = await playtest(opts);
 server?.stop();
 const bad = results.filter((r) => r.problems.length > 0);

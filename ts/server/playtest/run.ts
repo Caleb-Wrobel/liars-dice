@@ -8,6 +8,8 @@ export interface PlaytestOptions {
   readonly url: string;
   /** How many rooms to play in all, and how many at once. */
   readonly rooms: number;
+  /** Stop starting rooms after this many minutes (0 for no limit); rooms already under way are played to the end. */
+  readonly minutes: number;
   readonly concurrency: number;
   readonly seed: number;
   readonly minHumans: number;
@@ -38,6 +40,12 @@ export interface RoomResult {
 }
 
 const LETTERS = "ABCDEFGHIJKL";
+
+/**
+ * The seed a room's choices come from. Rooms of one run, and of runs with seeds that are close, must not repeat one
+ * another however long they go, so the seed is spread out and the room number added to it.
+ */
+export const roomSeed = (seed: number, index: number): number => (seed * 1_000_003 + index) >>> 0;
 
 /** How close to the end of the game a refused resume has to fall to be put down to the game ending. */
 const LATE_MS = 3000;
@@ -114,7 +122,7 @@ class Room {
     private readonly index: number,
     private readonly opts: PlaytestOptions,
   ) {
-    this.rng = seededRng(opts.seed * 1000 + index);
+    this.rng = seededRng(roomSeed(opts.seed, index));
     const span = opts.maxHumans - opts.minHumans + 1;
     this.humans = opts.minHumans + Math.floor(this.rng() * span);
     // A table seats at most six, people and bots together.
@@ -124,7 +132,7 @@ class Room {
     for (let i = 0; i < this.humans; i++) {
       // The first player stays to the end, so a room is never left with nobody to finish it.
       const leaves = i > 0 && this.rng() < opts.leave;
-      this.players.push(new Player(`Test ${LETTERS[i]}${index}`, seededRng(opts.seed * 1000 + index * 10 + i + 500), leaves ? 3 + Math.floor(this.rng() * 25) : Infinity));
+      this.players.push(new Player(`Test ${LETTERS[i]}${index}`, seededRng(roomSeed(opts.seed, index) * 16 + i + 1), leaves ? 3 + Math.floor(this.rng() * 25) : Infinity));
     }
   }
 
@@ -347,9 +355,10 @@ class Room {
 /** Plays `opts.rooms` whole games against the server, `opts.concurrency` at a time. */
 export async function playtest(opts: PlaytestOptions): Promise<RoomResult[]> {
   const results: RoomResult[] = [];
+  const until = opts.minutes > 0 ? Date.now() + opts.minutes * 60_000 : Infinity;
   let next = 0;
   const worker = async () => {
-    for (let i = next++; i < opts.rooms; i = next++) {
+    for (let i = next++; i < opts.rooms && Date.now() < until; i = next++) {
       const result = await new Room(i, opts).play();
       results.push(result);
       const verdict = result.problems.length === 0 ? "clean" : `${result.problems.length} PROBLEM(S)`;
@@ -358,5 +367,6 @@ export async function playtest(opts: PlaytestOptions): Promise<RoomResult[]> {
     }
   };
   await Promise.all(Array.from({ length: Math.min(opts.concurrency, opts.rooms) }, worker));
+  if (Date.now() >= until) opts.log(`the ${opts.minutes} minutes were up; rooms under way were played to the end`);
   return results.sort((a, b) => a.room - b.room);
 }

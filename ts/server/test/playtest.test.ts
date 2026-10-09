@@ -1,7 +1,7 @@
 import { Core, Game, advancedRules, basicRules, seededRng, view, type SeatView } from "@liars-dice/engine";
 import { describe, expect, it } from "vitest";
 import { agreementProblems, leaked, livesProblems, viewProblems } from "../playtest/checks.ts";
-import { playtest } from "../playtest/run.ts";
+import { playtest, roomSeed } from "../playtest/run.ts";
 import { chooseIntent } from "../playtest/strategy.ts";
 import { liveServer } from "./sockets.ts";
 
@@ -68,6 +68,14 @@ describe("the other checks", () => {
   });
 });
 
+describe("roomSeed", () => {
+  it("never gives two rooms the same seed, across runs with close seeds and runs of thousands of rooms", () => {
+    const seen = new Set<number>();
+    for (let seed = 1; seed <= 40; seed++) for (let room = 0; room < 5000; room++) seen.add(roomSeed(seed, room));
+    expect(seen.size).toBe(40 * 5000);
+  });
+});
+
 describe("chooseIntent", () => {
   it("has no move for a seat that has none", () => {
     expect(chooseIntent(freshView((freshView(0).current + 1) % 3), seededRng(1))).toBeNull();
@@ -92,11 +100,28 @@ describe("chooseIntent", () => {
 });
 
 describe("playtest against a live server", () => {
+  it("stops starting rooms when its minutes are up, and finishes the ones under way", async () => {
+    const live = await liveServer(12);
+    const lines: string[] = [];
+    try {
+      const results = await playtest({
+        url: live.url, rooms: 500, minutes: 0.05, concurrency: 2, seed: 9, minHumans: 2, maxHumans: 2, maxBots: 0,
+        drop: 0, ghost: 0, leave: 0, thinkMs: 5, stallMs: 15_000, log: (line) => lines.push(line),
+      });
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.length).toBeLessThan(500);
+      expect(results.flatMap((r) => r.problems)).toEqual([]);
+      expect(lines.some((l) => l.includes("minutes were up"))).toBe(true);
+    } finally {
+      await live.stop();
+    }
+  }, 60_000);
+
   it("plays rooms through drops, second connections and resumes with nothing wrong", async () => {
     const live = await liveServer(11);
     try {
       const results = await playtest({
-        url: live.url, rooms: 4, concurrency: 4, seed: 7, minHumans: 2, maxHumans: 3, maxBots: 0,
+        url: live.url, rooms: 4, minutes: 0, concurrency: 4, seed: 7, minHumans: 2, maxHumans: 3, maxBots: 0,
         drop: 0.25, ghost: 0.5, leave: 0, thinkMs: 10, stallMs: 15_000, log: () => {},
       });
       expect(results.flatMap((r) => r.problems)).toEqual([]);
