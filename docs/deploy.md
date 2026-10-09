@@ -33,6 +33,7 @@ Publishing the port on `127.0.0.1` keeps the container behind the proxy. The set
 | `PORT` | `8787` | The port to listen on. |
 | `HOST` | `127.0.0.1` (`0.0.0.0` in the image) | The address to listen on. The image listens on every interface so that a proxy beside it can reach it. |
 | `WS_PATH` | `/ws` | The URL path that speaks the game's protocol. |
+| `BOT_PACE` | `slow` | How fast bots move: `fast`, `normal` or `slow`. Slow is for people, who follow the table in a log; `fast` is for tests that want whole games in less time. |
 | `ALLOWED_ORIGINS` | none | The websites whose pages may connect, comma-separated, written as a browser writes them (`https://example.org`: no slash, no path, no wildcard). With none, every browser is refused. |
 
 A setting it cannot use stops the start with a message that names it.

@@ -1,6 +1,6 @@
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { PROTOCOL_VERSION } from "@liars-dice/engine";
+import { PROTOCOL_VERSION, nextRank, type SeatView } from "@liars-dice/engine";
 import { readFileSync } from "node:fs";
 import { createServer, type AddressInfo } from "node:net";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -98,6 +98,74 @@ function freePort(): Promise<number> {
     });
   });
 }
+
+/**
+ * Plays one person's side of a two-seat game against the bot, as quickly as a person could, and says how long the server
+ * made the person wait for each visible move of the bot's. Bots move on the server's clock at the pace it was started
+ * with, so these gaps are what show that a setting reached them.
+ */
+async function botGaps(port: number): Promise<number[]> {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`);
+    const gaps: number[] = [];
+    let view: SeatView | undefined;
+    let last = 0;
+    let echoes = 0;
+    const timer = setTimeout(() => reject(new Error("the game did not move on")), 25_000);
+    const finish = () => {
+      clearTimeout(timer);
+      ws.close();
+      resolve(gaps);
+    };
+    const move = () => {
+      if (view === undefined || view.winner !== null || view.available.length === 0) return;
+      const open = view.available;
+      const action = (["roll", "peek", "claim", "peer", "pull"] as const).find((a) => open.includes(a))!;
+      ws.send(JSON.stringify({ v: PROTOCOL_VERSION, type: "intent", intent: action === "claim" ? { action, rank: nextRank(view.claim) } : { action } }));
+      echoes++;
+    };
+    ws.on("open", () => ws.send(JSON.stringify({ v: PROTOCOL_VERSION, type: "create", name: "Sam", seats: 2, lives: 3 })));
+    ws.on("message", (data) => {
+      const m = JSON.parse(data.toString()) as { type: string; code?: string; view?: SeatView };
+      if (m.type === "joined") return void ws.send(JSON.stringify({ v: PROTOCOL_VERSION, type: "start" }));
+      if (m.type !== "started" && m.type !== "state") return;
+      view = m.view;
+      const now = Date.now();
+      // The first update after one of our own moves is the echo of it; any other is the bot having moved.
+      if (m.type === "state" && echoes > 0) echoes--;
+      else if (m.type === "state") gaps.push(now - last);
+      last = now;
+      if (gaps.length >= 3 || view?.winner != null) return finish();
+      move();
+    });
+    ws.on("error", reject);
+  });
+}
+
+describe("the bot pace", () => {
+  it("is the setting the server was started with: quick bots move within a second or so of each other", async () => {
+    const server = await start({ BOT_PACE: "fast" });
+    const gaps = await botGaps(server.port);
+    expect(gaps.length).toBeGreaterThan(0);
+    // Slow bots wait 3.2 seconds before a move, and 4.8 before a decision; fast ones a quarter and three eighths of a second.
+    for (const gap of gaps) expect(gap).toBeLessThan(2000);
+  }, 40_000);
+
+  it("is slow when nothing was set, so that people can follow the table", async () => {
+    const server = await start({});
+    const gaps = await botGaps(server.port);
+    expect(gaps[0]).toBeGreaterThan(2500);
+  }, 40_000);
+
+  it("stops the start when it is not one of the three", async () => {
+    const child = spawn("node", ["dist/server.mjs"], { cwd: serverDir, env: { PATH: process.env.PATH ?? "", PORT: "0", BOT_PACE: "quick" } });
+    let err = "";
+    child.stderr.on("data", (c: Buffer) => (err += c.toString()));
+    const code = await new Promise<number | null>((resolve) => child.on("exit", resolve));
+    expect(code).toBe(1);
+    expect(err).toContain("liars-dice server: BOT_PACE must be one of fast, normal, slow");
+  }, 30_000);
+});
 
 describe("the server's start-up order", () => {
   // A stop signal that arrives between the server saying it is listening and the handlers being set up kills the

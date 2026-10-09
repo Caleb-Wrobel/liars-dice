@@ -4,6 +4,9 @@
  * public repository says nothing about where. See docs/multiplayer.md.
  */
 
+import { BOT_PACE_MS, type BotPace } from "@liars-dice/engine";
+import { DEFAULT_PACE } from "./match.ts";
+
 export interface ServerConfig {
   readonly port: number;
   readonly host: string;
@@ -11,6 +14,8 @@ export interface ServerConfig {
   readonly path: string;
   /** Websites whose pages may connect, each written as a browser writes an origin. Empty refuses every browser. */
   readonly allowedOrigins: readonly string[];
+  /** How fast bots move. Slow is for people; a faster one is for a test that wants whole games in less time. */
+  readonly botPace: BotPace;
 }
 
 /** A setting that cannot be used, said in words for whoever is starting the server. */
@@ -61,11 +66,20 @@ function readOrigins(text: string | undefined): readonly string[] {
   return origins;
 }
 
+const PACES = Object.keys(BOT_PACE_MS) as BotPace[];
+
+function readPace(text: string | undefined): BotPace {
+  if (text === undefined || text === "") return DEFAULT_PACE;
+  if (!(PACES as string[]).includes(text)) throw new ConfigError(`BOT_PACE must be one of ${PACES.join(", ")}, not "${text}"`);
+  return text as BotPace;
+}
+
 export function readConfig(env: Readonly<Record<string, string | undefined>>): ServerConfig {
   return {
     port: readPort(env.PORT),
     host: env.HOST === undefined || env.HOST === "" ? DEFAULT_HOST : env.HOST,
     path: readPath(env.WS_PATH),
     allowedOrigins: readOrigins(env.ALLOWED_ORIGINS),
+    botPace: readPace(env.BOT_PACE),
   };
 }

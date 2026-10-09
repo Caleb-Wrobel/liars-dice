@@ -18,7 +18,7 @@ try {
   process.exit(1);
 }
 
-const hub = new Hub({ rng: secureRng, clock: realClock });
+const hub = new Hub({ rng: secureRng, clock: realClock, pace: config.botPace });
 
 // Stopping is set up before the server starts listening, and so before the line that says it is: that line is what a
 // supervisor, or a test, waits for before it sends a stop signal, and a signal that came before this was in place
